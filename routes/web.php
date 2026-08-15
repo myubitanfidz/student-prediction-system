@@ -14,6 +14,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/exams', [ExamController::class, 'index']);
 Route::get('/exams/{id}', [ExamController::class, 'show']);
 Route::post('/exams/submit', [ExamController::class, 'submit']);
+Route::post('/exams/grade', [ExamController::class, 'gradeAnswer']);
 
 // Portofolio
 Route::post('/portfolios', [PortfolioController::class, 'store']);

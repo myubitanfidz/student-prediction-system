@@ -77,4 +77,27 @@ class ExamController extends Controller
             'message' => 'Jawaban ujian berhasil dikirim',
         ]);
     }
+    // Tambahkan di dalam ExamController.php
+
+    // Endpoint untuk guru menginput/mengupdate nilai jawaban siswa
+    public function gradeAnswer(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'answer_id' => 'required|exists:student_answers,id',
+            'score'     => 'required|numeric|min:0|max:100',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+    
+        $answer = StudentAnswer::find($request->answer_id);
+        $answer->update(['score' => $request->score]);
+    
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Nilai berhasil disimpan',
+            'data'    => $answer,
+        ]);
+    }
 }
