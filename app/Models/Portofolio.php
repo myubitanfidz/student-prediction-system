@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Portfolio extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'links',
+        'files',
+    ];
+
+    protected $casts = [
+        'files' => 'array', // Menyimpan daftar path file dalam bentuk array JSON
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+}
