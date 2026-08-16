@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | Frontend routes — Talenta Santri
@@ -23,7 +22,6 @@ Route::get('/beranda', fn () => view('beranda.index'))->name('beranda');
 
 Route::get('/ujian/{id}', fn (string $id) => view('ujian.kerjakan', ['examId' => $id]))
     ->name('ujian.kerjakan');
-
 Route::get('/portofolio', fn () => view('portofolio.index'))->name('portofolio.index');
 
 Route::get('/dashboard', fn () => view('dashboard.index'))->name('dashboard');

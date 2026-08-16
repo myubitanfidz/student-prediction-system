@@ -16,9 +16,13 @@
 
     <div class="lg:flex">
 
+        {{-- Mobile-only backdrop for the off-canvas navigation --}}
+        <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false"
+             class="fixed inset-0 z-30 bg-ink/25 lg:hidden" aria-hidden="true"></div>
+
         {{-- Sidebar --}}
         <aside
-            class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-line transform transition-transform lg:translate-x-0 lg:static lg:flex lg:flex-col"
+            class="fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-line transform transition-transform lg:w-64 lg:max-w-none lg:translate-x-0 lg:static lg:flex lg:flex-col"
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
         >
             <div class="h-16 flex items-center gap-2 px-6 border-b border-line">
@@ -29,28 +33,17 @@
             </div>
 
             <nav class="flex-1 px-3 py-6 space-y-1">
-                <a href="{{ route('beranda') }}"
+                <a href="{{ route('beranda') }}" @click="sidebarOpen = false"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('beranda') ? 'bg-cloud text-ink' : 'text-ink/60 hover:bg-cloud' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4a1 1 0 001-1v-4h2v4a1 1 0 001 1h4a1 1 0 001-1V10"/></svg>
                     Beranda
                 </a>
-                <a href="{{ route('dashboard') }}"
+                <a href="{{ route('dashboard') }}" @click="sidebarOpen = false"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-cloud text-ink' : 'text-ink/60 hover:bg-cloud' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M8 17V10m5 7V6m5 11v-8"/></svg>
                     Dashboard
                 </a>
 
-                <p class="px-3 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-wide text-ink/35">Kategori Ujian</p>
-
-                <a href="{{ route('beranda') }}#kategori-bahasa" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-ink/60 hover:bg-cloud">
-                    <span class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-blue"></span> Bahasa</span>
-                </a>
-                <a href="{{ route('beranda') }}#kategori-it" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-ink/60 hover:bg-cloud">
-                    <span class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-green"></span> IT</span>
-                </a>
-                <a href="{{ route('beranda') }}#kategori-karakter" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-ink/60 hover:bg-cloud">
-                    <span class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-orange"></span> Karakter</span>
-                </a>
             </nav>
 
             <div class="p-3 border-t border-line">
@@ -67,14 +60,14 @@
                 <button class="lg:hidden text-ink/60" @click="sidebarOpen = !sidebarOpen">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
-                <h1 class="font-display font-bold text-lg">@yield('title', 'Beranda')</h1>
+                <h1 class="font-display font-bold text-lg truncate px-3">@yield('title', 'Beranda')</h1>
                 <a href="{{ route('beranda') }}#profil" class="flex items-center gap-2">
                     <span class="w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-semibold flex items-center justify-center"
                           x-text="($store.auth.user?.name ?? 'S').charAt(0).toUpperCase()"></span>
                 </a>
             </header>
 
-            <main class="p-4 lg:p-8">
+            <main class="p-4 sm:p-6 lg:p-8">
                 @yield('content')
             </main>
         </div>

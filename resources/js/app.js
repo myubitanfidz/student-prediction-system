@@ -47,7 +47,7 @@ Alpine.data('registerPage', () => ({
 
 // ---------- Beranda: profil + daftar ujian dikelompokkan per kategori ----------
 Alpine.data('berandaPage', () => ({
-    loading: true, error: '', kategori: [], user: getUser(),
+    loading: true, error: '', kategori: [], user: getUser(), openCategory: null,
     async init() {
         try {
             const json = await api.getExams();
@@ -142,9 +142,10 @@ Alpine.data('dashboardPage', () => ({
             this.stats = (data.exam_stats ?? []).map((s) => ({
                 ...s,
                 warna: categoryColor(s.category),
-                // total_score diasumsikan skala 0-100 mengikuti contoh di dokumentasi (85.00)
-                nilaiPersen: Math.max(0, Math.min(100, Number(s.total_score) || 0)),
-            }));
+                nilaiPersen: Math.max(0, Math.min(100, Number(s.compatibility) || 0)),
+            }))
+                .sort((a, b) => b.nilaiPersen - a.nilaiPersen)
+                .slice(0, 5);
             this.portfolio = data.portfolio;
         } catch (e) {
             this.error = e.message;

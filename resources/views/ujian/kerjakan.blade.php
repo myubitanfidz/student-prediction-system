@@ -10,7 +10,7 @@
     <template x-if="!loading && exam">
         <div>
             {{-- Header --}}
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                 <div>
                     <p class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium mb-2"
                        :class="'tag-' + (exam.category ?? '').toLowerCase()" x-text="exam.category"></p>
@@ -72,7 +72,7 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="submit" :disabled="submitting" class="btn-primary">
+                    <button type="submit" :disabled="submitting" class="btn-primary w-full sm:w-auto">
                         <span x-show="!submitting">Selesai &amp; Kumpulkan</span>
                         <span x-show="submitting">Mengirim...</span>
                     </button>

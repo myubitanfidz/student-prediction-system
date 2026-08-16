@@ -19,20 +19,27 @@
                 </div>
             </div>
 
-            {{-- Statistik nilai per ujian --}}
+            {{-- Lima rekomendasi berdasarkan jawaban pilihan ganda yang benar --}}
             <section>
-                <h2 class="font-display font-bold text-xl mb-4">Statistik Nilai</h2>
-                <div class="card p-6">
-                    <div x-show="!stats.length" class="text-sm text-ink/40">Belum ada ujian yang dikerjakan.</div>
-                    <div class="grid gap-6 items-end h-52" :style="`grid-template-columns: repeat(${stats.length || 1}, minmax(0,1fr))`">
-                        <template x-for="item in stats" :key="item.exam_id">
-                            <div class="flex flex-col items-center gap-2 h-full justify-end">
-                                <span class="font-mono text-xs font-semibold" x-text="item.total_score"></span>
-                                <div class="w-full rounded-t-md" :class="'bg-brand-' + item.warna" :style="`height: ${item.nilaiPersen}%`"></div>
-                                <span class="text-[11px] text-ink/50 text-center leading-tight" x-text="item.exam_title"></span>
+                <h2 class="font-display font-bold text-xl mb-1">Kecocokan Kelas</h2>
+                <p class="text-sm text-ink/50 mb-4">Lima bidang dengan kecocokan tertinggi dari jawaban pilihan gandamu.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+                    <div x-show="!stats.length" class="card p-5 text-sm text-ink/40 sm:col-span-2 xl:col-span-5">Belum ada ujian yang dikerjakan.</div>
+                    <template x-for="item in stats" :key="item.exam_id">
+                        <article class="card p-4 space-y-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full" :class="'tag-' + item.category.toLowerCase()" x-text="item.category"></span>
+                                <span class="font-mono text-lg font-semibold" x-text="item.nilaiPersen + '%'"></span>
                             </div>
-                        </template>
-                    </div>
+                            <div>
+                                <h3 class="font-display font-semibold text-sm leading-snug" x-text="item.exam_title"></h3>
+                                <p class="text-xs text-ink/50 mt-1" x-text="item.correct_count + ' benar dari ' + item.question_count + ' soal'"></p>
+                            </div>
+                            <div class="h-1.5 rounded-full bg-line overflow-hidden">
+                                <div class="h-full rounded-full" :class="'bg-brand-' + item.warna" :style="`width: ${item.nilaiPersen}%`"></div>
+                            </div>
+                        </article>
+                    </template>
                 </div>
             </section>
 

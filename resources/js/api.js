@@ -15,7 +15,9 @@
 //     pakai token sama sekali (cuma percaya user_id yang dikirim di body), token
 //     itu nggak akan disalahin, cuma nggak dipakai — aman untuk dua-duanya.
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+// A relative URL keeps the API on the same host and port as the Laravel pages.
+// VITE_API_BASE_URL can still override this if the API is moved to another project later.
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export function getToken() {
     return localStorage.getItem('ts_token');

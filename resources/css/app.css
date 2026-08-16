@@ -1,8 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 only loads a JavaScript config when it is explicitly referenced. */
+@config "../../tailwind.config.js";
+@import "tailwindcss";
 
 @layer base {
+  [x-cloak] {
+    display: none !important;
+  }
+
   body {
     @apply bg-cloud text-ink font-sans antialiased;
   }

@@ -32,7 +32,7 @@
 
         {{-- Upload berkas --}}
         <div class="card p-6 space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-3">
                 <p class="text-xs font-semibold uppercase tracking-wide text-ink/40">Berkas Pendukung</p>
                 <span class="text-xs font-mono" :class="files.length >= maxFiles ? 'text-brand-orange' : 'text-ink/40'"
                       x-text="files.length + ' / ' + maxFiles"></span>
@@ -59,7 +59,7 @@
         </div>
 
         <div class="flex justify-end">
-            <button type="submit" :disabled="submitting" class="btn-primary">
+            <button type="submit" :disabled="submitting" class="btn-primary w-full sm:w-auto">
                 <span x-show="!submitting">Kirim Portofolio</span>
                 <span x-show="submitting">Mengirim...</span>
             </button>
