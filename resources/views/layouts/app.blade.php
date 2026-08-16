@@ -9,9 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body x-data="{ sidebarOpen: false }" class="min-h-screen">
+<body x-data="{ sidebarOpen: false }"
+      x-init="if (!$store.auth.user) window.location.href = '/login'"
+      class="min-h-screen">
 
     <div class="lg:flex">
 
@@ -53,13 +54,10 @@
             </nav>
 
             <div class="p-3 border-t border-line">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-ink/50 hover:bg-cloud hover:text-ink">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        Keluar
-                    </button>
-                </form>
+                <button @click="$store.auth.logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-ink/50 hover:bg-cloud hover:text-ink">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Keluar
+                </button>
             </div>
         </aside>
 
@@ -71,9 +69,8 @@
                 </button>
                 <h1 class="font-display font-bold text-lg">@yield('title', 'Beranda')</h1>
                 <a href="{{ route('beranda') }}#profil" class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-semibold flex items-center justify-center">
-                        {{ strtoupper(substr($santri['nama'] ?? 'S', 0, 1)) }}
-                    </span>
+                    <span class="w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-semibold flex items-center justify-center"
+                          x-text="($store.auth.user?.name ?? 'S').charAt(0).toUpperCase()"></span>
                 </a>
             </header>
 
