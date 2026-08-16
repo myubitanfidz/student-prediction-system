@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Models\ExamCompletion;
+use App\Models\Question;
 use App\Models\StudentAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -11,9 +13,18 @@ use Illuminate\Support\Facades\Validator;
 class ExamController extends Controller
 {
     // Mengambil semua ujian dikelompokkan berdasarkan kategori
-    public function index()
+    public function index(Request $request)
     {
-        $exams = Exam::all()->groupBy('category');
+        $completedExamIds = $request->integer('user_id')
+            ? ExamCompletion::where('user_id', $request->integer('user_id'))->pluck('exam_id')->all()
+            : [];
+
+        $exams = Exam::all()
+            ->map(function (Exam $exam) use ($completedExamIds) {
+                $exam->completed = in_array($exam->id, $completedExamIds, true);
+                return $exam;
+            })
+            ->groupBy('category');
 
         return response()->json([
             'status' => 'success',
@@ -51,6 +62,7 @@ class ExamController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id'             => 'required|exists:users,id',
+            'exam_id'             => 'required|exists:exams,id',
             'answers'             => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
             'answers.*.answer_text' => 'required|string',
@@ -87,6 +99,12 @@ class ExamController extends Controller
                 ]
             );
         }
+
+        // Submitting the test gives the user a durable completion record.
+        ExamCompletion::updateOrCreate(
+            ['user_id' => $request->user_id, 'exam_id' => $request->exam_id],
+            ['completed_at' => now()],
+        );
 
         return response()->json([
             'status'  => 'success',

@@ -10,7 +10,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body x-data="{ sidebarOpen: false }"
+<body x-data="{ sidebarOpen: false, profileOpen: false }"
       x-init="if (!$store.auth.user) window.location.href = '/login'"
       class="min-h-screen">
 
@@ -38,12 +38,6 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4a1 1 0 001-1v-4h2v4a1 1 0 001 1h4a1 1 0 001-1V10"/></svg>
                     Beranda
                 </a>
-                <a href="{{ route('dashboard') }}" @click="sidebarOpen = false"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-cloud text-ink' : 'text-ink/60 hover:bg-cloud' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M8 17V10m5 7V6m5 11v-8"/></svg>
-                    Dashboard
-                </a>
-
             </nav>
 
             <div class="p-3 border-t border-line">
@@ -61,10 +55,17 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
                 <h1 class="font-display font-bold text-lg truncate px-3">@yield('title', 'Beranda')</h1>
-                <a href="{{ route('beranda') }}#profil" class="flex items-center gap-2">
+                <div class="relative">
+                    <button type="button" @click="profileOpen = !profileOpen" class="flex items-center gap-2" aria-label="Buka menu profil">
                     <span class="w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-semibold flex items-center justify-center"
                           x-text="($store.auth.user?.name ?? 'S').charAt(0).toUpperCase()"></span>
-                </a>
+                    </button>
+                    <div x-show="profileOpen" x-cloak x-transition @click.outside="profileOpen = false"
+                         class="absolute right-0 top-11 z-40 w-40 rounded-xl border border-line bg-white p-1.5 shadow-lg">
+                        <a href="{{ route('profile') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-ink/70 hover:bg-cloud">Profile</a>
+                        <button type="button" @click="$store.auth.logout()" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-ink/70 hover:bg-cloud">Logout</button>
+                    </div>
+                </div>
             </header>
 
             <main class="p-4 sm:p-6 lg:p-8">

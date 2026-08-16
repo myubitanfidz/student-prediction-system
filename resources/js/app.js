@@ -48,9 +48,12 @@ Alpine.data('registerPage', () => ({
 // ---------- Beranda: profil + daftar ujian dikelompokkan per kategori ----------
 Alpine.data('berandaPage', () => ({
     loading: true, error: '', kategori: [], user: getUser(), openCategory: null,
+    isCategoryComplete(category) {
+        return category.ujian.length > 0 && category.ujian.every((exam) => exam.completed);
+    },
     async init() {
         try {
-            const json = await api.getExams();
+            const json = await api.getExams(this.user?.id);
             // ASUMSI bentuk respons: { status, data: { Bahasa: [...], IT: [...], Karakter: [...] } }
             // atau { status, data: [ { category, exams: [...] } ] }. Kode di bawah menangani dua-duanya.
             const raw = json?.data ?? json ?? {};
@@ -91,8 +94,8 @@ Alpine.data('examPage', (examId) => ({
             const answers = Object.entries(this.jawaban)
                 .filter(([, v]) => v !== '' && v != null)
                 .map(([question_id, answer_text]) => ({ question_id: Number(question_id), answer_text }));
-            await api.submitExam({ user_id: getUser()?.id, answers });
-            window.location.href = '/dashboard';
+            await api.submitExam({ user_id: getUser()?.id, exam_id: this.exam.id, answers });
+            window.location.href = '/profile';
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -129,9 +132,9 @@ Alpine.data('portofolioPage', () => ({
     },
 }));
 
-// ---------- Dashboard ----------
-Alpine.data('dashboardPage', () => ({
-    loading: true, error: '', student: null, stats: [], portfolio: null,
+// ---------- Profile: placement results grouped by learning area ----------
+Alpine.data('profilePage', () => ({
+    loading: true, error: '', student: null, languageStats: [], itStats: [], characterStats: [], portfolio: null,
     async init() {
         const user = getUser();
         if (!user) { this.error = 'Belum login.'; this.loading = false; return; }
@@ -139,19 +142,33 @@ Alpine.data('dashboardPage', () => ({
             const json = await api.getDashboard(user.id);
             const data = json?.data ?? json;
             this.student = data.student;
-            this.stats = (data.exam_stats ?? []).map((s) => ({
+            const stats = (data.exam_stats ?? []).map((s) => ({
                 ...s,
                 warna: categoryColor(s.category),
                 nilaiPersen: Math.max(0, Math.min(100, Number(s.compatibility) || 0)),
-            }))
-                .sort((a, b) => b.nilaiPersen - a.nilaiPersen)
-                .slice(0, 5);
+            }));
+            this.languageStats = stats.filter((item) => item.category === 'Bahasa');
+            this.itStats = stats.filter((item) => item.category === 'IT');
+            this.characterStats = stats.filter((item) => item.category === 'Karakter');
             this.portfolio = data.portfolio;
         } catch (e) {
             this.error = e.message;
         } finally {
             this.loading = false;
         }
+    },
+    languageLevel(percent) {
+        if (percent < 20) return 'A1';
+        if (percent < 40) return 'A2';
+        if (percent < 60) return 'B1';
+        if (percent < 75) return 'B2';
+        if (percent < 90) return 'C1';
+        return 'C2';
+    },
+    itLevel(percent) {
+        if (percent < 34) return 'Rookie';
+        if (percent < 67) return 'Amateur';
+        return 'Pro';
     },
 }));
 

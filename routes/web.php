@@ -24,4 +24,5 @@ Route::get('/ujian/{id}', fn (string $id) => view('ujian.kerjakan', ['examId' =>
     ->name('ujian.kerjakan');
 Route::get('/portofolio', fn () => view('portofolio.index'))->name('portofolio.index');
 
-Route::get('/dashboard', fn () => view('dashboard.index'))->name('dashboard');
+Route::get('/profile', fn () => view('dashboard.index'))->name('profile');
+Route::redirect('/dashboard', '/profile')->name('dashboard');

@@ -90,8 +90,8 @@ export const api = {
     logout() {
         clearSession();
     },
-    getExams() {
-        return request('/exams');
+    getExams(userId) {
+        return request('/exams' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''));
     },
     getExam(id) {
         return request(`/exams/${id}`);
