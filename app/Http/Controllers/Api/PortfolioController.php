@@ -28,7 +28,9 @@ class PortfolioController extends Controller
             foreach ($request->file('files') as $file) {
                 // Simpan ke storage/app/public/portfolios
                 $path = $file->store('portfolios', 'public');
-                $uploadedPaths[] = asset('storage/' . $path);
+                // Keep this relative so the link follows whichever local port
+                // is serving the current application.
+                $uploadedPaths[] = Storage::url($path);
             }
         }
 

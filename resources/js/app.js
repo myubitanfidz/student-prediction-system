@@ -106,7 +106,7 @@ Alpine.data('examPage', (examId) => ({
 
 // ---------- Portofolio ----------
 Alpine.data('portofolioPage', () => ({
-    linkGithub: '', linkYoutube: '', files: [], maxFiles: 5,
+    open: false, linkGithub: '', linkYoutube: '', files: [], maxFiles: 5,
     submitting: false, error: '', success: false,
     addFiles(fileList) {
         const room = this.maxFiles - this.files.length;
@@ -124,6 +124,7 @@ Alpine.data('portofolioPage', () => ({
             await api.submitPortfolio(formData);
             this.success = true;
             this.files = []; this.linkGithub = ''; this.linkYoutube = '';
+            window.location.href = '/profile';
         } catch (e) {
             this.error = e.message;
         } finally {
