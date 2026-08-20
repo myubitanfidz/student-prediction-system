@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\Question;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class AdminExamController extends Controller
 {
-    // 1. Ambil semua ujian beserta total jumlah soalnya
-    public function index()
+    public function index(): JsonResponse
     {
         $exams = Exam::withCount('questions')->get();
 
@@ -21,8 +21,7 @@ class AdminExamController extends Controller
         ]);
     }
 
-    // 2. Tambah Paket Ujian Baru
-    public function storeExam(Request $request)
+    public function storeExam(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'category'    => 'required|string|max:100',
@@ -35,7 +34,7 @@ class AdminExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $exam = Exam::create($request->all());
+        $exam = Exam::create($request->only(['category', 'subcategory', 'title', 'description']));
 
         return response()->json([
             'status'  => 'success',
@@ -44,8 +43,7 @@ class AdminExamController extends Controller
         ], 201);
     }
 
-    // 3. Update Paket Ujian
-    public function updateExam(Request $request, $id)
+    public function updateExam(Request $request, $id): JsonResponse
     {
         $exam = Exam::find($id);
 
@@ -64,7 +62,7 @@ class AdminExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $exam->update($request->all());
+        $exam->update($request->only(['category', 'subcategory', 'title', 'description']));
 
         return response()->json([
             'status'  => 'success',
@@ -73,8 +71,7 @@ class AdminExamController extends Controller
         ]);
     }
 
-    // 4. Hapus Paket Ujian (otomatis menghapus soal di dalamnya)
-    public function destroyExam($id)
+    public function destroyExam($id): JsonResponse
     {
         $exam = Exam::find($id);
 
@@ -90,8 +87,7 @@ class AdminExamController extends Controller
         ]);
     }
 
-    // 5. Ambil semua soal dalam 1 ujian untuk Admin (PG & Esai lengkap dengan kunci jawaban)
-    public function getQuestionsByExam($examId)
+    public function getQuestionsByExam($examId): JsonResponse
     {
         $exam = Exam::with('questions')->find($examId);
 
@@ -108,15 +104,14 @@ class AdminExamController extends Controller
         ]);
     }
 
-    // 6. Tambah Soal Baru (PG atau Esai)
-    public function storeQuestion(Request $request)
+    public function storeQuestion(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'exam_id'        => 'required|exists:exams,id',
             'type'           => 'required|in:multiple_choice,essay',
             'question_text'  => 'required|string',
-            'options'        => 'nullable|array', // Diisi array string untuk PG, null untuk esai
-            'correct_answer' => 'nullable|string', // Kunci jawaban untuk PG
+            'options'        => 'nullable|array',
+            'correct_answer' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -138,8 +133,7 @@ class AdminExamController extends Controller
         ], 201);
     }
 
-    // 7. Update Soal
-    public function updateQuestion(Request $request, $id)
+    public function updateQuestion(Request $request, $id): JsonResponse
     {
         $question = Question::find($id);
 
@@ -172,8 +166,7 @@ class AdminExamController extends Controller
         ]);
     }
 
-    // 8. Hapus Satu Soal
-    public function destroyQuestion($id)
+    public function destroyQuestion($id): JsonResponse
     {
         $question = Question::find($id);
 

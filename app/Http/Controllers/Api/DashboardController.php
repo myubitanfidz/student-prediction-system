@@ -5,42 +5,31 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function show($userId)
+    public function show(Request $request): JsonResponse
     {
-        $user = User::with(['portfolio', 'answers.question.exam'])->find($userId);
+        $user = $request->user()->load(['portfolio', 'answers.question.exam']);
 
-        if (!$user) {
-            return response()->json(['message' => 'Santri tidak ditemukan'], 404);
-        }
+        $examResults = Exam::all()->map(function ($exam) use ($user) {
+            $answers = $user->answers->filter(fn ($ans) => $ans->question && $ans->question->exam_id === $exam->id);
+            $mcAnswers = $answers->filter(fn ($ans) => $ans->question->type === 'multiple_choice');
 
-        // Compatibility is based only on multiple-choice questions with an
-        // answer key. Essay answers are kept for teacher assessment.
-        $examResults = Exam::with('questions')->get()->map(function ($exam) use ($user) {
-            $answers = $user->answers->filter(function ($ans) use ($exam) {
-                return $ans->question && $ans->question->exam_id === $exam->id;
-            });
-
-            $multipleChoiceCount = $exam->questions->where('type', 'multiple_choice')->count();
-            $correctCount = $answers->filter(function ($answer) {
-                return $answer->question?->type === 'multiple_choice'
-                    && mb_strtolower(trim($answer->answer_text)) === mb_strtolower(trim((string) $answer->question->correct_answer));
-            })->count();
-            $compatibility = $multipleChoiceCount > 0
-                ? (int) round(($correctCount / $multipleChoiceCount) * 100)
-                : 0;
+            $mcTotal = $mcAnswers->count();
+            $mcCorrect = $mcAnswers->where('score', '>=', 100)->count();
+            $percentage = $mcTotal > 0 ? round(($mcCorrect / $mcTotal) * 100, 2) : 0;
 
             return [
-                'exam_id'       => $exam->id,
-                'category'      => $exam->category,
-                'subcategory'   => $exam->subcategory,
-                'exam_title'    => $exam->title,
-                'answered_count'=> $answers->count(),
-                'question_count'=> $multipleChoiceCount,
-                'correct_count' => $correctCount,
-                'compatibility' => $compatibility,
+                'exam_id'         => $exam->id,
+                'category'        => $exam->category,
+                'subcategory'     => $exam->subcategory,
+                'exam_title'      => $exam->title,
+                'answered_count'  => $answers->count(),
+                'mc_accuracy_pct' => $percentage,
+                'total_score'     => $answers->sum('score'),
             ];
         });
 

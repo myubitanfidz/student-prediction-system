@@ -5,27 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\StudentAnswer;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
-    // Mengambil daftar semua santri beserta status ujiannya
-    public function getStudents()
+    public function getStudents(): JsonResponse
     {
         $students = User::where('role', 'student')
             ->with(['portfolio', 'answers'])
             ->get()
-            ->map(function ($student) {
-                return [
-                    'id'               => $student->id,
-                    'name'             => $student->name,
-                    'email'            => $student->email,
-                    'total_answered'   => $student->answers->count(),
-                    'total_score'      => $student->answers->sum('score'),
-                    'has_portfolio'    => !is_null($student->portfolio),
-                ];
-            });
+            ->map(fn ($student) => [
+                'id'             => $student->id,
+                'name'           => $student->name,
+                'email'          => $student->email,
+                'total_answered' => $student->answers->count(),
+                'total_score'    => $student->answers->sum('score'),
+                'has_portfolio'  => !is_null($student->portfolio),
+            ]);
 
         return response()->json([
             'status' => 'success',
@@ -33,8 +31,7 @@ class AdminController extends Controller
         ]);
     }
 
-    // Mengambil detail jawaban santri untuk dikoreksi admin/guru
-    public function getStudentAnswers($userId)
+    public function getStudentAnswers($userId): JsonResponse
     {
         $student = User::with(['portfolio', 'answers.question.exam'])->find($userId);
 
@@ -47,22 +44,19 @@ class AdminController extends Controller
             'data'   => [
                 'student'   => $student->only(['id', 'name', 'email']),
                 'portfolio' => $student->portfolio,
-                'answers'   => $student->answers->map(function ($ans) {
-                    return [
-                        'answer_id'     => $ans->id,
-                        'exam_title'    => $ans->question->exam->title ?? '-',
-                        'question_type' => $ans->question->type,
-                        'question_text' => $ans->question->question_text,
-                        'student_answer'=> $ans->answer_text,
-                        'current_score' => $ans->score,
-                    ];
-                }),
+                'answers'   => $student->answers->map(fn ($ans) => [
+                    'answer_id'      => $ans->id,
+                    'exam_title'     => $ans->question->exam->title ?? '-',
+                    'question_type'  => $ans->question->type,
+                    'question_text'  => $ans->question->question_text,
+                    'student_answer' => $ans->answer_text,
+                    'current_score'  => $ans->score,
+                ]),
             ],
         ]);
     }
 
-    // Input/update nilai esai manual oleh admin
-    public function gradeAnswer(Request $request)
+    public function gradeAnswer(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'answer_id' => 'required|exists:student_answers,id',

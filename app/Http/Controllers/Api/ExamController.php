@@ -7,22 +7,30 @@ use App\Models\Exam;
 use App\Models\ExamCompletion;
 use App\Models\Question;
 use App\Models\StudentAnswer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ExamController extends Controller
 {
-    // Mengambil semua ujian dikelompokkan berdasarkan kategori
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $completedExamIds = $request->integer('user_id')
-            ? ExamCompletion::where('user_id', $request->integer('user_id'))->pluck('exam_id')->all()
-            : [];
+        $userId = $request->user()->id;
+        $completedExamIds = ExamCompletion::where('user_id', $userId)
+            ->pluck('exam_id')
+            ->toArray();
 
         $exams = Exam::all()
             ->map(function (Exam $exam) use ($completedExamIds) {
-                $exam->completed = in_array($exam->id, $completedExamIds, true);
-                return $exam;
+                return [
+                    'id'          => $exam->id,
+                    'category'    => $exam->category,
+                    'subcategory' => $exam->subcategory,
+                    'title'       => $exam->title,
+                    'description' => $exam->description,
+                    'completed'   => in_array($exam->id, $completedExamIds, true),
+                ];
             })
             ->groupBy('category');
 
@@ -32,8 +40,7 @@ class ExamController extends Controller
         ]);
     }
 
-    // Mengambil detail ujian beserta soal PG dan Esai
-    public function show($id)
+    public function show($id): JsonResponse
     {
         $exam = Exam::with('questions')->find($id);
 
@@ -45,25 +52,21 @@ class ExamController extends Controller
             'status' => 'success',
             'data'   => [
                 'exam'      => $exam->only(['id', 'category', 'subcategory', 'title', 'description']),
-                'questions' => $exam->questions->map(function ($q) {
-                    return [
-                        'id'            => $q->id,
-                        'type'          => $q->type,
-                        'question_text' => $q->question_text,
-                        'options'       => $q->options, // null jika esai
-                    ];
-                }),
+                'questions' => $exam->questions->map(fn ($q) => [
+                    'id'            => $q->id,
+                    'type'          => $q->type,
+                    'question_text' => $q->question_text,
+                    'options'       => $q->options,
+                ]),
             ],
         ]);
     }
 
-    // Submit jawaban ujian santri
-    public function submit(Request $request)
+    public function submit(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'user_id'             => 'required|exists:users,id',
-            'exam_id'             => 'required|exists:exams,id',
-            'answers'             => 'required|array',
+            'exam_id'               => 'required|exists:exams,id',
+            'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
             'answers.*.answer_text' => 'required|string',
         ]);
@@ -72,66 +75,42 @@ class ExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $questions = Question::whereIn('id', collect($request->answers)->pluck('question_id'))
-            ->get()
-            ->keyBy('id');
+        $userId = $request->user()->id;
+        $questionIds = collect($request->answers)->pluck('question_id');
+        $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
 
-        foreach ($request->answers as $ans) {
-            $question = $questions->get($ans['question_id']);
-            $score = null;
+        DB::transaction(function () use ($request, $userId, $questions) {
+            foreach ($request->answers as $ans) {
+                $question = $questions->get($ans['question_id']);
+                $score = null;
 
-            // Multiple-choice answers can be marked immediately. Essays keep a
-            // null score so a teacher can assess them later.
-            if ($question?->type === 'multiple_choice') {
-                $score = mb_strtolower(trim($ans['answer_text'])) === mb_strtolower(trim((string) $question->correct_answer))
-                    ? 100
-                    : 0;
+                if ($question?->type === 'multiple_choice') {
+                    $score = mb_strtolower(trim($ans['answer_text'])) === mb_strtolower(trim((string) $question->correct_answer))
+                        ? 100
+                        : 0;
+                }
+
+                StudentAnswer::updateOrCreate(
+                    [
+                        'user_id'     => $userId,
+                        'question_id' => $ans['question_id'],
+                    ],
+                    [
+                        'answer_text' => $ans['answer_text'],
+                        'score'       => $score,
+                    ]
+                );
             }
 
-            StudentAnswer::updateOrCreate(
-                [
-                    'user_id'     => $request->user_id,
-                    'question_id' => $ans['question_id'],
-                ],
-                [
-                    'answer_text' => $ans['answer_text'],
-                    'score'       => $score,
-                ]
+            ExamCompletion::updateOrCreate(
+                ['user_id' => $userId, 'exam_id' => $request->exam_id],
+                ['completed_at' => now()]
             );
-        }
-
-        // Submitting the test gives the user a durable completion record.
-        ExamCompletion::updateOrCreate(
-            ['user_id' => $request->user_id, 'exam_id' => $request->exam_id],
-            ['completed_at' => now()],
-        );
+        });
 
         return response()->json([
             'status'  => 'success',
             'message' => 'Jawaban ujian berhasil dikirim',
-        ]);
-    }
-    // Tambahkan di dalam ExamController.php
-
-    // Endpoint untuk guru menginput/mengupdate nilai jawaban siswa
-    public function gradeAnswer(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'answer_id' => 'required|exists:student_answers,id',
-            'score'     => 'required|numeric|min:0|max:100',
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-    
-        $answer = StudentAnswer::find($request->answer_id);
-        $answer->update(['score' => $request->score]);
-    
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Nilai berhasil disimpan',
-            'data'    => $answer,
         ]);
     }
 }
