@@ -1,22 +1,3 @@
-// resources/js/api.js
-//
-// Wrapper tipis di atas fetch() untuk manggil API backend (Laravel API terpisah,
-// lihat dokumentasi yang dikasih temanmu). Base URL diambil dari
-// import.meta.env.VITE_API_BASE_URL kalau ada, fallback ke localhost:8000.
-//
-// ASUMSI YANG BELUM DIKONFIRMASI DOKUMENTASI (cek & sesuaikan setelah tes di Postman):
-//   - /login dan /register diasumsikan balikin sesuatu seperti:
-//       { status: "success", data: { token: "...", user: { id, name, email } } }
-//     Kalau bentuknya beda (misal token ada di root, atau field-nya "access_token"),
-//     tinggal sesuaikan di fungsi login()/register() di bawah — sudah aku kasih
-//     beberapa fallback path yang umum dipakai Laravel Sanctum.
-//   - Endpoint yang butuh login (submit ujian, portofolio, dashboard) diasumsikan
-//     menerima Bearer token di header Authorization. Kalau ternyata backend tidak
-//     pakai token sama sekali (cuma percaya user_id yang dikirim di body), token
-//     itu nggak akan disalahin, cuma nggak dipakai — aman untuk dua-duanya.
-
-// A relative URL keeps the API on the same host and port as the Laravel pages.
-// VITE_API_BASE_URL can still override this if the API is moved to another project later.
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export function getToken() {
@@ -106,6 +87,12 @@ export const api = {
     },
     getDashboard(userId) {
         return request(`/dashboard/${userId}`);
+    },
+    getAdminStudents() {
+        return request('/admin/students');
+    },
+    getAdminStudentAnswers(userId) {
+        return request(`/admin/students/${userId}/answers`);
     },
     gradeAnswer(payload) {
         // payload: { answer_id, score } — dipakai halaman guru, bukan bagian spek santri

@@ -20,7 +20,8 @@ Alpine.data('loginPage', () => ({
         this.loading = true; this.error = '';
         try {
             await api.login({ email: this.email, password: this.password });
-            window.location.href = '/beranda';
+            const user = getUser();
+            window.location.href = user?.role === 'admin' ? '/admin/dashboard' : '/beranda';
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -129,6 +130,58 @@ Alpine.data('portofolioPage', () => ({
             this.error = e.message;
         } finally {
             this.submitting = false;
+        }
+    },
+}));
+
+// ---------- Admin Dashboard: daftar santri ----------
+Alpine.data('adminDashboardPage', () => ({
+    loading: true, error: '', students: [],
+    async init() {
+        const user = getUser();
+        if (!user || user.role !== 'admin') { this.error = 'Akses ditolak.'; this.loading = false; return; }
+        try {
+            const json = await api.getAdminStudents();
+            this.students = json?.data ?? json ?? [];
+        } catch (e) {
+            this.error = e.message;
+        } finally {
+            this.loading = false;
+        }
+    },
+}));
+
+// ---------- Admin Koreksi: detail jawaban santri ----------
+Alpine.data('adminKoreksiPage', () => ({
+    loading: true, error: '', student: null, answers: [], scores: {},
+    async init() {
+        const user = getUser();
+        if (!user || user.role !== 'admin') { this.error = 'Akses ditolak.'; this.loading = false; return; }
+        // Ambil userId dari URL: /admin/koreksi/{userId}
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        const userId = parts[parts.length - 1];
+        try {
+            const json = await api.getAdminStudentAnswers(userId);
+            const data = json?.data ?? json ?? {};
+            this.student = data.student ?? null;
+            this.answers = data.answers ?? [];
+            // Pre-fill scores for answers that already have a value
+            this.answers.forEach((a) => {
+                if (a.current_score != null) this.scores[a.answer_id] = a.current_score;
+            });
+        } catch (e) {
+            this.error = e.message;
+        } finally {
+            this.loading = false;
+        }
+    },
+    async saveScore(answerId) {
+        try {
+            await api.gradeAnswer({ answer_id: answerId, score: this.scores[answerId] });
+            const answer = this.answers.find((a) => a.answer_id === answerId);
+            if (answer) answer.current_score = this.scores[answerId];
+        } catch (e) {
+            this.error = e.message;
         }
     },
 }));

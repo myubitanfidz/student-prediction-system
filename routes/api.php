@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExamController;
@@ -17,3 +18,9 @@ Route::post('/exams/grade', [ExamController::class, 'gradeAnswer']);
 
 Route::post('/portfolios', [PortfolioController::class, 'store']);
 Route::get('/dashboard/{userId}', [DashboardController::class, 'show']);
+
+// Halaman Admin / Guru
+Route::prefix('admin')->group(function () {
+    Route::get('/students', [AdminController::class, 'getStudents']);
+    Route::get('/students/{userId}/answers', [AdminController::class, 'getStudentAnswers']);
+});
