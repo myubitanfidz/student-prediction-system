@@ -6,6 +6,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -17,11 +19,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -30,15 +27,18 @@ class User extends Authenticatable
         ];
     }
 
-    // Relasi ke jawaban ujian santri
-    public function answers()
+    public function answers(): HasMany
     {
         return $this->hasMany(StudentAnswer::class);
     }
 
-    // Relasi ke data portofolio santri
-    public function portfolio()
+    public function portfolio(): HasOne
     {
         return $this->hasOne(Portfolio::class);
+    }
+
+    public function completions(): HasMany
+    {
+        return $this->hasMany(ExamCompletion::class);
     }
 }
