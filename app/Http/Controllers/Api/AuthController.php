@@ -25,13 +25,21 @@ class AuthController extends Controller
         $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
-            'password' => $request->password, // casts di model akan meng-hash secara otomatis
+            'password' => $request->password, // Otomatis di-hash oleh casts model
             'role'     => 'student',
         ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
     
         return response()->json([
             'message' => 'Registrasi berhasil',
-            'user'    => $user,
+            'token'   => $token,
+            'user'    => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'role'  => $user->role,
+            ],
         ], 201);
     }
 
@@ -52,9 +60,28 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
+        // Hapus token lama & generate token baru
+        $user->tokens()->delete();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
             'message' => 'Login berhasil',
-            'user'    => $user,
+            'token'   => $token,
+            'user'    => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'role'  => $user->role,
+            ],
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Logout berhasil',
         ]);
     }
 }
