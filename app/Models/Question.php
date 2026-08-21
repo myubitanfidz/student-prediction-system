@@ -19,6 +19,11 @@ class Question extends Model
         'correct_answer',
     ];
 
+    // Mencegah kebocoran kunci jawaban ke output JSON publik/santri
+    protected $hidden = [
+        'correct_answer',
+    ];
+
     protected $casts = [
         'options' => 'array',
     ];

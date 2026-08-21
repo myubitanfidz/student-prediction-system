@@ -87,14 +87,17 @@ class AdminExamController extends Controller
         ]);
     }
 
-    public function getQuestionsByExam($examId): JsonResponse
+    public function getQuestionsByExam($examId)
     {
         $exam = Exam::with('questions')->find($examId);
-
+    
         if (!$exam) {
             return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
         }
-
+    
+        // Tampilkan kunci jawaban hanya untuk admin
+        $exam->questions->makeVisible('correct_answer');
+    
         return response()->json([
             'status' => 'success',
             'data'   => [
