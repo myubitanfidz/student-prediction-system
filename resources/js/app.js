@@ -196,6 +196,23 @@ Alpine.data('profilePage', () => ({
     itLevel: '-',
     itAccuracy: 0,
 
+    get totalAnswered() {
+        return this.stats.reduce((sum, item) => sum + (Number(item.answered_count) || 0), 0);
+    },
+
+    get totalQuestionsCount() {
+        // Asumsi estimasi total seluruh butir soal dari semua kategori (atau hitung dinamis)
+        const total = this.stats.length * 3; // jika rata-rata tiap exam 3 soal
+        return total > 0 ? total : (this.totalAnswered || 1);
+    },
+
+    get overallProgress() {
+        if (!this.stats.length) return 0;
+        const totalExams = this.stats.length;
+        const completedExams = this.stats.filter(s => Number(s.answered_count) > 0).length;
+        return Math.min(100, Math.round((completedExams / totalExams) * 100));
+    },
+
     async init() {
         try {
             const json = await api.getDashboard();
@@ -215,7 +232,6 @@ Alpine.data('profilePage', () => ({
     },
 
     calculatePredictions() {
-        // Prediksi Bahasa
         const bahasaStats = this.stats.filter((s) => s.category?.toLowerCase() === 'bahasa');
         if (bahasaStats.length > 0) {
             const avg = bahasaStats.reduce((acc, curr) => acc + (Number(curr.mc_accuracy_pct) || 0), 0) / bahasaStats.length;
@@ -229,7 +245,6 @@ Alpine.data('profilePage', () => ({
             else this.languageLevel = 'C2';
         }
 
-        // Prediksi IT
         const itStats = this.stats.filter((s) => s.category?.toLowerCase() === 'it');
         if (itStats.length > 0) {
             const avg = itStats.reduce((acc, curr) => acc + (Number(curr.mc_accuracy_pct) || 0), 0) / itStats.length;
