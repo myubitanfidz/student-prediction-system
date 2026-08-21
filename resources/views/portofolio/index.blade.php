@@ -15,18 +15,33 @@
 
     <form @submit.prevent="submit" class="space-y-6">
 
-        {{-- Link porto --}}
+        {{-- Dynamic Link Portofolio --}}
         <div class="card p-6 space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink/40">Link Portofolio</p>
             <div>
-                <label class="text-sm font-medium block mb-1.5">GitHub</label>
-                <input type="url" x-model="linkGithub" placeholder="https://github.com/username/proyek"
-                       class="w-full rounded-lg border border-line p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green">
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink/40">Link Portofolio</p>
+                <p class="text-xs text-ink/45 mt-0.5">Tautkan link karya online seperti repositori GitHub, video YouTube, Behance, Figma, atau website portofolio pribadimu.</p>
             </div>
-            <div>
-                <label class="text-sm font-medium block mb-1.5">YouTube</label>
-                <input type="url" x-model="linkYoutube" placeholder="https://youtube.com/watch?v=..."
-                       class="w-full rounded-lg border border-line p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green">
+
+            <div class="space-y-3">
+                <template x-for="(item, index) in links" :key="index">
+                    <div class="flex items-center gap-2">
+                        <input type="url" x-model="links[index]" placeholder="https://github.com/... atau https://youtube.com/..."
+                               class="flex-1 rounded-lg border border-line p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green">
+                        <button type="button" @click="removeLink(index)" x-show="links.length > 1"
+                                class="p-2 text-ink/40 hover:text-brand-orange transition-colors" title="Hapus Link">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            {{-- Tombol Tambah Link di Bawah Kanan --}}
+            <div class="flex justify-end pt-1">
+                <button type="button" @click="addLink()"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-green hover:underline">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    Tambah Link Portofolio
+                </button>
             </div>
         </div>
 

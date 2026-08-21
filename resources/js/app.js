@@ -141,14 +141,24 @@ Alpine.data('examPage', (examId) => ({
 }));
 
 // ---------- 5. Portofolio ----------
+// ---------- 5. Portofolio ----------
 Alpine.data('portofolioPage', () => ({
-    linkGithub: '',
-    linkYoutube: '',
+    links: [''],
     files: [],
     maxFiles: 5,
     submitting: false,
     error: '',
     success: false,
+
+    addLink() {
+        this.links.push('');
+    },
+
+    removeLink(index) {
+        if (this.links.length > 1) {
+            this.links.splice(index, 1);
+        }
+    },
 
     addFiles(fileList) {
         const room = this.maxFiles - this.files.length;
@@ -165,16 +175,15 @@ Alpine.data('portofolioPage', () => ({
         this.success = false;
 
         try {
-            const links = [this.linkGithub, this.linkYoutube].filter(Boolean).join(', ');
+            const validLinks = this.links.filter(l => l && l.trim() !== '').join(', ');
             const formData = new FormData();
-            if (links) formData.append('links', links);
+            if (validLinks) formData.append('links', validLinks);
             this.files.forEach((f) => formData.append('files[]', f));
 
             await api.submitPortfolio(formData);
             this.success = true;
             this.files = [];
-            this.linkGithub = '';
-            this.linkYoutube = '';
+            this.links = [''];
             window.location.href = '/dashboard';
         } catch (e) {
             this.error = e.message;
