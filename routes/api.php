@@ -25,20 +25,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'show']);
     });
 
-    // Admin Endpoints
-    Route::middleware('role:admin')->prefix('admin')->group(function () {
-        // Students & Grading
+    // Admin & Teacher — student overview and grading
+    Route::middleware('role:admin,teacher')->prefix('admin')->group(function () {
         Route::get('/students', [AdminController::class, 'getStudents']);
         Route::get('/students/{userId}/answers', [AdminController::class, 'getStudentAnswers']);
         Route::post('/grade', [AdminController::class, 'gradeAnswer']);
+    });
 
-        // Exam Package Management
+    // Admin only — exam package management
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/exams', [AdminExamController::class, 'index']);
         Route::post('/exams', [AdminExamController::class, 'storeExam']);
         Route::put('/exams/{id}', [AdminExamController::class, 'updateExam']);
         Route::delete('/exams/{id}', [AdminExamController::class, 'destroyExam']);
 
-        // Questions Management
         Route::get('/exams/{examId}/questions', [AdminExamController::class, 'getQuestionsByExam']);
         Route::post('/questions', [AdminExamController::class, 'storeQuestion']);
         Route::put('/questions/{id}', [AdminExamController::class, 'updateQuestion']);

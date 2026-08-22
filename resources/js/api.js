@@ -140,12 +140,20 @@ export const api = {
         return request(`/admin/exams/${id}`, { method: 'DELETE' });
     },
 
+    updateExam(id, payload) {
+        return request(`/admin/exams/${id}`, { method: 'PUT', body: payload });
+    },
+
     getAdminQuestions(examId) {
         return request(`/admin/exams/${examId}/questions`);
     },
 
     createQuestion(payload) {
         return request('/admin/questions', { method: 'POST', body: payload });
+    },
+
+    updateQuestion(id, payload) {
+        return request(`/admin/questions/${id}`, { method: 'PUT', body: payload });
     },
 
     deleteQuestion(id) {

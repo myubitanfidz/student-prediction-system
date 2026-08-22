@@ -14,12 +14,11 @@ class RoleMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      * @param  string  $role
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
-        // Cek apakah user sudah login dan role-nya cocok
-        if (!$user || $user->role !== $role) {
+        if (! $user || ! in_array($user->role, $roles, true)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Akses ditolak. Anda tidak memiliki izin untuk halaman ini.',

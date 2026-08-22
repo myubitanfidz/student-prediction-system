@@ -14,6 +14,9 @@ class ExamSeeder extends Seeder
         User::firstOrCreate(['email' => 'guru@sekolah.sch.id'], [
             'name' => 'Ustadz / Guru Penguji', 'password' => 'password123', 'role' => 'admin',
         ]);
+        User::firstOrCreate(['email' => 'guru2@sekolah.sch.id'], [
+            'name' => 'Bu Guru (Teacher)', 'password' => 'password123', 'role' => 'teacher',
+        ]);
         User::firstOrCreate(['email' => 'santri@sekolah.sch.id'], [
             'name' => 'Ahmad Santri', 'password' => 'password123', 'role' => 'student',
         ]);

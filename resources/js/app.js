@@ -32,7 +32,7 @@ Alpine.data('loginPage', () => ({
             const res = await api.login({ email: this.email, password: this.password });
             const user = getUser() || res.user;
             Alpine.store('auth').user = user;
-            window.location.href = user?.role === 'admin' ? '/admin/dashboard' : '/beranda';
+            window.location.href = ['admin', 'teacher'].includes(user?.role) ? '/admin/dashboard' : '/beranda';
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -69,11 +69,48 @@ Alpine.data('berandaPage', () => ({
     loading: true,
     error: '',
     exams: {},
+    expanded: {},
+
+    categoryOrder: ['Bahasa', 'IT', 'Karakter'],
+
+    get orderedCategories() {
+        const keys = Object.keys(this.exams);
+        const ordered = this.categoryOrder.filter((c) => keys.includes(c));
+        const rest = keys.filter((k) => !this.categoryOrder.includes(k));
+        return [...ordered, ...rest];
+    },
+
+    toggleCategory(category) {
+        this.expanded[category] = !this.expanded[category];
+    },
+
+    isExpanded(category) {
+        return !!this.expanded[category];
+    },
+
+    categoryDotClass(category) {
+        const key = category.toLowerCase();
+        if (key === 'bahasa') return 'bg-brand-blue';
+        if (key === 'it') return 'bg-brand-green';
+        if (key === 'karakter') return 'bg-brand-orange';
+        return 'bg-brand-blue';
+    },
+
+    categoryBorderClass(category) {
+        const key = category.toLowerCase();
+        if (key === 'bahasa') return 'border-l-brand-blue';
+        if (key === 'it') return 'border-l-brand-green';
+        if (key === 'karakter') return 'border-l-brand-orange';
+        return 'border-l-brand-blue';
+    },
 
     async init() {
         try {
             const json = await api.getExams();
             this.exams = json?.data ?? json ?? {};
+            this.orderedCategories.forEach((cat, i) => {
+                this.expanded[cat] = i === 0;
+            });
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -266,16 +303,109 @@ Alpine.data('profilePage', () => ({
     },
 }));
 
+// ---------- Animated Counter (global) ----------
+Alpine.data('animatedCounter', (target = 0, ms = 700) => ({
+    display: 0,
+    start() {
+        const end = Number(target) || 0;
+        const tick = performance.now();
+        const step = (now) => {
+            const progress = Math.min(1, (now - tick) / ms);
+            this.display = Math.round(end * progress);
+            if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    },
+}));
+
 // ---------- 7. Admin Dashboard ----------
 Alpine.data('adminDashboardPage', () => ({
     loading: true,
     error: '',
     students: [],
+    expanded: {},
+
+    get summaryTotal() {
+        return this.students.length;
+    },
+
+    get summaryParticipated() {
+        return this.students.filter((s) => this.loginCount(s) > 0).length;
+    },
+
+    get summaryTestsDone() {
+        return this.students.reduce((sum, s) => sum + this.testsDone(s), 0);
+    },
+
+    toggleStudent(id) {
+        this.expanded[id] = !this.expanded[id];
+    },
+
+    studentName(student) {
+        return student?.name || student?.student_name || student?.full_name || '-';
+    },
+
+    studentEmail(student) {
+        return student?.email || student?.student_email || '';
+    },
+
+    loginCount(student) {
+        return Number(student?.login_count ?? student?.participated ?? 0);
+    },
+
+    testsDone(student) {
+        return Number(student?.tests_done ?? student?.exam_count ?? 0);
+    },
+
+    highestScore(student) {
+        return Number(student?.highest_score ?? student?.max_score ?? 0) || 0;
+    },
+
+    portfolioFiles(student) {
+        if (Array.isArray(student?.portfolio?.files)) return student.portfolio.files;
+        if (Array.isArray(student?.files)) return student.files;
+        return [];
+    },
+
+    groupedStats(student) {
+        const stats = student?.exam_stats ?? student?.stats ?? [];
+        if (!Array.isArray(stats)) return { Bahasa: [], Karakter: [], IT: [] };
+
+        return stats.reduce((groups, item) => {
+            const key = String(item?.category || '').trim().toLowerCase();
+            if (key === 'bahasa') groups.Bahasa.push(item);
+            else if (key === 'karakter') groups.Karakter.push(item);
+            else if (key === 'it') groups.IT.push(item);
+            return groups;
+        }, { Bahasa: [], Karakter: [], IT: [] });
+    },
+
+    statTitle(stat) {
+        return stat?.exam_title || stat?.title || stat?.name || '-';
+    },
+
+    statValue(stat) {
+        return Number(stat?.mc_accuracy_pct ?? stat?.percentage ?? stat?.score ?? 0) || 0;
+    },
+
+    categoryBorderClass(label) {
+        const map = { Bahasa: 'border-l-4 border-l-brand-blue', IT: 'border-l-4 border-l-brand-green', Karakter: 'border-l-4 border-l-brand-orange' };
+        return map[label] || 'border-l-4 border-l-brand-blue';
+    },
+
+    categoryBarClass(label) {
+        const map = { Bahasa: 'bg-brand-blue', IT: 'bg-brand-green', Karakter: 'bg-brand-orange' };
+        return map[label] || 'bg-brand-blue';
+    },
+
+    barWidth(studentId, value) {
+        return this.expanded[studentId] ? `width: ${value}%` : 'width: 0%';
+    },
 
     async init() {
         const user = getUser();
-        if (!user || user.role !== 'admin') {
-            this.error = 'Akses ditolak.';
+        if (!user || !['admin', 'teacher'].includes(user.role)) {
+            this.error = 'Akses ditolak. Halaman ini khusus Admin / Guru.';
             this.loading = false;
             return;
         }
@@ -289,6 +419,17 @@ Alpine.data('adminDashboardPage', () => ({
             this.loading = false;
         }
     },
+
+    revealBars(student) {
+        const raw = this.groupedStats(student);
+        return Object.entries(raw).map(([label, items]) => ({
+            label,
+            items: items.map((item) => ({
+                title: this.statTitle(item),
+                value: this.statValue(item),
+            })),
+        }));
+    },
 }));
 
 // ---------- 8. Admin Koreksi Jawaban ----------
@@ -301,7 +442,7 @@ Alpine.data('adminKoreksiPage', () => ({
 
     async init() {
         const user = getUser();
-        if (!user || user.role !== 'admin') {
+        if (!user || !['admin', 'teacher'].includes(user.role)) {
             this.error = 'Akses ditolak.';
             this.loading = false;
             return;
