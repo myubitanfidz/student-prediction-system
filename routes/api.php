@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/students', [AdminController::class, 'getStudents']);
         Route::get('/students/{userId}/answers', [AdminController::class, 'getStudentAnswers']);
         Route::post('/grade', [AdminController::class, 'gradeAnswer']);
+        Route::post('/retake', [AdminController::class, 'allowRetake']);
     });
 
     // Admin only — exam package management

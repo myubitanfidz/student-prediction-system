@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Models\ExamCompletion;
 use App\Models\StudentAnswer;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +31,8 @@ class AdminController extends Controller
                     $mcCorrect = $mcAnswers->where('score', '>=', 100)->count();
                     $percentage = $mcTotal > 0 ? round(($mcCorrect / $mcTotal) * 100, 2) : 0;
 
-                    $completed = $student->completions->contains('exam_id', $exam->id);
+                    $completion = $student->completions->firstWhere('exam_id', $exam->id);
+                    $completed = (bool) $completion;
 
                     return [
                         'exam_id'         => $exam->id,
@@ -44,6 +46,7 @@ class AdminController extends Controller
                         'score'           => $percentage,
                         'total_score'     => $answers->sum('score'),
                         'completed'       => $completed,
+                        'retake_allowed'  => (bool) ($completion?->retake_allowed),
                     ];
                 })->filter(fn ($stat) => $stat['answered_count'] > 0 || $stat['completed'])->values();
 
@@ -55,8 +58,6 @@ class AdminController extends Controller
                     'id'            => $student->id,
                     'name'          => $student->name,
                     'email'         => $student->email,
-                    'login_count'   => (int) ($student->login_count ?? 0),
-                    'participated'  => (int) ($student->login_count ?? 0) > 0 ? 1 : 0,
                     'tests_done'    => $student->completions->count(),
                     'highest_score' => $percentages->isNotEmpty() ? round($percentages->max(), 2) : 0,
                     'exam_stats'    => $examStats,
@@ -117,6 +118,39 @@ class AdminController extends Controller
             'status'  => 'success',
             'message' => 'Nilai berhasil disimpan',
             'data'    => $answer,
+        ]);
+    }
+
+    public function allowRetake(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'exam_id' => 'required|exists:exams,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $student = User::find($request->user_id);
+        if (! $student || $student->role !== 'student') {
+            return response()->json(['message' => 'Santri tidak ditemukan'], 404);
+        }
+
+        $completion = ExamCompletion::where('user_id', $request->user_id)
+            ->where('exam_id', $request->exam_id)
+            ->first();
+
+        if (! $completion) {
+            return response()->json(['message' => 'Santri belum menyelesaikan ujian ini'], 404);
+        }
+
+        $completion->update(['retake_allowed' => true]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Izin mengerjakan ulang berhasil diberikan',
+            'data'    => $completion,
         ]);
     }
 }

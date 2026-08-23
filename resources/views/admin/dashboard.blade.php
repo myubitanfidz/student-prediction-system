@@ -12,24 +12,26 @@
             <div class="flex items-end justify-between gap-4 flex-wrap">
                 <div>
                     <h1 class="font-display font-bold text-2xl">Admin / Teacher Dashboard</h1>
-                    <p class="text-sm text-ink/50">Lihat login, nilai, jumlah test, progress poll, dan portofolio santri.</p>
+                    <p class="text-sm text-ink/50">Lihat nilai, jumlah test, progress poll, portofolio, dan izinkan ulang ujian.</p>
                 </div>
                 <span class="text-xs font-medium bg-cloud rounded-full px-3 py-1" x-text="students.length + ' santri'"></span>
             </div>
 
-            {{-- Statistik ringkas dengan animasi --}}
+            {{-- Statistik ringkas --}}
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="card p-5 border-l-4 border-l-brand-blue space-y-1">
                     <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Santri</p>
                     <p class="font-mono font-bold text-2xl" x-data="animatedCounter(summaryTotal)" x-init="start()" x-text="display"></p>
                 </div>
                 <div class="card p-5 border-l-4 border-l-brand-green space-y-1">
-                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Sudah Login / Participated</p>
-                    <p class="font-mono font-bold text-2xl text-brand-green" x-data="animatedCounter(summaryParticipated)" x-init="start()" x-text="display"></p>
+                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Test Selesai</p>
+                    <p class="font-mono font-bold text-2xl text-brand-green" x-data="animatedCounter(summaryTestsDone)" x-init="start()" x-text="display"></p>
                 </div>
                 <div class="card p-5 border-l-4 border-l-brand-orange space-y-1">
-                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Test Selesai</p>
-                    <p class="font-mono font-bold text-2xl text-brand-orange" x-data="animatedCounter(summaryTestsDone)" x-init="start()" x-text="display"></p>
+                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Rata-rata Highest Score</p>
+                    <p class="font-mono font-bold text-2xl text-brand-orange">
+                        <span x-data="animatedCounter(summaryAvgHighest)" x-init="start()" x-text="display"></span>%
+                    </p>
                 </div>
             </div>
 
@@ -37,7 +39,6 @@
             <div class="space-y-4">
                 <template x-for="student in students" :key="student.id">
                     <article class="card rounded-3xl overflow-hidden border border-line/70 shadow-sm">
-                        {{-- Collapsed header — hanya highest score --}}
                         <button type="button" @click="toggleStudent(student.id)" class="w-full text-left p-5 sm:p-6 hover:bg-slate-50/50 transition-colors">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div class="flex items-center gap-4 min-w-0">
@@ -49,11 +50,7 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full sm:w-auto">
-                                    <div class="rounded-2xl bg-slate-50 px-4 py-3 border-l-4 border-l-brand-blue">
-                                        <p class="text-[11px] uppercase tracking-wide text-ink/40">Login</p>
-                                        <p class="font-mono font-bold text-lg" x-data="animatedCounter(loginCount(student))" x-init="start()" x-text="display"></p>
-                                    </div>
+                                <div class="grid grid-cols-3 gap-3 sm:gap-4 w-full sm:w-auto">
                                     <div class="rounded-2xl bg-slate-50 px-4 py-3 border-l-4 border-l-brand-green">
                                         <p class="text-[11px] uppercase tracking-wide text-ink/40">Test Done</p>
                                         <p class="font-mono font-bold text-lg" x-data="animatedCounter(testsDone(student))" x-init="start()" x-text="display"></p>
@@ -79,7 +76,6 @@
                             </div>
                         </button>
 
-                        {{-- Expanded detail --}}
                         <div x-show="expanded[student.id]"
                              x-transition:enter="transition ease-out duration-300"
                              x-transition:enter-start="opacity-0 -translate-y-2"
@@ -87,7 +83,6 @@
                              x-cloak
                              class="border-t border-line bg-white">
                             <div class="p-5 sm:p-6 space-y-6">
-                                {{-- Poll per kategori — bar dari kiri --}}
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <template x-for="group in revealBars(student)" :key="group.label">
                                         <section class="card rounded-3xl p-4 space-y-3"
@@ -98,16 +93,25 @@
                                             </div>
 
                                             <div class="space-y-3" x-show="group.items.length">
-                                                <template x-for="item in group.items" :key="item.title">
-                                                    <div class="space-y-1">
-                                                        <div class="flex items-center justify-between text-xs text-ink/60">
-                                                            <span class="truncate pr-2" x-text="item.title"></span>
-                                                            <span class="font-mono shrink-0" x-text="item.value + '%'"></span>
+                                                <template x-for="item in group.items" :key="item.exam_id || item.title">
+                                                    <div class="space-y-2">
+                                                        <div class="space-y-1">
+                                                            <div class="flex items-center justify-between text-xs text-ink/60">
+                                                                <span class="truncate pr-2" x-text="item.title"></span>
+                                                                <span class="font-mono shrink-0" x-text="item.value + '%'"></span>
+                                                            </div>
+                                                            <div class="w-full h-2.5 rounded-full border border-slate-200 p-0.5 bg-transparent overflow-hidden">
+                                                                <div class="h-full rounded-full transition-all duration-700 ease-out"
+                                                                     :class="categoryBarClass(group.label)"
+                                                                     :style="barWidth(student.id, item.value)"></div>
+                                                            </div>
                                                         </div>
-                                                        <div class="w-full h-2.5 rounded-full border border-slate-200 p-0.5 bg-transparent overflow-hidden">
-                                                            <div class="h-full rounded-full transition-all duration-700 ease-out"
-                                                                 :class="categoryBarClass(group.label)"
-                                                                 :style="barWidth(student.id, item.value)"></div>
+                                                        <div class="flex justify-end" x-show="item.completed">
+                                                            <button type="button"
+                                                                    @click.stop="allowRetake(student, item)"
+                                                                    :disabled="item.retake_allowed || retakeBusy === (student.id + '-' + item.exam_id)"
+                                                                    class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-line hover:bg-cloud disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    x-text="item.retake_allowed ? 'Izin ulang aktif' : 'Izinkan Ulang'"></button>
                                                         </div>
                                                     </div>
                                                 </template>
@@ -117,7 +121,6 @@
                                     </template>
                                 </div>
 
-                                {{-- Portfolio --}}
                                 <section class="card rounded-3xl p-4 space-y-3 border-l-4 border-l-brand-orange">
                                     <div class="flex items-center justify-between">
                                         <h3 class="font-display font-bold text-sm">Portfolio Uploaded</h3>

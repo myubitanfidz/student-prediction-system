@@ -69,7 +69,7 @@ Alpine.data('berandaPage', () => ({
     loading: true,
     error: '',
     exams: {},
-    expanded: {},
+    openCategory: null,
 
     categoryOrder: ['Bahasa', 'IT', 'Karakter'],
 
@@ -81,11 +81,11 @@ Alpine.data('berandaPage', () => ({
     },
 
     toggleCategory(category) {
-        this.expanded[category] = !this.expanded[category];
+        this.openCategory = this.openCategory === category ? null : category;
     },
 
     isExpanded(category) {
-        return !!this.expanded[category];
+        return this.openCategory === category;
     },
 
     categoryDotClass(category) {
@@ -104,13 +104,23 @@ Alpine.data('berandaPage', () => ({
         return 'border-l-brand-blue';
     },
 
+    examButtonLabel(item) {
+        if (item.retake_allowed) return 'Kerjakan Ulang';
+        if (item.completed) return 'Lihat Hasil';
+        return 'Mulai Ujian';
+    },
+
+    examButtonClass(item) {
+        if (item.retake_allowed) return '';
+        if (item.completed) return 'opacity-90 bg-slate-600 hover:bg-slate-700';
+        return '';
+    },
+
     async init() {
         try {
             const json = await api.getExams();
             this.exams = json?.data ?? json ?? {};
-            this.orderedCategories.forEach((cat, i) => {
-                this.expanded[cat] = i === 0;
-            });
+            this.openCategory = this.orderedCategories[0] ?? null;
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -124,14 +134,48 @@ Alpine.data('examPage', (examId) => ({
     loading: true,
     submitting: false,
     error: '',
-    tab: 'pg',
     exam: null,
-    pilihanGanda: [],
-    essai: [],
+    questions: [],
+    results: [],
+    completed: false,
+    retakeAllowed: false,
+    currentIndex: 0,
     jawaban: {},
 
+    get currentQuestion() {
+        return this.questions[this.currentIndex] ?? null;
+    },
+
+    get isLast() {
+        return this.currentIndex >= this.questions.length - 1;
+    },
+
     get answeredCount() {
-        return this.pilihanGanda.filter((q) => this.jawaban[q.id] !== undefined && this.jawaban[q.id] !== '').length;
+        return this.questions.filter((q) => {
+            const v = this.jawaban[q.id];
+            return v !== undefined && v !== null && String(v).trim() !== '';
+        }).length;
+    },
+
+    get mcTotal() {
+        return this.results.filter((r) => r.type === 'multiple_choice').length;
+    },
+
+    get correctCount() {
+        return this.results.filter((r) => r.type === 'multiple_choice' && r.is_correct).length;
+    },
+
+    get mcAccuracy() {
+        if (!this.mcTotal) return 0;
+        return Math.round((this.correctCount / this.mcTotal) * 100);
+    },
+
+    next() {
+        if (!this.isLast) this.currentIndex += 1;
+    },
+
+    prev() {
+        if (this.currentIndex > 0) this.currentIndex -= 1;
     },
 
     async init() {
@@ -139,12 +183,11 @@ Alpine.data('examPage', (examId) => ({
             const json = await api.getExam(examId);
             const data = json?.data ?? json;
             this.exam = { ...data.exam, warna: categoryColor(data.exam?.category) };
-            this.pilihanGanda = (data.questions ?? []).filter((q) => q.type === 'multiple_choice');
-            this.essai = (data.questions ?? []).filter((q) => q.type === 'essay');
-
-            if (!this.pilihanGanda.length && this.essai.length) {
-                this.tab = 'essai';
-            }
+            this.completed = !!data.completed;
+            this.retakeAllowed = !!data.retake_allowed;
+            this.results = data.results ?? [];
+            this.questions = data.questions ?? [];
+            this.currentIndex = 0;
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -156,19 +199,24 @@ Alpine.data('examPage', (examId) => ({
         this.submitting = true;
         this.error = '';
 
-        const answers = Object.entries(this.jawaban)
-            .filter(([, v]) => v !== '' && v != null)
-            .map(([question_id, answer_text]) => ({ question_id: Number(question_id), answer_text }));
+        const unanswered = this.questions.filter((q) => {
+            const v = this.jawaban[q.id];
+            return v === undefined || v === null || String(v).trim() === '';
+        });
 
-        if (!answers.length) {
-            this.error = 'Harap isi minimal satu pertanyaan sebelum mengumpulkan.';
+        if (unanswered.length) {
+            this.error = `Masih ada ${unanswered.length} soal yang belum dijawab. Periksa kembali sebelum mengumpulkan.`;
             this.submitting = false;
             return;
         }
 
+        const answers = Object.entries(this.jawaban)
+            .filter(([, v]) => v !== '' && v != null)
+            .map(([question_id, answer_text]) => ({ question_id: Number(question_id), answer_text }));
+
         try {
             await api.submitExam({ exam_id: this.exam.id, answers });
-            window.location.href = '/dashboard';
+            window.location.href = '/ujian/' + this.exam.id;
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -324,17 +372,20 @@ Alpine.data('adminDashboardPage', () => ({
     error: '',
     students: [],
     expanded: {},
+    retakeBusy: null,
 
     get summaryTotal() {
         return this.students.length;
     },
 
-    get summaryParticipated() {
-        return this.students.filter((s) => this.loginCount(s) > 0).length;
-    },
-
     get summaryTestsDone() {
         return this.students.reduce((sum, s) => sum + this.testsDone(s), 0);
+    },
+
+    get summaryAvgHighest() {
+        if (!this.students.length) return 0;
+        const sum = this.students.reduce((acc, s) => acc + this.highestScore(s), 0);
+        return Math.round(sum / this.students.length);
     },
 
     toggleStudent(id) {
@@ -347,10 +398,6 @@ Alpine.data('adminDashboardPage', () => ({
 
     studentEmail(student) {
         return student?.email || student?.student_email || '';
-    },
-
-    loginCount(student) {
-        return Number(student?.login_count ?? student?.participated ?? 0);
     },
 
     testsDone(student) {
@@ -402,6 +449,20 @@ Alpine.data('adminDashboardPage', () => ({
         return this.expanded[studentId] ? `width: ${value}%` : 'width: 0%';
     },
 
+    async allowRetake(student, item) {
+        if (!item?.exam_id || item.retake_allowed) return;
+        const key = student.id + '-' + item.exam_id;
+        this.retakeBusy = key;
+        try {
+            await api.allowRetake({ user_id: student.id, exam_id: item.exam_id });
+            item.retake_allowed = true;
+        } catch (e) {
+            alert(e.message || 'Gagal memberikan izin ulang');
+        } finally {
+            this.retakeBusy = null;
+        }
+    },
+
     async init() {
         const user = getUser();
         if (!user || !['admin', 'teacher'].includes(user.role)) {
@@ -425,8 +486,11 @@ Alpine.data('adminDashboardPage', () => ({
         return Object.entries(raw).map(([label, items]) => ({
             label,
             items: items.map((item) => ({
+                exam_id: item.exam_id,
                 title: this.statTitle(item),
                 value: this.statValue(item),
+                completed: !!item.completed,
+                retake_allowed: !!item.retake_allowed,
             })),
         }));
     },

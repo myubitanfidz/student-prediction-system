@@ -128,6 +128,11 @@ export const api = {
         return request('/admin/grade', { method: 'POST', body: payload });
     },
 
+    allowRetake(payload) {
+        // payload: { user_id, exam_id }
+        return request('/admin/retake', { method: 'POST', body: payload });
+    },
+
     getAdminExams() {
         return request('/admin/exams');
     },

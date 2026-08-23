@@ -14,10 +14,12 @@ class ExamCompletion extends Model
         'user_id',
         'exam_id',
         'completed_at',
+        'retake_allowed',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'retake_allowed' => 'boolean',
     ];
 
     public function user(): BelongsTo
