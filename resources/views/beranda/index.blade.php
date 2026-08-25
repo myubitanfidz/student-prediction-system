@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Beranda Ujian')
+@section('title', 'Beranda Ujian & Portofolio')
 
 @section('content')
 <div x-data="berandaPage" class="max-w-5xl mx-auto space-y-8">
@@ -41,7 +41,11 @@
                          :class="isExpanded(category) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
                         <div class="overflow-hidden min-h-0">
                             <div class="border-t border-line bg-white p-4 sm:p-5">
+                                
+                                {{-- EXAM LIST & PORTFOLIO CARD GRID --}}
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    
+                                    {{-- 1. Generate Exam Cards --}}
                                     <template x-for="item in exams[category]" :key="item.id">
                                         <div class="rounded-2xl border border-line p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-slate-50/30">
                                             <div class="space-y-2">
@@ -68,7 +72,29 @@
                                             </div>
                                         </div>
                                     </template>
+
+                                    {{-- 2. Generate Portfolio Card (Only shows inside the 'IT' category) --}}
+                                    <template x-if="category === 'IT'">
+                                        <div class="rounded-2xl border border-brand-green/30 p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-brand-green-soft/20">
+                                            <div class="space-y-2">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold tag-it">Praktik / Tugas</span>
+                                                </div>
+                                                <h3 class="font-display font-bold text-base text-slate-900">Upload Portofolio GCLWAMA</h3>
+                                                <p class="text-xs text-ink/60 line-clamp-2">Bagikan hasil karyamu. Link project dan berkas pendukung akan dinilai langsung oleh pembimbing.</p>
+                                            </div>
+
+                                            <div class="pt-4 mt-auto">
+                                                <a href="{{ route('portofolio.index') }}"
+                                                   class="btn-primary w-full text-center text-xs py-2 block !bg-brand-green hover:!bg-brand-green/90">
+                                                    Buka Form Upload
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </template>
+
                                 </div>
+
                             </div>
                         </div>
                     </div>
