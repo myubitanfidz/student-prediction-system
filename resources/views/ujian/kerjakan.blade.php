@@ -8,6 +8,7 @@
     <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2 mb-4"></div>
 
     <template x-if="!loading && exam">
+        <!-- SINGLE ROOT ELEMENT FOR TEMPLATE -->
         <div>
             {{-- Header --}}
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
@@ -24,6 +25,22 @@
             {{-- ========== RESULTS MODE ========== --}}
             <template x-if="completed">
                 <div class="space-y-4">
+                    
+                    <!-- Alpine SPS Prediction Results -->
+                    <template x-if="spsPrediction">
+                        <div class="p-6 bg-emerald-50 border border-emerald-200 rounded-xl mb-6">
+                            <h3 class="text-xl font-bold mb-2 text-emerald-800">Hasil Prediksi SPS</h3>
+                            <p class="mb-4 text-ink/80">Kecenderungan Terkuat kamu ada di bidang: <strong class="text-emerald-700 text-lg uppercase tracking-wide" x-text="spsPrediction.highest_inclination"></strong></p>
+                            
+                            <label class="block text-sm font-semibold mb-2 text-ink/70">Detail Skor Per Kategori (GCLWAMA):</label>
+                            <select class="border border-line p-2.5 rounded-lg w-full max-w-md bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <template x-for="(score, category) in spsPrediction.category_scores" :key="category">
+                                    <option x-text="category + ' - Prediksi: ' + score + '%'"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
+                    
                     <div class="card p-4 flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink/40">Ringkasan</p>
@@ -83,6 +100,12 @@
             {{-- ========== TAKING MODE — one question at a time ========== --}}
             <template x-if="!completed && questions.length">
                 <div>
+                    <!-- ALpine Timer Display -->
+                    <div class="sticky top-0 bg-white p-4 shadow-sm mb-4 border border-rose-200 rounded-lg flex justify-between items-center z-10">
+                        <span class="font-bold text-rose-600">Sisa Waktu:</span>
+                        <span class="font-mono font-bold text-xl text-rose-600" x-text="formattedTime"></span>
+                    </div>
+                    
                     <div class="card p-4 mb-6">
                         <div class="flex justify-between text-xs font-medium text-ink/50 mb-2">
                             <span>Progres pengerjaan</span>

@@ -75,6 +75,7 @@ class ExamController extends Controller
 
                 return [
                     'id'              => $question->id,
+                    'category'        => $question->category, // Added category tracking
                     'type'            => $question->type,
                     'question_text'   => $question->question_text,
                     'options'         => $question->options,
@@ -85,6 +86,43 @@ class ExamController extends Controller
                 ];
             })->values();
 
+            // --- SPS PREDICTION LOGIC ---
+            $spsStats = [];
+            $highestCategory = null;
+
+            if ($exam->subcategory === 'GCLWAMA') {
+                $categoryScores = [];
+
+                foreach ($results as $res) {
+                    $cat = $res['category'];
+                    if (!$cat) continue;
+
+                    if (!isset($categoryScores[$cat])) {
+                        $categoryScores[$cat] = ['total_score' => 0, 'count' => 0];
+                    }
+
+                    // Calculate score. Essays will have a null score until graded by a teacher.
+                    $score = $res['score'] ?? 0;
+                    $categoryScores[$cat]['total_score'] += (float)$score;
+                    $categoryScores[$cat]['count']++;
+                }
+
+                $maxScore = -1;
+                foreach ($categoryScores as $cat => $data) {
+                    $avg = $data['count'] > 0 ? ($data['total_score'] / $data['count']) : 0;
+                    $spsStats[$cat] = round($avg, 2);
+
+                    if ($avg > $maxScore) {
+                        $maxScore = $avg;
+                        $highestCategory = $cat;
+                    }
+                }
+
+                // Sort so the highest inclination score is at the top of the array
+                arsort($spsStats);
+            }
+            // -----------------------------
+
             return response()->json([
                 'status' => 'success',
                 'data'   => [
@@ -93,6 +131,10 @@ class ExamController extends Controller
                     'retake_allowed' => false,
                     'questions'      => [],
                     'results'        => $results,
+                    'sps_prediction' => [
+                        'highest_inclination' => $highestCategory,
+                        'category_scores'     => $spsStats
+                    ]
                 ],
             ]);
         }
@@ -106,6 +148,7 @@ class ExamController extends Controller
 
             return [
                 'id'            => $question->id,
+                'category'      => $question->category, // Added category tracking
                 'type'          => $question->type,
                 'question_text' => $question->question_text,
                 'options'       => $options,
@@ -120,6 +163,7 @@ class ExamController extends Controller
                 'retake_allowed' => (bool) ($completion?->retake_allowed),
                 'questions'      => $questions,
                 'results'        => [],
+                'sps_prediction' => null
             ],
         ]);
     }

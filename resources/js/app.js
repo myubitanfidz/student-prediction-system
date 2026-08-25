@@ -130,6 +130,7 @@ Alpine.data('berandaPage', () => ({
 }));
 
 // ---------- 4. Pengerjaan Ujian ----------
+// ---------- 4. Pengerjaan Ujian ----------
 Alpine.data('examPage', (examId) => ({
     loading: true,
     submitting: false,
@@ -141,6 +142,33 @@ Alpine.data('examPage', (examId) => ({
     retakeAllowed: false,
     currentIndex: 0,
     jawaban: {},
+    
+    // --- NEW: Timer and SPS Variables ---
+    spsPrediction: null,
+    timeRemaining: 0,
+    timerInterval: null,
+
+    // Format seconds into MM:SS for the frontend
+    get formattedTime() {
+        let minutes = Math.floor(this.timeRemaining / 60);
+        let seconds = this.timeRemaining % 60;
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    },
+
+    startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        
+        this.timerInterval = setInterval(() => {
+            if (this.timeRemaining > 0) {
+                this.timeRemaining--;
+            } else {
+                clearInterval(this.timerInterval);
+                alert('Waktu habis! Jawaban Anda otomatis dikumpulkan.');
+                this.submit(); // Auto-submit when time is up
+            }
+        }, 1000);
+    },
+    // ------------------------------------
 
     get currentQuestion() {
         return this.questions[this.currentIndex] ?? null;
@@ -150,33 +178,7 @@ Alpine.data('examPage', (examId) => ({
         return this.currentIndex >= this.questions.length - 1;
     },
 
-    get answeredCount() {
-        return this.questions.filter((q) => {
-            const v = this.jawaban[q.id];
-            return v !== undefined && v !== null && String(v).trim() !== '';
-        }).length;
-    },
-
-    get mcTotal() {
-        return this.results.filter((r) => r.type === 'multiple_choice').length;
-    },
-
-    get correctCount() {
-        return this.results.filter((r) => r.type === 'multiple_choice' && r.is_correct).length;
-    },
-
-    get mcAccuracy() {
-        if (!this.mcTotal) return 0;
-        return Math.round((this.correctCount / this.mcTotal) * 100);
-    },
-
-    next() {
-        if (!this.isLast) this.currentIndex += 1;
-    },
-
-    prev() {
-        if (this.currentIndex > 0) this.currentIndex -= 1;
-    },
+    // ... (Keep your existing getter functions like answeredCount, mcTotal, etc.) ...
 
     async init() {
         try {
@@ -188,6 +190,18 @@ Alpine.data('examPage', (examId) => ({
             this.results = data.results ?? [];
             this.questions = data.questions ?? [];
             this.currentIndex = 0;
+            
+            // --- NEW: Load SPS and start timer ---
+            this.spsPrediction = data.sps_prediction ?? null;
+            
+            // If the exam isn't completed yet, start the countdown
+            if (!this.completed && this.questions.length > 0) {
+                // Fallback to 30 mins if duration_minutes isn't set
+                this.timeRemaining = (this.exam.duration_minutes || 30) * 60; 
+                this.startTimer();
+            }
+            // -------------------------------------
+
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -198,6 +212,12 @@ Alpine.data('examPage', (examId) => ({
     async submit() {
         this.submitting = true;
         this.error = '';
+
+        // --- NEW: Clear the timer on manual submit ---
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        // ---------------------------------------------
+
+        // ... (Keep the rest of your submit logic exactly the same) ...
 
         const unanswered = this.questions.filter((q) => {
             const v = this.jawaban[q.id];
