@@ -8,27 +8,11 @@
 
     <template x-if="!loading && profile">
         <div class="space-y-6">
-            {{-- Horizontal Progress Bar Total Pengerjaan Soal (Hanya Garis Pinggir & Terisi Sesuai Persen) --}}
-            <div class="card p-5 space-y-3">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-sm">
-                    <div>
-                        <span class="font-display font-bold text-slate-900">Total Progres Pengerjaan Ujian</span>
-                        <span class="text-xs text-ink/50 block sm:inline sm:ml-2"
-                              x-text="`(${totalAnswered} dari ${totalQuestionsCount} soal terjawab)`"></span>
-                    </div>
-                    <span class="font-mono font-bold text-base text-brand-blue" x-text="overallProgress + '%'"></span>
-                </div>
-                {{-- Bar horizontal: outline transparan/border tegas, isi solid --}}
-                <div class="w-full h-3.5 rounded-full border-2 border-slate-300 p-0.5 bg-transparent overflow-hidden">
-                    <div class="h-full rounded-full bg-brand-blue transition-all duration-500 ease-out"
-                         :style="`width: ${overallProgress}%`"></div>
-                </div>
-            </div>
-
+            
             {{-- User Identity Header --}}
-            <div class="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t-4 border-brand-blue">
                 <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-full bg-brand-blue text-white text-xl font-display font-bold flex items-center justify-center"
+                    <div class="w-14 h-14 rounded-full bg-brand-blue text-white text-xl font-display font-bold flex items-center justify-center shadow-md"
                          x-text="profile.name.charAt(0).toUpperCase()"></div>
                     <div>
                         <h1 class="font-display font-bold text-xl text-slate-900" x-text="profile.name"></h1>
@@ -41,6 +25,32 @@
                     Kelola Portofolio
                 </a>
             </div>
+
+            {{-- 🌟 NEW: Animated Career Path Analytics 🌟 --}}
+            <template x-if="profile.career_predictions">
+                <div class="card p-6 border border-line shadow-sm" x-data="{ showAnim: false }" x-init="setTimeout(() => showAnim = true, 300)">
+                    <div class="mb-5">
+                        <h2 class="font-display font-bold text-xl text-slate-900">Analitik Bakat & Minat Karir IT</h2>
+                        <p class="text-sm text-ink/50 mt-1">Berdasarkan akumulasi skormu, berikut adalah bidang karir profesional yang paling cocok untukmu.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <template x-for="(score, role) in profile.career_predictions" :key="role">
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center text-sm font-semibold">
+                                    <span class="text-slate-800" x-text="role"></span>
+                                    <span class="font-mono text-brand-green" x-text="score + '%'"></span>
+                                </div>
+                                {{-- Bar Animation Track --}}
+                                <div class="w-full h-3.5 rounded-full border border-slate-200 bg-slate-50 overflow-hidden p-0.5 shadow-inner">
+                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-green to-emerald-400 transition-all duration-1000 ease-out"
+                                         :style="showAnim ? `width: ${score}%` : 'width: 0%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
 
             {{-- Stat & Prediction Cards dengan Bar Garis Pinggir --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -66,7 +76,7 @@
                 {{-- Prediksi IT --}}
                 <div class="card p-5 border-l-4 border-l-brand-green space-y-3">
                     <div class="flex items-center justify-between">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/40">Prediksi IT</p>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/40">Prediksi Dasar IT</p>
                         <span class="font-display font-bold text-xl text-brand-green" x-text="itLevel"></span>
                     </div>
                     <div class="space-y-1">
@@ -79,7 +89,7 @@
                                  :style="`width: ${itAccuracy || 0}%`"></div>
                         </div>
                     </div>
-                    <p class="text-xs text-ink/50">Evaluasi coding, desain &amp; multimedia.</p>
+                    <p class="text-xs text-ink/50">Evaluasi kompetensi dasar teknologi.</p>
                 </div>
 
                 {{-- Portofolio Status --}}
@@ -106,9 +116,19 @@
 
             {{-- Detail Statistik Nilai dengan Bar Progres di Tiap Baris --}}
             <div class="card overflow-hidden">
-                <div class="p-4 border-b border-line">
+                <div class="p-4 border-b border-line flex flex-col sm:flex-row justify-between items-center gap-3">
                     <h2 class="font-display font-bold text-base text-slate-900">Rekap Nilai &amp; Pengerjaan Per Ujian</h2>
+                    
+                    {{-- Horizontal Progress Bar Total Pengerjaan Soal --}}
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="w-32 h-2.5 rounded-full border border-slate-300 p-0.5 bg-transparent overflow-hidden">
+                            <div class="h-full rounded-full bg-brand-blue transition-all duration-500 ease-out"
+                                 :style="`width: ${overallProgress}%`"></div>
+                        </div>
+                        <span class="text-xs font-medium text-ink/60" x-text="`Progres: ${overallProgress}%`"></span>
+                    </div>
                 </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead class="bg-slate-50 border-b border-line text-[11px] font-semibold uppercase tracking-wide text-ink/40 text-left">
