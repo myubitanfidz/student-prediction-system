@@ -10,10 +10,11 @@ return new class extends Migration
     {
         Schema::create('exams', function (Blueprint $table) {
             $table->id();
-            $table->string('category'); // e.g., 'bahasa', 'it', 'karakter'
-            $table->string('subcategory'); // e.g., 'inggris', 'arab', 'programming', 'dkv', 'dkf', 'komik', 'videografi', 'portofolio', 'aqidah_akhlak'
-            $table->string('title'); // e.g., 'Ujian Masuk Pemrograman Dasar'
+            $table->string('category'); 
+            $table->string('subcategory'); 
+            $table->string('title'); 
             $table->text('description')->nullable();
+            $table->integer('duration_minutes')->default(30);
             $table->timestamps();
         });
     }

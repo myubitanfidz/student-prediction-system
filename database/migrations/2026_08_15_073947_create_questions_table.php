@@ -11,10 +11,11 @@ return new class extends Migration
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('exam_id')->constrained('exams')->onDelete('cascade');
+            $table->string('category')->nullable(); // To store Gambar, Cerita, Layout, etc.
             $table->enum('type', ['multiple_choice', 'essay']);
             $table->text('question_text');
-            $table->json('options')->nullable(); // Untuk menyimpan pilihan A, B, C, D (hanya untuk multiple_choice)
-            $table->string('correct_answer')->nullable(); // Opsional: kunci jawaban untuk PG
+            $table->json('options')->nullable(); 
+            $table->string('correct_answer')->nullable(); 
             $table->timestamps();
         });
     }

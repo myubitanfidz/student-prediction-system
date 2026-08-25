@@ -61,7 +61,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
-        $user->increment('login_count');
+            
         $user->tokens()->delete();
         $token = $user->createToken('auth_token')->plainTextToken;
 

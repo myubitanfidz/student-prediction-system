@@ -7,34 +7,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /** Add role / teacher enum / login_count for databases created before the base migration included them. */
+    /** Add role / teacher enum for databases created before the base migration included them. */
     public function up(): void
     {
-        if (! Schema::hasColumn('users', 'role')) {
+        if (!Schema::hasColumn('users', 'role')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->enum('role', ['admin', 'teacher', 'student'])->default('student')->after('password');
+                $table->enum('role', ['admin', 'teacher', 'student'])
+                    ->default('student')
+                    ->after('password');
             });
         } elseif (Schema::getConnection()->getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'teacher', 'student') NOT NULL DEFAULT 'student'");
-        }
-
-        if (! Schema::hasColumn('users', 'login_count')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->unsignedInteger('login_count')->default(0)->after('role');
-            });
+            DB::statement(
+                "ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'teacher', 'student') NOT NULL DEFAULT 'student'"
+            );
         }
     }
 
     public function down(): void
     {
-        if (Schema::hasColumn('users', 'login_count')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->dropColumn('login_count');
-            });
-        }
-
-        if (Schema::hasColumn('users', 'role') && Schema::getConnection()->getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'student') NOT NULL DEFAULT 'student'");
+        if (
+            Schema::hasColumn('users', 'role') &&
+            Schema::getConnection()->getDriverName() === 'mysql'
+        ) {
+            DB::statement(
+                "ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'student') NOT NULL DEFAULT 'student'"
+            );
         }
     }
 };
