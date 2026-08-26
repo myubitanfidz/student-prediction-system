@@ -387,6 +387,8 @@ Alpine.data('animatedCounter', (target = 0, ms = 700) => ({
 }));
 
 // ---------- 7. Admin Dashboard ----------
+// ---------- 7. Admin Dashboard ----------
+// ---------- 7. Admin Dashboard ----------
 Alpine.data('adminDashboardPage', () => ({
     loading: true,
     error: '',
@@ -394,6 +396,66 @@ Alpine.data('adminDashboardPage', () => ({
     expanded: {},
     retakeBusy: null,
 
+    // --- NEW: Modal Controls ---
+    activeStudent: null,
+    modalAnim: false,
+
+    // --- NEW: Table Controls (Search, Sort, Pagination) ---
+    searchQuery: '',
+    sortBy: 'default',
+    sortDropdownOpen: false,
+    currentPage: 1,
+    itemsPerPage: 20,
+
+    get processedStudents() {
+        let result = [...this.students]; // Copy array
+
+// ... (keep the rest of the code exactly the same) ...
+
+        // 1. Search Filter
+        if (this.searchQuery.trim() !== '') {
+            const q = this.searchQuery.toLowerCase();
+            result = result.filter(s => 
+                (s.name && s.name.toLowerCase().includes(q)) || 
+                (s.email && s.email.toLowerCase().includes(q))
+            );
+        }
+
+        // 2. Sort Logic
+        if (this.sortBy === 'highest_score') {
+            result.sort((a, b) => (b.highest_score || 0) - (a.highest_score || 0));
+        } else if (this.sortBy === 'alphabetical') {
+            result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+        // 'default' leaves it in the original order (who signed up first)
+
+        return result;
+    },
+
+    get paginatedStudents() {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        return this.processedStudents.slice(start, start + this.itemsPerPage);
+    },
+
+    get totalPages() {
+        return Math.max(1, Math.ceil(this.processedStudents.length / this.itemsPerPage));
+    },
+
+    nextPage() {
+        if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+
+    prevPage() {
+        if (this.currentPage > 1) this.currentPage--;
+    },
+
+    setSort(type) {
+        this.sortBy = type;
+        this.sortDropdownOpen = false;
+        this.currentPage = 1; // Reset to page 1 on new sort
+    },
+
+    // --- Existing Getters & Methods ---
     get summaryTotal() {
         return this.students.length;
     },
@@ -406,10 +468,6 @@ Alpine.data('adminDashboardPage', () => ({
         if (!this.students.length) return 0;
         const sum = this.students.reduce((acc, s) => acc + this.highestScore(s), 0);
         return Math.round(sum / this.students.length);
-    },
-
-    toggleStudent(id) {
-        this.expanded[id] = !this.expanded[id];
     },
 
     studentName(student) {
@@ -455,18 +513,18 @@ Alpine.data('adminDashboardPage', () => ({
         return Number(stat?.mc_accuracy_pct ?? stat?.percentage ?? stat?.score ?? 0) || 0;
     },
 
-    categoryBorderClass(label) {
-        const map = { Bahasa: 'border-l-4 border-l-brand-blue', IT: 'border-l-4 border-l-brand-green', Karakter: 'border-l-4 border-l-brand-orange' };
-        return map[label] || 'border-l-4 border-l-brand-blue';
-    },
-
-    categoryBarClass(label) {
-        const map = { Bahasa: 'bg-brand-blue', IT: 'bg-brand-green', Karakter: 'bg-brand-orange' };
-        return map[label] || 'bg-brand-blue';
-    },
-
-    barWidth(studentId, value) {
-        return this.expanded[studentId] ? `width: ${value}%` : 'width: 0%';
+    revealBars(student) {
+        const raw = this.groupedStats(student);
+        return Object.entries(raw).map(([label, items]) => ({
+            label,
+            items: items.map((item) => ({
+                exam_id: item.exam_id,
+                title: this.statTitle(item),
+                value: this.statValue(item),
+                completed: !!item.completed,
+                retake_allowed: !!item.retake_allowed,
+            })),
+        }));
     },
 
     async allowRetake(student, item) {
@@ -491,6 +549,9 @@ Alpine.data('adminDashboardPage', () => ({
             return;
         }
 
+        // Watch search input to auto-reset pagination
+        this.$watch('searchQuery', () => { this.currentPage = 1; });
+
         try {
             const json = await api.getAdminStudents();
             this.students = json?.data ?? json ?? [];
@@ -499,20 +560,6 @@ Alpine.data('adminDashboardPage', () => ({
         } finally {
             this.loading = false;
         }
-    },
-
-    revealBars(student) {
-        const raw = this.groupedStats(student);
-        return Object.entries(raw).map(([label, items]) => ({
-            label,
-            items: items.map((item) => ({
-                exam_id: item.exam_id,
-                title: this.statTitle(item),
-                value: this.statValue(item),
-                completed: !!item.completed,
-                retake_allowed: !!item.retake_allowed,
-            })),
-        }));
     },
 }));
 

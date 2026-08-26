@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Admin / Guru')
 
 @section('content')
-<div x-data="adminDashboardPage" class="max-w-6xl mx-auto space-y-6">
+<div x-data="adminDashboardPage" class="max-w-6xl mx-auto space-y-6 relative">
     <div x-show="loading" class="text-sm text-ink/40">Memuat daftar santri...</div>
     <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2"></div>
 
@@ -11,23 +11,22 @@
             {{-- Header & ringkasan --}}
             <div class="flex items-end justify-between gap-4 flex-wrap">
                 <div>
-                    <h1 class="font-display font-bold text-2xl">Admin / Teacher Dashboard</h1>
-                    <p class="text-sm text-ink/50">Lihat nilai, jumlah test, progress poll, portofolio, dan izinkan ulang ujian.</p>
+                    <h1 class="font-display font-bold text-2xl">Daftar Rekap Santri</h1>
+                    <p class="text-sm text-ink/50">Tinjau nilai, portofolio, dan analitik potensi karir seluruh santri.</p>
                 </div>
-                <span class="text-xs font-medium bg-cloud rounded-full px-3 py-1" x-text="students.length + ' santri'"></span>
             </div>
 
             {{-- Statistik ringkas --}}
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="card p-5 border-l-4 border-l-brand-blue space-y-1">
+                <div class="card p-5 border-l-4 border-l-brand-blue space-y-1 shadow-sm">
                     <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Santri</p>
                     <p class="font-mono font-bold text-2xl" x-data="animatedCounter(summaryTotal)" x-init="start()" x-text="display"></p>
                 </div>
-                <div class="card p-5 border-l-4 border-l-brand-green space-y-1">
+                <div class="card p-5 border-l-4 border-l-brand-green space-y-1 shadow-sm">
                     <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Test Selesai</p>
                     <p class="font-mono font-bold text-2xl text-brand-green" x-data="animatedCounter(summaryTestsDone)" x-init="start()" x-text="display"></p>
                 </div>
-                <div class="card p-5 border-l-4 border-l-brand-orange space-y-1">
+                <div class="card p-5 border-l-4 border-l-brand-orange space-y-1 shadow-sm">
                     <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Rata-rata Highest Score</p>
                     <p class="font-mono font-bold text-2xl text-brand-orange">
                         <span x-data="animatedCounter(summaryAvgHighest)" x-init="start()" x-text="display"></span>%
@@ -35,124 +34,214 @@
                 </div>
             </div>
 
-            {{-- Daftar santri --}}
-            <div class="space-y-4">
-                <template x-for="student in students" :key="student.id">
-                    <article class="card rounded-3xl overflow-hidden border border-line/70 shadow-sm">
-                        <button type="button" @click="toggleStudent(student.id)" class="w-full text-left p-5 sm:p-6 hover:bg-slate-50/50 transition-colors">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div class="flex items-center gap-4 min-w-0">
-                                    <div class="w-12 h-12 rounded-2xl bg-brand-blue text-white flex items-center justify-center font-display font-bold shrink-0"
-                                         x-text="studentName(student).charAt(0).toUpperCase()"></div>
-                                    <div class="min-w-0">
-                                        <h2 class="font-display font-bold text-lg truncate" x-text="studentName(student)"></h2>
-                                        <p class="text-sm text-ink/50 truncate" x-text="studentEmail(student)"></p>
-                                    </div>
-                                </div>
+            {{-- 🌟 NEW: Data Table with Search, Sort & Pagination 🌟 --}}
+            <div class="card shadow-sm border border-line rounded-2xl">
+                
+                {{-- Table Controls: Search & Sort --}}
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 border-b border-line bg-slate-50/50 rounded-t-2xl">
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-80">
+                        <input type="text" x-model="searchQuery" placeholder="Cari nama atau email santri..." 
+                               class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-shadow">
+                        <svg class="w-5 h-5 text-ink/40 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
 
-                                <div class="grid grid-cols-3 gap-3 sm:gap-4 w-full sm:w-auto">
-                                    <div class="rounded-2xl bg-slate-50 px-4 py-3 border-l-4 border-l-brand-green">
-                                        <p class="text-[11px] uppercase tracking-wide text-ink/40">Test Done</p>
-                                        <p class="font-mono font-bold text-lg" x-data="animatedCounter(testsDone(student))" x-init="start()" x-text="display"></p>
-                                    </div>
-                                    <div class="rounded-2xl bg-slate-50 px-4 py-3 border-l-4 border-l-brand-orange">
-                                        <p class="text-[11px] uppercase tracking-wide text-ink/40">Highest Score</p>
-                                        <p class="font-mono font-bold text-lg text-brand-green">
-                                            <span x-data="animatedCounter(highestScore(student))" x-init="start()" x-text="display"></span>%
-                                        </p>
-                                    </div>
-                                    <div class="rounded-2xl bg-slate-50 px-4 py-3 flex items-center justify-between gap-2">
-                                        <div>
-                                            <p class="text-[11px] uppercase tracking-wide text-ink/40">Portfolio</p>
-                                            <p class="font-mono font-bold text-lg" x-text="portfolioFiles(student).length"></p>
-                                        </div>
-                                        <svg class="w-5 h-5 text-ink/30 shrink-0 transition-transform duration-300"
-                                             :class="expanded[student.id] ? 'rotate-180' : ''"
-                                             fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Sort Popup Menu -->
+                    <div class="relative w-full sm:w-auto">
+                        <button @click="sortDropdownOpen = !sortDropdownOpen" 
+                                class="w-full sm:w-auto flex items-center justify-between gap-3 px-5 py-2.5 text-sm font-medium border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors">
+                            <span x-text="sortBy === 'default' ? 'Urutkan: Pendaftar Awal' : (sortBy === 'highest_score' ? 'Urutkan: Skor Tertinggi' : 'Urutkan: Abjad (A-Z)')"></span>
+                            <svg class="w-4 h-4 text-ink/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-
-                        <div x-show="expanded[student.id]"
-                             x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0 -translate-y-2"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             x-cloak
-                             class="border-t border-line bg-white">
-                            <div class="p-5 sm:p-6 space-y-6">
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <template x-for="group in revealBars(student)" :key="group.label">
-                                        <section class="card rounded-3xl p-4 space-y-3"
-                                                 :class="categoryBorderClass(group.label)">
-                                            <div class="flex items-center justify-between">
-                                                <h3 class="font-display font-bold text-sm" x-text="group.label"></h3>
-                                                <span class="text-[11px] font-semibold text-ink/40" x-text="group.items.length + ' test(s)'"></span>
-                                            </div>
-
-                                            <div class="space-y-3" x-show="group.items.length">
-                                                <template x-for="item in group.items" :key="item.exam_id || item.title">
-                                                    <div class="space-y-2">
-                                                        <div class="space-y-1">
-                                                            <div class="flex items-center justify-between text-xs text-ink/60">
-                                                                <span class="truncate pr-2" x-text="item.title"></span>
-                                                                <span class="font-mono shrink-0" x-text="item.value + '%'"></span>
-                                                            </div>
-                                                            <div class="w-full h-2.5 rounded-full border border-slate-200 p-0.5 bg-transparent overflow-hidden">
-                                                                <div class="h-full rounded-full transition-all duration-700 ease-out"
-                                                                     :class="categoryBarClass(group.label)"
-                                                                     :style="barWidth(student.id, item.value)"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex justify-end" x-show="item.completed">
-                                                            <button type="button"
-                                                                    @click.stop="allowRetake(student, item)"
-                                                                    :disabled="item.retake_allowed || retakeBusy === (student.id + '-' + item.exam_id)"
-                                                                    class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-line hover:bg-cloud disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                    x-text="item.retake_allowed ? 'Izin ulang aktif' : 'Izinkan Ulang'"></button>
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                            <p x-show="!group.items.length" class="text-xs text-ink/40">Belum ada test di kategori ini.</p>
-                                        </section>
-                                    </template>
-                                </div>
-
-                                <section class="card rounded-3xl p-4 space-y-3 border-l-4 border-l-brand-orange">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="font-display font-bold text-sm">Portfolio Uploaded</h3>
-                                        <span class="text-[11px] font-semibold text-ink/40" x-text="portfolioFiles(student).length + ' file(s)'"></span>
-                                    </div>
-
-                                    <div x-show="student.portfolio?.links" class="text-sm text-ink/60">
-                                        <span class="font-semibold text-ink/40 text-xs uppercase">Links: </span>
-                                        <span x-text="student.portfolio.links"></span>
-                                    </div>
-
-                                    <div class="flex flex-wrap gap-2">
-                                        <template x-for="file in portfolioFiles(student)" :key="file">
-                                            <span class="px-3 py-1.5 rounded-full bg-slate-100 text-xs text-ink/70" x-text="file"></span>
-                                        </template>
-                                        <span x-show="!portfolioFiles(student).length" class="text-sm text-ink/40">Belum ada portofolio.</span>
-                                    </div>
-                                </section>
-
-                                <div class="flex justify-end">
-                                    <a :href="'/admin/koreksi/' + student.id" class="btn-primary text-sm px-4 py-2">Buka Koreksi Essay</a>
-                                </div>
-                            </div>
+                        
+                        <div x-show="sortDropdownOpen" @click.away="sortDropdownOpen = false" x-cloak 
+                             class="absolute right-0 mt-2 w-56 bg-white border border-line rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                            <button @click="setSort('default')" class="w-full text-left px-5 py-3 text-sm hover:bg-slate-50 transition-colors" :class="sortBy === 'default' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Pendaftar Awal (Default)</button>
+                            <button @click="setSort('highest_score')" class="w-full text-left px-5 py-3 text-sm hover:bg-slate-50 transition-colors" :class="sortBy === 'highest_score' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Skor Tertinggi ke Terendah</button>
+                            <button @click="setSort('alphabetical')" class="w-full text-left px-5 py-3 text-sm hover:bg-slate-50 transition-colors" :class="sortBy === 'alphabetical' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Abjad (A - Z)</button>
                         </div>
-                    </article>
-                </template>
+                    </div>
+                </div>
+
+                {{-- The Table --}}
+                <div class="overflow-x-auto min-h-[400px]">
+                    <table class="w-full text-sm text-left whitespace-nowrap">
+                        <thead class="bg-white border-b border-line text-xs uppercase tracking-wide text-ink/50">
+                            <tr>
+                                <th class="px-5 py-4 font-semibold text-center w-16">No</th>
+                                <th class="px-5 py-4 font-semibold">Nama Santri</th>
+                                <th class="px-5 py-4 font-semibold text-center w-32">Test Kelar</th>
+                                <th class="px-5 py-4 font-semibold text-center w-32">Porto (Total)</th>
+                                <th class="px-5 py-4 font-semibold text-center w-32">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-line bg-white">
+                            {{-- Notice we loop over paginatedStudents here --}}
+                            <template x-for="(student, index) in paginatedStudents" :key="student.id">
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-5 py-4 text-center font-mono text-ink/50" x-text="(currentPage - 1) * itemsPerPage + index + 1"></td>
+                                    <td class="px-5 py-4">
+                                        <p class="font-bold text-slate-900 text-base" x-text="studentName(student)"></p>
+                                        <p class="text-xs text-ink/50" x-text="studentEmail(student)"></p>
+                                    </td>
+                                    <td class="px-5 py-4 text-center font-mono font-bold text-brand-blue text-base" x-text="testsDone(student)"></td>
+                                    <td class="px-5 py-4 text-center font-mono font-bold text-brand-orange text-base" x-text="portfolioFiles(student).length"></td>
+                                    <td class="px-5 py-4 text-center">
+                                        <button @click="activeStudent = student; setTimeout(() => modalAnim = true, 150)" 
+                                                class="bg-slate-800 text-white text-xs font-semibold px-5 py-2 rounded-lg hover:bg-slate-700 transition-colors">
+                                            Expand
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                            
+                            {{-- If search returns no results --}}
+                            <tr x-show="paginatedStudents.length === 0">
+                                <td colspan="5" class="px-5 py-12 text-center text-ink/40">
+                                    Pencarian tidak menemukan santri yang cocok.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Pagination Controls --}}
+                <div class="flex items-center justify-between px-6 py-4 border-t border-line bg-slate-50/50 rounded-b-2xl">
+                    <button @click="prevPage" :disabled="currentPage === 1" 
+                            class="px-4 py-2 text-sm font-medium border border-line rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        ← Sebelumnya
+                    </button>
+                    <span class="text-sm font-medium text-ink/60" x-text="`Halaman ${currentPage} dari ${totalPages}`"></span>
+                    <button @click="nextPage" :disabled="currentPage === totalPages" 
+                            class="px-4 py-2 text-sm font-medium border border-line rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        Selanjutnya →
+                    </button>
+                </div>
             </div>
         </div>
     </template>
 
     <div x-show="!loading && !error && !students.length" class="card p-8 text-center text-sm text-ink/40 rounded-3xl">
         Belum ada santri terdaftar.
+    </div>
+
+    {{-- 🌟 Detail Modal Popup 🌟 --}}
+    <div x-show="activeStudent" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div @click.away="modalAnim = false; setTimeout(() => activeStudent = null, 300)" 
+             x-show="activeStudent" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col relative border border-line">
+            
+            {{-- Popup Header --}}
+            <div class="sticky top-0 bg-white border-b border-line px-6 py-4 flex items-center justify-between z-10 rounded-t-3xl">
+                <div>
+                    <h2 class="font-display font-bold text-xl text-slate-900" x-text="activeStudent ? studentName(activeStudent) : ''"></h2>
+                    <p class="text-xs text-ink/50">Detail Potensi dan Hasil Ujian</p>
+                </div>
+                <button @click="modalAnim = false; setTimeout(() => activeStudent = null, 300)" class="p-2 rounded-full hover:bg-slate-100 text-ink/40 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Popup Content Grid --}}
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                {{-- Left Column: Compact Vertical Animated Analytics --}}
+                <div class="md:col-span-1 border border-line rounded-2xl p-5 bg-slate-50 flex flex-col items-center">
+                    <h3 class="font-display font-bold text-sm uppercase tracking-wide text-slate-800 w-full text-center mb-1">Analitik Karir</h3>
+                    <p class="text-[10px] text-ink/50 text-center mb-6">Prediksi bakat tertinggi</p>
+                    
+                    {{-- Notice the height is shorter here (h-36 instead of h-48) to keep it compact --}}
+                    <div class="flex items-end justify-between w-full h-36 gap-2 px-1">
+                        <template x-if="activeStudent && activeStudent.career_predictions">
+                            <template x-for="(score, role) in activeStudent.career_predictions" :key="role">
+                                <div class="flex flex-col items-center gap-2 w-full group relative">
+                                    <div class="absolute -top-10 bg-slate-800 text-white text-[10px] px-2 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg" x-text="role + ': ' + score + '%'"></div>
+                                    <span class="font-mono text-[9px] font-bold text-brand-green" x-text="score + '%'"></span>
+                                    
+                                    {{-- Vertical Bar --}}
+                                    <div class="w-6 h-28 rounded-full border border-slate-200 bg-white overflow-hidden shadow-inner flex flex-col justify-end">
+                                        <div class="w-full bg-gradient-to-t from-emerald-500 to-brand-green transition-all duration-1000 ease-out rounded-full"
+                                             :style="modalAnim ? `height: ${score}%` : 'height: 0%'"></div>
+                                    </div>
+                                    
+                                    <span class="text-[9px] font-semibold text-ink/60 text-center truncate w-full" x-text="role"></span>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Right Column: Test Results & Portfolio --}}
+                <div class="md:col-span-2 space-y-6">
+                    
+                    {{-- Portofolio Block --}}
+                    <section class="border border-line rounded-2xl p-5 border-l-4 border-l-brand-orange bg-white shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-display font-bold text-sm">Portfolio Uploaded</h3>
+                            <span class="text-[11px] font-semibold text-ink/40" x-text="activeStudent ? portfolioFiles(activeStudent).length + ' file(s)' : ''"></span>
+                        </div>
+
+                        <div x-show="activeStudent?.portfolio?.links" class="text-sm text-ink/60 mb-3 bg-slate-50 p-3 rounded-lg border border-line">
+                            <span class="font-semibold text-ink/60 text-xs uppercase block mb-1">Tautan Karya: </span>
+                            <a :href="activeStudent?.portfolio?.links" target="_blank" class="text-brand-blue hover:underline break-all" x-text="activeStudent?.portfolio?.links"></a>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            <template x-if="activeStudent">
+                                <template x-for="file in portfolioFiles(activeStudent)" :key="file">
+                                    <span class="px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs text-ink/70" x-text="file"></span>
+                                </template>
+                            </template>
+                            <span x-show="activeStudent && !portfolioFiles(activeStudent).length" class="text-sm text-ink/40 italic">Belum ada file portofolio yang diunggah.</span>
+                        </div>
+                    </section>
+
+                    {{-- Exam Scores List --}}
+                    <section class="border border-line rounded-2xl p-5 bg-white shadow-sm space-y-3">
+                        <h3 class="font-display font-bold text-sm mb-2">Skor per Ujian</h3>
+                        <template x-if="activeStudent">
+                            <div class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                <template x-for="group in revealBars(activeStudent)" :key="group.label">
+                                    <template x-for="item in group.items" :key="item.exam_id">
+                                        <div class="flex items-center justify-between p-3 rounded-lg border border-line hover:bg-slate-50 transition-colors">
+                                            <div class="min-w-0 pr-4">
+                                                <p class="text-xs font-semibold text-brand-blue uppercase tracking-wider mb-0.5" x-text="group.label"></p>
+                                                <p class="text-sm font-medium text-slate-800 truncate" x-text="item.title"></p>
+                                            </div>
+                                            <div class="flex items-center gap-4 shrink-0">
+                                                <span class="font-mono font-bold text-base text-brand-green" x-text="item.value + '%'"></span>
+                                                <button type="button"
+                                                        x-show="item.completed"
+                                                        @click.stop="allowRetake(activeStudent, item)"
+                                                        :disabled="item.retake_allowed || retakeBusy === (activeStudent.id + '-' + item.exam_id)"
+                                                        class="text-[10px] font-bold px-3 py-1.5 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-50 transition-colors"
+                                                        x-text="item.retake_allowed ? 'Izin Aktif' : 'Izinkan Ulang'"></button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+                    </section>
+
+                    {{-- Action Button --}}
+                    <div class="flex justify-end pt-2">
+                        <template x-if="activeStudent">
+                            <a :href="'/admin/koreksi/' + activeStudent.id" class="btn-primary text-sm px-6 py-2.5 shadow-md">Buka Halaman Koreksi Essay</a>
+                        </template>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
