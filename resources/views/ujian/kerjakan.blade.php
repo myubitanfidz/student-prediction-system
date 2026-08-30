@@ -1,185 +1,227 @@
 @extends('layouts.app')
-@section('title', 'Ujian')
+@section('title', 'Ujian — Talent Mapping')
 
 @section('content')
-<div x-data="examPage({{ (int) $examId }})" class="max-w-3xl mx-auto">
+<div x-data="examFlow({{ (int) $examId }})" class="min-h-[calc(100vh-4rem)] bg-[#F8F9FA] flex flex-col justify-center py-10 px-4">
 
-    <div x-show="loading" class="text-sm text-ink/40">Memuat soal...</div>
-    <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2 mb-4"></div>
+    {{-- ==================== SCREEN 1: DESKTOP - 11 (SUDAH SIAP?) ==================== --}}
+    <div x-show="step === 'ready'" x-cloak class="max-w-4xl w-full mx-auto text-center space-y-10">
+        <h1 class="font-display font-extrabold text-4xl sm:text-5xl text-slate-900 tracking-tight">
+            Sudah siap?
+        </h1>
 
-    <template x-if="!loading && exam">
-        <!-- SINGLE ROOT ELEMENT FOR TEMPLATE -->
-        <div>
-            {{-- Header --}}
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-                <div>
-                    <p class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium mb-2"
-                       :class="'tag-' + (exam.category ?? '').toLowerCase()" x-text="exam.category"></p>
-                    <h1 class="font-display font-bold text-2xl" x-text="exam.title"></h1>
-                    <p x-show="completed" class="text-sm text-ink/50 mt-1">Hasil ujian — Anda tidak dapat mengerjakan ulang tanpa izin guru.</p>
-                    <p x-show="retakeAllowed" class="text-sm text-brand-green mt-1">Izin ulang aktif — kerjakan kembali dari awal.</p>
-                </div>
-                <a href="{{ route('beranda') }}" class="text-sm font-medium text-brand-blue hover:underline shrink-0">← Beranda</a>
+        {{-- 3 Instruksi Card Container --}}
+        <div class="bg-[#ECEAE4] p-6 sm:p-10 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-6 shadow-xs">
+            <div class="bg-white p-8 rounded-2xl flex items-center justify-center text-center shadow-xs">
+                <p class="font-medium text-sm sm:text-base text-slate-800 leading-snug">
+                    Tidak ada jawaban yang benar atau salah
+                </p>
             </div>
-
-            {{-- ========== RESULTS MODE ========== --}}
-            <template x-if="completed">
-                <div class="space-y-4">
-                    
-                    <!-- Alpine SPS Prediction Results -->
-                    <template x-if="spsPrediction">
-                        <div class="p-6 bg-emerald-50 border border-emerald-200 rounded-xl mb-6">
-                            <h3 class="text-xl font-bold mb-2 text-emerald-800">Hasil Prediksi SPS</h3>
-                            <p class="mb-4 text-ink/80">Kecenderungan Terkuat kamu ada di bidang: <strong class="text-emerald-700 text-lg uppercase tracking-wide" x-text="spsPrediction.highest_inclination"></strong></p>
-                            
-                            <label class="block text-sm font-semibold mb-2 text-ink/70">Detail Skor Per Kategori (GCLWAMA):</label>
-                            <select class="border border-line p-2.5 rounded-lg w-full max-w-md bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <template x-for="(score, category) in spsPrediction.category_scores" :key="category">
-                                    <option x-text="category + ' - Prediksi: ' + score + '%'"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </template>
-                    
-                    <div class="card p-4 flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-ink/40">Ringkasan</p>
-                            <p class="font-display font-bold text-lg mt-0.5">
-                                <span x-text="correctCount"></span> benar
-                                <span class="text-ink/30 font-normal">/</span>
-                                <span x-text="mcTotal"></span> PG
-                            </p>
-                        </div>
-                        <span class="font-mono font-bold text-2xl text-brand-green" x-text="mcAccuracy + '%'"></span>
-                    </div>
-
-                    <template x-for="(item, i) in results" :key="item.id">
-                        <article class="card p-5 space-y-3"
-                                 :class="item.type === 'multiple_choice'
-                                    ? (item.is_correct ? 'border-l-4 border-l-brand-green' : 'border-l-4 border-l-rose-400')
-                                    : 'border-l-4 border-l-brand-orange'">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-ink/40 mb-1" x-text="'Soal ' + (i + 1)"></p>
-                                    <p class="font-medium" x-text="item.question_text"></p>
-                                </div>
-                                <template x-if="item.type === 'multiple_choice'">
-                                    <span class="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full"
-                                          :class="item.is_correct ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
-                                          x-text="item.is_correct ? 'Benar' : 'Salah'"></span>
-                                </template>
-                                <template x-if="item.type === 'essay'">
-                                    <span class="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Esai</span>
-                                </template>
-                            </div>
-
-                            <div class="text-sm space-y-1">
-                                <p class="text-ink/60">
-                                    <span class="font-medium text-ink/80">Jawaban Anda:</span>
-                                    <span x-text="item.student_answer || '—'"></span>
-                                </p>
-                                <template x-if="item.type === 'multiple_choice' && !item.is_correct">
-                                    <p class="text-brand-green">
-                                        <span class="font-medium">Kunci:</span>
-                                        <span x-text="item.correct_answer"></span>
-                                    </p>
-                                </template>
-                                <template x-if="item.type === 'essay'">
-                                    <p class="text-ink/50">
-                                        Nilai esai:
-                                        <span class="font-mono font-semibold text-ink"
-                                              x-text="item.score != null ? item.score + '%' : 'Belum dikoreksi'"></span>
-                                    </p>
-                                </template>
-                            </div>
-                        </article>
-                    </template>
-                </div>
-            </template>
-
-            {{-- ========== TAKING MODE — one question at a time ========== --}}
-            <template x-if="!completed && questions.length">
-                <div>
-                    <!-- ALpine Timer Display -->
-                    <div class="sticky top-0 bg-white p-4 shadow-sm mb-4 border border-rose-200 rounded-lg flex justify-between items-center z-10">
-                        <span class="font-bold text-rose-600">Sisa Waktu:</span>
-                        <span class="font-mono font-bold text-xl text-rose-600" x-text="formattedTime"></span>
-                    </div>
-                    
-                    <div class="card p-4 mb-6">
-                        <div class="flex justify-between text-xs font-medium text-ink/50 mb-2">
-                            <span>Progres pengerjaan</span>
-                            <span x-text="(currentIndex + 1) + ' / ' + questions.length + ' soal'"></span>
-                        </div>
-                        <div class="h-1.5 rounded-full bg-line overflow-hidden">
-                            <div class="h-full transition-all duration-300"
-                                 :class="'bg-brand-' + exam.warna"
-                                 :style="`width: ${((currentIndex + 1) / questions.length) * 100}%`"></div>
-                        </div>
-                    </div>
-
-                    <div class="card p-5 sm:p-6 space-y-4"
-                         x-show="currentQuestion"
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 translate-x-2"
-                         x-transition:enter-end="opacity-100 translate-x-0">
-                        <div class="flex items-center justify-between gap-2">
-                            <p class="text-xs font-semibold text-ink/40" x-text="'Soal ' + (currentIndex + 1)"></p>
-                            <span class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
-                                  :class="currentQuestion?.type === 'multiple_choice' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'"
-                                  x-text="currentQuestion?.type === 'multiple_choice' ? 'Pilihan Ganda' : 'Esai'"></span>
-                        </div>
-
-                        <p class="font-medium text-base sm:text-lg" x-text="currentQuestion?.question_text"></p>
-
-                        {{-- Multiple choice --}}
-                        <div class="space-y-2" x-show="currentQuestion?.type === 'multiple_choice'">
-                            <template x-for="opsi in (currentQuestion?.options || [])" :key="opsi">
-                                <label class="flex items-center gap-3 p-3 rounded-lg border border-line cursor-pointer has-[:checked]:border-brand-blue has-[:checked]:bg-brand-blue-soft transition-colors">
-                                    <input type="radio"
-                                           :name="'q-' + currentQuestion.id"
-                                           :value="opsi"
-                                           x-model="jawaban[currentQuestion.id]">
-                                    <span class="text-sm" x-text="opsi"></span>
-                                </label>
-                            </template>
-                        </div>
-
-                        {{-- Essay --}}
-                        <div x-show="currentQuestion?.type === 'essay'">
-                            <textarea rows="5"
-                                      placeholder="Tulis jawabanmu di sini..."
-                                      x-model="jawaban[currentQuestion.id]"
-                                      class="w-full rounded-lg border border-line p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-6">
-                        <button type="button" @click="prev()"
-                                :disabled="currentIndex === 0"
-                                class="px-4 py-2 rounded-lg border border-line text-sm font-medium text-ink/70 hover:bg-cloud disabled:opacity-40 disabled:cursor-not-allowed">
-                            Sebelumnya
-                        </button>
-
-                        <div class="flex gap-3">
-                            <button type="button" x-show="!isLast" @click="next()"
-                                    class="btn-primary text-sm px-5 py-2 w-full sm:w-auto">
-                                Selanjutnya
-                            </button>
-                            <button type="button" x-show="isLast" @click="submit()" :disabled="submitting"
-                                    class="btn-primary text-sm px-5 py-2 w-full sm:w-auto">
-                                <span x-show="!submitting">Selesai &amp; Kumpulkan</span>
-                                <span x-show="submitting">Mengirim...</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </template>
-
-            <div x-show="!completed && !questions.length && !loading" class="card p-8 text-center text-sm text-ink/40">
-                Belum ada soal pada ujian ini.
+            <div class="bg-white p-8 rounded-2xl flex items-center justify-center text-center shadow-xs">
+                <p class="font-medium text-sm sm:text-base text-slate-800 leading-snug">
+                    Jujur dengan diri sendiri
+                </p>
+            </div>
+            <div class="bg-white p-8 rounded-2xl flex items-center justify-center text-center shadow-xs">
+                <p class="font-medium text-sm sm:text-base text-slate-800 leading-snug">
+                    Pilih yang paling menggambarkan dirimu
+                </p>
             </div>
         </div>
-    </template>
+
+        <div>
+            <button type="button" @click="startExam()"
+                    class="bg-[#8C8C8C] hover:bg-[#737373] text-white font-extrabold text-base sm:text-lg px-12 py-3.5 rounded-2xl transition shadow-md active:scale-95">
+                Mari kita mulai!
+            </button>
+        </div>
+    </div>
+
+    {{-- ==================== SCREEN 2: DESKTOP - 12 (PENGERJAAN KUIS) ==================== --}}
+    <div x-show="step === 'exam'" x-cloak class="max-w-4xl w-full mx-auto space-y-8">
+        {{-- Top Bar Quiz --}}
+        <div class="flex items-center justify-between gap-4">
+            <div class="w-24 sm:w-36 h-9 bg-[#8C8C8C] rounded-lg"></div>
+
+            {{-- Progress Count & Bar --}}
+            <div class="flex-1 max-w-md space-y-1.5 text-center">
+                <p class="text-xs sm:text-sm font-semibold text-slate-700">
+                    Aku sudah mengerjakan <span class="font-bold text-slate-900" x-text="`${answeredCount}/${questions.length}`"></span>
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 h-3 rounded-full bg-[#D9D9D9] overflow-hidden">
+                        <div class="h-full bg-[#8C8C8C] transition-all duration-300"
+                             :style="`width: ${progressPercentage}%`"></div>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-slate-700 shrink-0" x-text="`${progressPercentage}%`"></span>
+                </div>
+            </div>
+
+            <a href="{{ route('beranda') }}" class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-800 text-xs sm:text-sm font-bold px-5 py-2 rounded-lg transition">
+                Keluar
+            </a>
+        </div>
+
+        {{-- Badge Kategori Soal --}}
+        <div class="text-center">
+            <span class="inline-block bg-[#D9D9D9] text-slate-800 font-bold text-xs uppercase tracking-wider px-6 py-1.5 rounded-full"
+                  x-text="exam?.title ?? 'QUIZ PENGETAHUAN'"></span>
+        </div>
+
+        {{-- Main Quiz Box --}}
+        <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-12 shadow-sm space-y-6">
+            <div class="inline-block bg-[#D9D9D9] text-slate-800 font-semibold text-xs px-4 py-1 rounded-full"
+                 x-text="`Pertanyaan ${currentIndex + 1}`"></div>
+
+            <h2 class="font-display font-bold text-lg sm:text-2xl text-slate-900 leading-relaxed"
+                x-text="currentQuestion?.question_text"></h2>
+
+            {{-- Opsi Pilihan Ganda --}}
+            <div class="space-y-3 pt-2" x-show="currentQuestion?.type === 'multiple_choice'">
+                <template x-for="(opsi, idx) in (currentQuestion?.options || [])" :key="idx">
+                    <label class="flex items-center gap-4 p-4 rounded-xl border border-slate-900/80 cursor-pointer transition-colors"
+                           :class="jawaban[currentQuestion.id] === opsi ? 'bg-slate-100 border-slate-950 font-bold' : 'hover:bg-slate-50'">
+                        <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi" x-model="jawaban[currentQuestion.id]" class="hidden">
+                        <span class="font-bold text-slate-900 text-sm sm:text-base" x-text="String.fromCharCode(65 + idx) + '.'"></span>
+                        <span class="text-sm sm:text-base text-slate-800" x-text="opsi"></span>
+                    </label>
+                </template>
+            </div>
+
+            {{-- Input Esai jika ada --}}
+            <div x-show="currentQuestion?.type === 'essay'" class="pt-2">
+                <textarea rows="4" placeholder="Tuliskan jawaban Anda di sini..." x-model="jawaban[currentQuestion.id]"
+                          class="w-full rounded-xl border border-slate-900/80 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"></textarea>
+            </div>
+        </div>
+
+        {{-- Navigasi Bawah --}}
+        <div class="flex items-center justify-between pt-2">
+            <button type="button" @click="prevQuestion()" :disabled="currentIndex === 0"
+                    class="bg-[#D9D9D9] hover:bg-[#C8C8C8] disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 rounded-2xl transition">
+                &lt; Sebelumnya
+            </button>
+
+            <button type="button" x-show="!isLast" @click="nextQuestion()"
+                    class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-900 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 rounded-2xl transition">
+                Selanjutnya &gt;
+            </button>
+
+            <button type="button" x-show="isLast" @click="finishExam()"
+                    class="bg-[#8C8C8C] hover:bg-[#737373] text-white font-bold text-sm sm:text-base px-8 py-3 rounded-2xl transition shadow active:scale-95">
+                Selesai &gt;
+            </button>
+        </div>
+    </div>
+
+    {{-- ==================== SCREEN 3: DESKTOP - 7 (MENGANALISIS BAKATMU) ==================== --}}
+    <div x-show="step === 'analyzing'" x-cloak class="max-w-xl w-full mx-auto text-center space-y-8 py-16">
+        <div class="space-y-2">
+            <h1 class="font-display font-black text-3xl sm:text-4xl text-slate-900">
+                Menganalisis bakatmu
+            </h1>
+            <p class="text-sm sm:text-base text-slate-600">
+                Kami sedang memetakan hasil jawaban mu!
+            </p>
+        </div>
+
+        {{-- Circular Placeholder Graphic --}}
+        <div class="w-48 h-48 sm:w-60 sm:h-60 mx-auto rounded-full bg-[#ECEAE4] flex items-center justify-center relative overflow-hidden border border-slate-200">
+            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#8C8C8C_1.5px,transparent_1.5px)] [background-size:12px_12px] animate-pulse"></div>
+        </div>
+
+        {{-- Horizontal Progress Animation --}}
+        <div class="max-w-md mx-auto h-3.5 rounded-full bg-[#D9D9D9] overflow-hidden p-0.5">
+            <div class="h-full bg-slate-800 rounded-full animate-[progress_2s_ease-in-out_infinite]" style="width: 70%"></div>
+        </div>
+    </div>
+
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('examFlow', (examId) => ({
+        examId,
+        step: 'ready', // 'ready' -> 'exam' -> 'analyzing'
+        exam: null,
+        questions: [],
+        currentIndex: 0,
+        jawaban: {},
+
+        get currentQuestion() {
+            return this.questions[this.currentIndex] || null;
+        },
+        get isLast() {
+            return this.currentIndex === (this.questions.length - 1);
+        },
+        get answeredCount() {
+            return Object.values(this.jawaban).filter(v => v !== undefined && v !== '').length;
+        },
+        get progressPercentage() {
+            if (!this.questions.length) return 0;
+            return Math.round((this.answeredCount / this.questions.length) * 100);
+        },
+
+        async init() {
+            try {
+                const res = await fetch(`/api/exams/${this.examId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const json = await res.json();
+                this.exam = json?.data?.exam;
+                this.questions = json?.data?.questions || [];
+            } catch (err) {
+                console.error(err);
+            }
+        },
+
+        startExam() {
+            this.step = 'exam';
+        },
+        nextQuestion() {
+            if (!this.isLast) this.currentIndex++;
+        },
+        prevQuestion() {
+            if (this.currentIndex > 0) this.currentIndex--;
+        },
+
+        async finishExam() {
+            this.step = 'analyzing';
+
+            const payloadAnswers = Object.entries(this.jawaban).map(([question_id, answer_text]) => ({
+                question_id: parseInt(question_id),
+                answer_text: answer_text
+            }));
+
+            try {
+                await fetch('/api/exams/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        exam_id: this.examId,
+                        answers: payloadAnswers
+                    })
+                });
+
+                // Tunda sejenak agar animasi loading menganalisis tampil
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2200);
+            } catch (err) {
+                console.error(err);
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+            }
+        }
+    }));
+});
+</script>
 @endsection

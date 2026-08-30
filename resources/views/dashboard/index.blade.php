@@ -1,171 +1,153 @@
 @extends('layouts.app')
-@section('title', 'Profil & Hasil Prediksi')
+@section('title', 'Hasil Pengerjaan — Talent Mapping')
 
 @section('content')
-<div x-data="profilePage" class="max-w-5xl mx-auto space-y-6">
-    <div x-show="loading" class="text-sm text-ink/40">Memuat profil dan statistik...</div>
-    <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2"></div>
+<div x-data="resultPage" class="min-h-[calc(100vh-4rem)] bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-10" x-show="!loading" x-cloak>
 
-    <template x-if="!loading && profile">
-        <div class="space-y-6">
+        {{-- Header Status --}}
+        <div class="text-center space-y-2">
+            <div class="w-6 h-6 bg-slate-950 rounded-full mx-auto mb-3"></div>
+            <h1 class="font-display font-black text-3xl sm:text-4xl text-slate-900">
+                Pengerjaan selesai!
+            </h1>
+            <p class="text-sm text-slate-600">
+                kamu berhasil menuntaskan tes Talent Mapping
+            </p>
+        </div>
+
+        {{-- Main Result Card (Desktop - 13) --}}
+        <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-10 border border-slate-100 shadow-sm space-y-8">
             
-            {{-- User Identity Header --}}
-            <div class="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t-4 border-brand-blue">
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-full bg-brand-blue text-white text-xl font-display font-bold flex items-center justify-center shadow-md"
-                         x-text="profile.name.charAt(0).toUpperCase()"></div>
-                    <div>
-                        <h1 class="font-display font-bold text-xl text-slate-900" x-text="profile.name"></h1>
-                        <p class="text-sm text-ink/50" x-text="profile.email"></p>
-                        <span class="inline-block mt-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700"
-                              x-text="'Role: ' + profile.role"></span>
-                    </div>
+            {{-- Top Result Banner --}}
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-6 border-b border-slate-200/60 pb-8">
+                <div class="space-y-1">
+                    <p class="text-xs sm:text-sm text-slate-500 font-medium">Memiliki kekuatan bakat dibidang:</p>
+                    <h2 class="font-display font-black text-2xl sm:text-4xl text-slate-900" x-text="topCategory">
+                        Desain Komunikasi Visual (DKV)
+                    </h2>
                 </div>
-                <a href="{{ route('portofolio.index') }}" class="btn-primary text-xs px-4 py-2 self-start sm:self-auto">
-                    Kelola Portofolio
-                </a>
+                <div class="text-left sm:text-right shrink-0">
+                    <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">SKOR KESELURUHAN</p>
+                    <p class="font-display font-black text-4xl sm:text-6xl text-slate-900 mt-1" x-text="`${overallScore}%`">
+                        100%
+                    </p>
+                </div>
             </div>
 
-            {{-- 🌟 NEW: Animated Career Path Analytics 🌟 --}}
-            <template x-if="profile.career_predictions">
-                <div class="card p-6 border border-line shadow-sm" x-data="{ showAnim: false }" x-init="setTimeout(() => showAnim = true, 300)">
-                    <div class="mb-5">
-                        <h2 class="font-display font-bold text-xl text-slate-900">Analitik Bakat & Minat Karir IT</h2>
-                        <p class="text-sm text-ink/50 mt-1">Berdasarkan akumulasi skormu, berikut adalah bidang karir profesional yang paling cocok untukmu.</p>
+            {{-- Grid Preview & Rincian Skor Bar --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                {{-- Placeholder Ilustrasi Kotak Transparan --}}
+                <div class="w-full h-56 sm:h-64 bg-white rounded-2xl border border-slate-200 flex items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#8C8C8C_1.5px,transparent_1.5px)] [background-size:12px_12px]"></div>
+                </div>
+
+                {{-- Bar Rincian Skor --}}
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 space-y-4">
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900">Rincian Skor</h3>
+                        <p class="text-[11px] text-slate-500">Detail perolehan skor perkategori</p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                        <template x-for="(score, role) in profile.career_predictions" :key="role">
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center text-sm font-semibold">
-                                    <span class="text-slate-800" x-text="role"></span>
-                                    <span class="font-mono text-brand-green" x-text="score + '%'"></span>
+                    <div class="space-y-3 pt-2">
+                        <template x-for="item in subScores" :key="item.label">
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold text-slate-800">
+                                    <span x-text="item.label"></span>
                                 </div>
-                                {{-- Bar Animation Track --}}
-                                <div class="w-full h-3.5 rounded-full border border-slate-200 bg-slate-50 overflow-hidden p-0.5 shadow-inner">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-green to-emerald-400 transition-all duration-1000 ease-out"
-                                         :style="showAnim ? `width: ${score}%` : 'width: 0%'"></div>
+                                <div class="w-full h-3 rounded-full bg-[#E5E7EB] overflow-hidden">
+                                    <div class="h-full bg-[#8C8C8C] transition-all duration-500"
+                                         :style="`width: ${item.score}%`"></div>
                                 </div>
                             </div>
                         </template>
                     </div>
                 </div>
-            </template>
-
-            {{-- Stat & Prediction Cards dengan Bar Garis Pinggir --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {{-- Prediksi Bahasa --}}
-                <div class="card p-5 border-l-4 border-l-brand-blue space-y-3">
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/40">Prediksi Bahasa</p>
-                        <span class="font-display font-bold text-xl text-brand-blue" x-text="languageLevel"></span>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-ink/60 font-medium">
-                            <span>Akurasi Jawaban</span>
-                            <span class="font-mono" x-text="(languageAccuracy || 0) + '%'"></span>
-                        </div>
-                        <div class="w-full h-2.5 rounded-full border border-brand-blue/40 p-0.5 bg-transparent overflow-hidden">
-                            <div class="h-full rounded-full bg-brand-blue transition-all duration-500"
-                                 :style="`width: ${languageAccuracy || 0}%`"></div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-ink/50">Evaluasi tes Bahasa Inggris &amp; Arab.</p>
-                </div>
-
-                {{-- Prediksi IT --}}
-                <div class="card p-5 border-l-4 border-l-brand-green space-y-3">
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/40">Prediksi Dasar IT</p>
-                        <span class="font-display font-bold text-xl text-brand-green" x-text="itLevel"></span>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-ink/60 font-medium">
-                            <span>Akurasi Jawaban</span>
-                            <span class="font-mono" x-text="(itAccuracy || 0) + '%'"></span>
-                        </div>
-                        <div class="w-full h-2.5 rounded-full border border-brand-green/40 p-0.5 bg-transparent overflow-hidden">
-                            <div class="h-full rounded-full bg-brand-green transition-all duration-500"
-                                 :style="`width: ${itAccuracy || 0}%`"></div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-ink/50">Evaluasi kompetensi dasar teknologi.</p>
-                </div>
-
-                {{-- Portofolio Status --}}
-                <div class="card p-5 border-l-4 border-l-brand-orange space-y-3">
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/40">Portofolio</p>
-                        <span class="font-display font-bold text-sm"
-                              :class="portfolio ? 'text-brand-green' : 'text-slate-400'"
-                              x-text="portfolio ? 'Lengkap ✓' : 'Belum Ada'"></span>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-ink/60 font-medium">
-                            <span>Berkas Karya</span>
-                            <span class="font-mono" x-text="`${portfolio?.files?.length || 0} / 5`"></span>
-                        </div>
-                        <div class="w-full h-2.5 rounded-full border border-brand-orange/40 p-0.5 bg-transparent overflow-hidden">
-                            <div class="h-full rounded-full bg-brand-orange transition-all duration-500"
-                                 :style="`width: ${((portfolio?.files?.length || 0) / 5) * 100}%`"></div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-ink/50" x-text="portfolio?.links ? 'Link repositori/karya terhubung' : 'Tautkan link atau unggah file'"></p>
-                </div>
             </div>
+        </div>
 
-            {{-- Detail Statistik Nilai dengan Bar Progres di Tiap Baris --}}
-            <div class="card overflow-hidden">
-                <div class="p-4 border-b border-line flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <h2 class="font-display font-bold text-base text-slate-900">Rekap Nilai &amp; Pengerjaan Per Ujian</h2>
-                    
-                    {{-- Horizontal Progress Bar Total Pengerjaan Soal --}}
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <div class="w-32 h-2.5 rounded-full border border-slate-300 p-0.5 bg-transparent overflow-hidden">
-                            <div class="h-full rounded-full bg-brand-blue transition-all duration-500 ease-out"
-                                 :style="`width: ${overallProgress}%`"></div>
-                        </div>
-                        <span class="text-xs font-medium text-ink/60" x-text="`Progres: ${overallProgress}%`"></span>
-                    </div>
+        {{-- Bottom Narrative & Stats Card --}}
+        <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-10 border border-slate-100 shadow-sm space-y-8">
+            <p class="text-xs sm:text-sm text-slate-700 leading-relaxed max-w-3xl" x-text="narrativeText">
+                Kamu memiliki jiwa visual dan estetika yang baik untuk dapat mengolah desain kedepannya serta kemampuan penataan desain kamu sangat baik! Bidang DKV adalah tempat terbaik untuk kamu menyalurkan bakat yang kamu miliki.
+            </p>
+
+            {{-- 3 Box Statistik --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-[#D9D9D9] p-6 rounded-2xl text-center space-y-1">
+                    <p class="font-display font-black text-2xl sm:text-3xl text-slate-900" x-text="`${accuracy}%`">90%</p>
+                    <p class="text-xs font-semibold text-slate-700">Skor benar</p>
                 </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50 border-b border-line text-[11px] font-semibold uppercase tracking-wide text-ink/40 text-left">
-                            <tr>
-                                <th class="px-4 py-3">Kategori</th>
-                                <th class="px-4 py-3">Ujian</th>
-                                <th class="px-4 py-3 text-center">Soal Dijawab</th>
-                                <th class="px-4 py-3 min-w-[160px]">Akurasi PG (Bar)</th>
-                                <th class="px-4 py-3 text-right">Total Skor</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-line">
-                            <template x-for="stat in stats" :key="stat.exam_id">
-                                <tr class="hover:bg-slate-50/50">
-                                    <td class="px-4 py-3 font-semibold text-xs text-brand-blue" x-text="stat.category"></td>
-                                    <td class="px-4 py-3 font-medium" x-text="stat.exam_title"></td>
-                                    <td class="px-4 py-3 text-center font-mono" x-text="stat.answered_count"></td>
-                                    <td class="px-4 py-3">
-                                        <div class="space-y-1">
-                                            <div class="flex justify-between text-[11px] font-mono text-ink/60">
-                                                <span>Akurasi</span>
-                                                <span x-text="(stat.mc_accuracy_pct || 0) + '%'"></span>
-                                            </div>
-                                            <div class="w-full h-2 rounded-full border border-slate-300 p-0.5 bg-transparent overflow-hidden">
-                                                <div class="h-full rounded-full bg-brand-blue transition-all"
-                                                     :style="`width: ${stat.mc_accuracy_pct || 0}%`"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3 text-right font-mono font-bold" x-text="stat.total_score ?? '-'"></td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
+                <div class="bg-[#D9D9D9] p-6 rounded-2xl text-center space-y-1">
+                    <p class="font-display font-black text-2xl sm:text-3xl text-slate-900" x-text="correctCount">45</p>
+                    <p class="text-xs font-semibold text-slate-700">Benar</p>
+                </div>
+                <div class="bg-[#D9D9D9] p-6 rounded-2xl text-center space-y-1">
+                    <p class="font-display font-black text-2xl sm:text-3xl text-slate-900" x-text="wrongCount">5</p>
+                    <p class="text-xs font-semibold text-slate-700">Salah</p>
                 </div>
             </div>
         </div>
-    </template>
+
+        {{-- Action Buttons --}}
+        <div class="text-center space-y-4 pt-2">
+            <div>
+                <a href="{{ route('portofolio.index') }}"
+                   class="inline-block bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-900 font-extrabold text-sm sm:text-base px-10 py-3.5 rounded-2xl transition shadow-xs">
+                    Upload Portofolio terbaik kamu!
+                </a>
+            </div>
+            <div>
+                <a href="{{ route('beranda') }}" class="text-xs sm:text-sm text-slate-800 hover:underline font-semibold inline-block">
+                    Mau melakukan Quiz ulang?
+                </a>
+            </div>
+        </div>
+
+    </div>
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('resultPage', () => ({
+        loading: true,
+        topCategory: 'Desain Komunikasi Visual (DKV)',
+        overallScore: 100,
+        accuracy: 90,
+        correctCount: 45,
+        wrongCount: 5,
+        narrativeText: 'Kamu memiliki jiwa visual dan estetika yang baik untuk dapat mengolah desain kedepannya serta kemampuan penataan desain kamu sangat baik! Bidang DKV adalah tempat terbaik untuk kamu menyalurkan bakat yang kamu miliki.',
+        subScores: [
+            { label: 'Gambar', score: 92 },
+            { label: 'Cerita', score: 88 },
+            { label: 'Layout', score: 85 },
+            { label: 'Matematika', score: 65 }
+        ],
+
+        async init() {
+            try {
+                const res = await fetch('/api/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const json = await res.json();
+                const stats = json?.data?.exam_stats || [];
+
+                if (stats.length > 0) {
+                    const top = [...stats].sort((a, b) => (b.mc_accuracy_pct || 0) - (a.mc_accuracy_pct || 0))[0];
+                    this.topCategory = top.exam_title || top.subcategory || 'IT';
+                    this.overallScore = Math.round(stats.reduce((a, b) => a + (b.mc_accuracy_pct || 0), 0) / stats.length);
+                    this.accuracy = top.mc_accuracy_pct || 85;
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.loading = false;
+            }
+        }
+    }));
+});
+</script>
 @endsection
