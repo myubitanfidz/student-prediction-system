@@ -10,8 +10,8 @@ Route::get('/register', fn () => view('auth.register'))->name('register');
 
 // Halaman Santri
 Route::get('/beranda', fn () => view('beranda.index'))->name('beranda');
-Route::get('/beranda/bahasa', fn () => view('beranda.bidang', ['kategori' => 'Bahasa']))->name('beranda.bahasa');
-Route::get('/beranda/it', fn () => view('beranda.bidang', ['kategori' => 'IT']))->name('beranda.it');
+Route::get('/beranda/bahasa', fn () => view('ujian.bahasa'))->name('beranda.bahasa');
+Route::get('/beranda/it', fn () => view('ujian.it'))->name('beranda.it');
 
 Route::get('/ujian/{id}', fn (string $id) => view('ujian.kerjakan', ['examId' => $id]))->name('ujian.kerjakan');
 Route::get('/portofolio', fn () => view('portofolio.index'))->name('portofolio.index');
@@ -24,4 +24,4 @@ Route::prefix('admin')->group(function () {
     Route::get('/koreksi/{userId}', fn (string $userId) => view('admin.koreksi', ['userId' => $userId]))->name('admin.koreksi');
     Route::get('/exams', fn () => view('admin.exams.index'))->name('admin.exams.index');
     Route::get('/exams/{id}/questions', fn (string $id) => view('admin.exams.questions', ['examId' => $id]))->name('admin.exams.questions');
-}); 
+});
