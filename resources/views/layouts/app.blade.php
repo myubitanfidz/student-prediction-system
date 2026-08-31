@@ -10,15 +10,19 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body x-data="{ profileOpen: false }"
-      x-init="if (!$store.auth.user) window.location.href = '/login'"
+<body x-data="{ profileOpen: false, pageLoaded: false }"
+      x-init="if (!$store.auth.user) window.location.href = '/login'; $nextTick(() => pageLoaded = true)"
       class="min-h-screen bg-[#FFFDF0] text-slate-800 flex flex-col">
 
     {{-- Topbar Ungu Terpadu --}}
     @include('layouts.partials.topbar')
 
-    {{-- Main Container Full Width --}}
-    <main class="flex-1 w-full">
+    {{-- Main Container Full Width dengan Animasi Transisi Halaman --}}
+    <main class="flex-1 w-full"
+          x-show="pageLoaded"
+          x-transition:enter="transition-all ease-out duration-500"
+          x-transition:enter-start="opacity-0 translate-y-3"
+          x-transition:enter-end="opacity-100 translate-y-0">
         @yield('content')
     </main>
 
