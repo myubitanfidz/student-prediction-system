@@ -24,18 +24,37 @@
         <h3 id="questionModalTitle" class="text-lg font-bold text-slate-900">Tambah Soal Baru</h3>
         <form id="questionForm" class="space-y-3">
             <input type="hidden" id="questionId" value="">
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-500">Tipe Soal</label>
-                <select id="type" onchange="toggleQuestionType(this.value)" class="w-full border rounded-lg p-2 text-sm mt-1" required>
-                    <option value="multiple_choice">Pilihan Ganda (PG)</option>
-                    <option value="essay">Esai</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-500">Teks Pertanyaan</label>
-                <textarea id="question_text" class="w-full border rounded-lg p-2 text-sm mt-1" rows="3" required></textarea>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500">Tipe Soal</label>
+                    <select id="type" onchange="toggleQuestionType(this.value)" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" required>
+                        <option value="multiple_choice">Pilihan Ganda (PG)</option>
+                        <option value="essay">Esai (Teks / Cerita)</option>
+                        <option value="image_upload">Upload Gambar (G)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500">Bagian GCLWAMA</label>
+                    <select id="gclwama_tag" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40">
+                        <option value="">-- Non-GCLWAMA --</option>
+                        <option value="G">G - Gambar (Karya Visual)</option>
+                        <option value="C">C - Cerita (Narrative/Story)</option>
+                        <option value="L">L - Layout (Tata Letak)</option>
+                        <option value="W">W - Warna (Color Harmony)</option>
+                        <option value="A_animasi">A - Animasi (Gerak Visual)</option>
+                        <option value="M">M - Matematika (Logika Angka)</option>
+                        <option value="A_algoritma">A - Algoritma (Flow Logika)</option>
+                    </select>
+                </div>
             </div>
 
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500">Teks Pertanyaan / Instruksi Tugas</label>
+                <textarea id="question_text" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" rows="3" required></textarea>
+            </div>
+
+            <!-- Bagian Opsi PG -->
             <div id="mcSection" class="space-y-2">
                 <label class="block text-xs font-semibold uppercase text-slate-500">Pilihan Jawaban (A, B, C, D)</label>
                 <input type="text" id="opt_0" placeholder="Pilihan A" class="w-full border rounded-lg p-2 text-sm">
@@ -87,9 +106,14 @@
             container.innerHTML = questionsCache.map((q, idx) => `
                 <div class="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
                     <div class="flex justify-between items-start gap-3">
-                        <span class="inline-block text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${q.type === 'multiple_choice' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
-                            ${q.type === 'multiple_choice' ? 'Pilihan Ganda' : 'Esai'}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                q.type === 'multiple_choice' ? 'bg-amber-100 text-amber-800' : (q.type === 'image_upload' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800')
+                            }">
+                                ${q.type === 'multiple_choice' ? 'Pilihan Ganda' : (q.type === 'image_upload' ? 'Upload Gambar' : 'Esai')}
+                            </span>
+                            ${q.gclwama_tag ? `<span class="inline-block text-xs font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Tag: ${q.gclwama_tag}</span>` : ''}
+                        </div>
                         <div class="flex gap-2 shrink-0">
                             <button onclick="openQuestionModal(${q.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1 rounded-lg">Edit</button>
                             <button onclick="deleteQuestion(${q.id})" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1">Hapus</button>
@@ -123,6 +147,7 @@
             document.getElementById('questionModalTitle').innerText = 'Edit Soal';
             document.getElementById('questionSubmitBtn').innerText = 'Simpan Perubahan';
             document.getElementById('type').value = q.type;
+            document.getElementById('gclwama_tag').value = q.gclwama_tag || '';
             document.getElementById('question_text').value = q.question_text;
             toggleQuestionType(q.type);
             if (q.type === 'multiple_choice' && q.options) {
@@ -164,6 +189,7 @@
 
         const body = {
             type,
+            gclwama_tag: document.getElementById('gclwama_tag').value || null,
             question_text: document.getElementById('question_text').value,
             options,
             correct_answer: correct,
@@ -199,7 +225,7 @@
     }
 
     function toggleQuestionType(val) {
-        document.getElementById('mcSection').classList.toggle('hidden', val === 'essay');
+        document.getElementById('mcSection').classList.toggle('hidden', val !== 'multiple_choice');
     }
 
     loadQuestions();

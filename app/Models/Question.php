@@ -13,13 +13,13 @@ class Question extends Model
 
     protected $fillable = [
         'exam_id',
-        'type',
+        'type',          // 'multiple_choice', 'essay', 'image_upload'
+        'gclwama_tag',   // 'G', 'C', 'L', 'W', 'A_animasi', 'M', 'A_algoritma'
         'question_text',
         'options',
         'correct_answer',
     ];
 
-    // Mencegah kebocoran kunci jawaban ke output JSON publik/santri
     protected $hidden = [
         'correct_answer',
     ];

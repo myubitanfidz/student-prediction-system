@@ -14,11 +14,8 @@ class StudentAnswer extends Model
         'user_id',
         'question_id',
         'answer_text',
+        'file_path',
         'score',
-    ];
-
-    protected $casts = [
-        'score' => 'float',
     ];
 
     public function user(): BelongsTo

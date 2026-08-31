@@ -111,7 +111,8 @@ class AdminExamController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'exam_id'        => 'required|exists:exams,id',
-            'type'           => 'required|in:multiple_choice,essay',
+            'type'           => 'required|in:multiple_choice,essay,image_upload',
+            'gclwama_tag'    => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
             'question_text'  => 'required|string',
             'options'        => 'nullable|array',
             'correct_answer' => 'nullable|string',
@@ -124,6 +125,7 @@ class AdminExamController extends Controller
         $question = Question::create([
             'exam_id'        => $request->exam_id,
             'type'           => $request->type,
+            'gclwama_tag'    => $request->gclwama_tag,
             'question_text'  => $request->question_text,
             'options'        => $request->type === 'multiple_choice' ? $request->options : null,
             'correct_answer' => $request->type === 'multiple_choice' ? $request->correct_answer : null,
@@ -145,7 +147,8 @@ class AdminExamController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'type'           => 'required|in:multiple_choice,essay',
+            'type'           => 'required|in:multiple_choice,essay,image_upload',
+            'gclwama_tag'    => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
             'question_text'  => 'required|string',
             'options'        => 'nullable|array',
             'correct_answer' => 'nullable|string',
@@ -157,6 +160,7 @@ class AdminExamController extends Controller
 
         $question->update([
             'type'           => $request->type,
+            'gclwama_tag'    => $request->gclwama_tag,
             'question_text'  => $request->question_text,
             'options'        => $request->type === 'multiple_choice' ? $request->options : null,
             'correct_answer' => $request->type === 'multiple_choice' ? $request->correct_answer : null,
