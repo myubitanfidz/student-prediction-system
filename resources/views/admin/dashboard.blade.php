@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Admin / Guru')
 
 @section('content')
-<div x-data="adminDashboardPage" class="max-w-6xl mx-auto space-y-6 relative">
+<div x-data="adminDashboardPage" class="max-w-6xl mx-auto mt-6 sm:mt-8 pb-12 px-4 space-y-6 relative">
     <div x-show="loading" class="text-sm text-ink/40">Memuat daftar santri...</div>
     <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2"></div>
 
@@ -78,7 +78,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-line bg-white">
-                            {{-- Notice we loop over paginatedStudents here --}}
                             <template x-for="(student, index) in paginatedStudents" :key="student.id">
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="px-5 py-4 text-center font-mono text-ink/50" x-text="(currentPage - 1) * itemsPerPage + index + 1"></td>
@@ -97,7 +96,6 @@
                                 </tr>
                             </template>
                             
-                            {{-- If search returns no results --}}
                             <tr x-show="paginatedStudents.length === 0">
                                 <td colspan="5" class="px-5 py-12 text-center text-ink/40">
                                     Pencarian tidak menemukan santri yang cocok.
@@ -158,7 +156,6 @@
                     <h3 class="font-display font-bold text-sm uppercase tracking-wide text-slate-800 w-full text-center mb-1">Analitik Karir</h3>
                     <p class="text-[10px] text-ink/50 text-center mb-6">Prediksi bakat tertinggi</p>
                     
-                    {{-- Notice the height is shorter here (h-36 instead of h-48) to keep it compact --}}
                     <div class="flex items-end justify-between w-full h-36 gap-2 px-1">
                         <template x-if="activeStudent && activeStudent.career_predictions">
                             <template x-for="(score, role) in activeStudent.career_predictions" :key="role">
@@ -166,7 +163,6 @@
                                     <div class="absolute -top-10 bg-slate-800 text-white text-[10px] px-2 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg" x-text="role + ': ' + score + '%'"></div>
                                     <span class="font-mono text-[9px] font-bold text-brand-green" x-text="score + '%'"></span>
                                     
-                                    {{-- Vertical Bar --}}
                                     <div class="w-6 h-28 rounded-full border border-slate-200 bg-white overflow-hidden shadow-inner flex flex-col justify-end">
                                         <div class="w-full bg-gradient-to-t from-emerald-500 to-brand-green transition-all duration-1000 ease-out rounded-full"
                                              :style="modalAnim ? `height: ${score}%` : 'height: 0%'"></div>

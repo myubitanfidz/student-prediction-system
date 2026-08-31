@@ -2,7 +2,7 @@
 @section('title', 'Koreksi Jawaban')
 
 @section('content')
-<div x-data="adminKoreksiPage" class="max-w-4xl mx-auto space-y-6">
+<div x-data="adminKoreksiPage" class="max-w-4xl mx-auto mt-6 sm:mt-8 pb-12 px-4 space-y-6">
     <div x-show="loading" class="text-sm text-ink/40">Memuat jawaban santri...</div>
     <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2"></div>
 
@@ -10,7 +10,7 @@
         <div class="space-y-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-brand-blue text-white text-base font-display font-bold flex items-center justify-center"
+                    <div class="w-12 h-12 rounded-full bg-brand-blue text-white text-base font-display font-bold flex items-center justify-center shadow-xs"
                          x-text="student.name.charAt(0).toUpperCase()"></div>
                     <div>
                         <h1 class="font-display font-bold text-xl" x-text="student.name"></h1>

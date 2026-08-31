@@ -2,7 +2,7 @@
 @section('title', 'Kelola Butir Soal')
 
 @section('content')
-<div class="max-w-5xl mx-auto space-y-6">
+<div class="max-w-5xl mx-auto mt-6 sm:mt-8 pb-12 px-4 sm:px-6 space-y-6">
     <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         <div>
             <a href="{{ route('admin.exams.index') }}" class="text-xs text-indigo-600 hover:underline font-semibold">← Kembali ke List Ujian</a>

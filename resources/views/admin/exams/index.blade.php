@@ -2,7 +2,7 @@
 @section('title', 'Kelola Paket Ujian')
 
 @section('content')
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="max-w-6xl mx-auto mt-6 sm:mt-8 pb-12 px-4 sm:px-6 space-y-6">
     <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-line">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Kelola Paket Ujian</h1>
