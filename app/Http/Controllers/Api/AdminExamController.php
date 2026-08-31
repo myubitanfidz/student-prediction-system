@@ -24,17 +24,30 @@ class AdminExamController extends Controller
     public function storeExam(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'category'    => 'required|string|max:100',
-            'subcategory' => 'required|string|max:100',
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'category'     => 'required|string|max:100',
+            'subcategory'  => 'required|string|max:100',
+            'title'        => 'required|string|max:255',
+            'period_title' => 'nullable|string|max:255',
+            'description'  => 'nullable|string',
+            'is_active'    => 'nullable|boolean',
+            'start_time'   => 'nullable|date',
+            'end_time'     => 'nullable|date|after_or_equal:start_time',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $exam = Exam::create($request->only(['category', 'subcategory', 'title', 'description']));
+        $exam = Exam::create([
+            'category'     => $request->category,
+            'subcategory'  => $request->subcategory,
+            'title'        => $request->title,
+            'period_title' => $request->period_title ?? 'PSB 2026/2027',
+            'description'  => $request->description,
+            'is_active'    => $request->boolean('is_active', true),
+            'start_time'   => $request->start_time,
+            'end_time'     => $request->end_time,
+        ]);
 
         return response()->json([
             'status'  => 'success',
@@ -52,17 +65,30 @@ class AdminExamController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'category'    => 'required|string|max:100',
-            'subcategory' => 'required|string|max:100',
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'category'     => 'required|string|max:100',
+            'subcategory'  => 'required|string|max:100',
+            'title'        => 'required|string|max:255',
+            'period_title' => 'nullable|string|max:255',
+            'description'  => 'nullable|string',
+            'is_active'    => 'nullable|boolean',
+            'start_time'   => 'nullable|date',
+            'end_time'     => 'nullable|date|after_or_equal:start_time',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $exam->update($request->only(['category', 'subcategory', 'title', 'description']));
+        $exam->update([
+            'category'     => $request->category,
+            'subcategory'  => $request->subcategory,
+            'title'        => $request->title,
+            'period_title' => $request->period_title ?? 'PSB 2026/2027',
+            'description'  => $request->description,
+            'is_active'    => $request->boolean('is_active', true),
+            'start_time'   => $request->start_time,
+            'end_time'     => $request->end_time,
+        ]);
 
         return response()->json([
             'status'  => 'success',
@@ -95,7 +121,6 @@ class AdminExamController extends Controller
             return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
         }
     
-        // Tampilkan kunci jawaban hanya untuk admin
         $exam->questions->makeVisible('correct_answer');
     
         return response()->json([
@@ -110,12 +135,13 @@ class AdminExamController extends Controller
     public function storeQuestion(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'exam_id'        => 'required|exists:exams,id',
-            'type'           => 'required|in:multiple_choice,essay,image_upload',
-            'gclwama_tag'    => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
-            'question_text'  => 'required|string',
-            'options'        => 'nullable|array',
-            'correct_answer' => 'nullable|string',
+            'exam_id'            => 'required|exists:exams,id',
+            'type'               => 'required|in:multiple_choice,essay,image_upload',
+            'time_limit_seconds' => 'nullable|integer|min:5|max:1800',
+            'gclwama_tag'        => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
+            'question_text'      => 'required|string',
+            'options'            => 'nullable|array',
+            'correct_answer'     => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -123,12 +149,13 @@ class AdminExamController extends Controller
         }
 
         $question = Question::create([
-            'exam_id'        => $request->exam_id,
-            'type'           => $request->type,
-            'gclwama_tag'    => $request->gclwama_tag,
-            'question_text'  => $request->question_text,
-            'options'        => $request->type === 'multiple_choice' ? $request->options : null,
-            'correct_answer' => $request->type === 'multiple_choice' ? $request->correct_answer : null,
+            'exam_id'            => $request->exam_id,
+            'type'               => $request->type,
+            'time_limit_seconds' => $request->time_limit_seconds ?? 60,
+            'gclwama_tag'        => $request->gclwama_tag,
+            'question_text'      => $request->question_text,
+            'options'            => $request->type === 'multiple_choice' ? $request->options : null,
+            'correct_answer'     => $request->type === 'multiple_choice' ? $request->correct_answer : null,
         ]);
 
         return response()->json([
@@ -147,11 +174,12 @@ class AdminExamController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'type'           => 'required|in:multiple_choice,essay,image_upload',
-            'gclwama_tag'    => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
-            'question_text'  => 'required|string',
-            'options'        => 'nullable|array',
-            'correct_answer' => 'nullable|string',
+            'type'               => 'required|in:multiple_choice,essay,image_upload',
+            'time_limit_seconds' => 'nullable|integer|min:5|max:1800',
+            'gclwama_tag'        => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
+            'question_text'      => 'required|string',
+            'options'            => 'nullable|array',
+            'correct_answer'     => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -159,11 +187,12 @@ class AdminExamController extends Controller
         }
 
         $question->update([
-            'type'           => $request->type,
-            'gclwama_tag'    => $request->gclwama_tag,
-            'question_text'  => $request->question_text,
-            'options'        => $request->type === 'multiple_choice' ? $request->options : null,
-            'correct_answer' => $request->type === 'multiple_choice' ? $request->correct_answer : null,
+            'type'               => $request->type,
+            'time_limit_seconds' => $request->time_limit_seconds ?? 60,
+            'gclwama_tag'        => $request->gclwama_tag,
+            'question_text'      => $request->question_text,
+            'options'            => $request->type === 'multiple_choice' ? $request->options : null,
+            'correct_answer'     => $request->type === 'multiple_choice' ? $request->correct_answer : null,
         ]);
 
         return response()->json([

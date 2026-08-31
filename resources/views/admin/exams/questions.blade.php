@@ -20,12 +20,12 @@
 
 <!-- Modal Tambah / Edit Soal -->
 <div id="questionModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
-    <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 my-8 shadow-xl">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-4 my-8 shadow-xl">
         <h3 id="questionModalTitle" class="text-lg font-bold text-slate-900">Tambah Soal Baru</h3>
         <form id="questionForm" class="space-y-3">
             <input type="hidden" id="questionId" value="">
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-500">Tipe Soal</label>
                     <select id="type" onchange="toggleQuestionType(this.value)" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" required>
@@ -35,16 +35,20 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500">Waktu (Detik)</label>
+                    <input type="number" id="time_limit_seconds" min="5" max="1800" value="60" placeholder="60" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" required>
+                </div>
+                <div>
                     <label class="block text-xs font-semibold uppercase text-slate-500">Bagian GCLWAMA</label>
                     <select id="gclwama_tag" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40">
-                        <option value="">-- Non-GCLWAMA --</option>
-                        <option value="G">G - Gambar (Karya Visual)</option>
-                        <option value="C">C - Cerita (Narrative/Story)</option>
-                        <option value="L">L - Layout (Tata Letak)</option>
-                        <option value="W">W - Warna (Color Harmony)</option>
-                        <option value="A_animasi">A - Animasi (Gerak Visual)</option>
-                        <option value="M">M - Matematika (Logika Angka)</option>
-                        <option value="A_algoritma">A - Algoritma (Flow Logika)</option>
+                        <option value="">Non-GCLWAMA</option>
+                        <option value="G">G - Gambar</option>
+                        <option value="C">C - Cerita</option>
+                        <option value="L">L - Layout</option>
+                        <option value="W">W - Warna</option>
+                        <option value="A_animasi">A - Animasi</option>
+                        <option value="M">M - Matematika</option>
+                        <option value="A_algoritma">A - Algoritma</option>
                     </select>
                 </div>
             </div>
@@ -69,7 +73,7 @@
             </div>
 
             <div class="flex justify-end space-x-2 pt-3">
-                <button type="button" onclick="closeQuestionModal()" class="px-4 py-2 border rounded-lg text-sm">Batal</button>
+                <button type="button" onclick="closeQuestionModal()" class="px-4 py-2 border rounded-lg text-sm font-semibold">Batal</button>
                 <button type="submit" id="questionSubmitBtn" class="btn-primary text-sm px-4 py-2">Simpan Soal</button>
             </div>
         </form>
@@ -112,6 +116,7 @@
                             }">
                                 ${q.type === 'multiple_choice' ? 'Pilihan Ganda' : (q.type === 'image_upload' ? 'Upload Gambar' : 'Esai')}
                             </span>
+                            <span class="inline-block text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">⏱ ${q.time_limit_seconds || 60}s</span>
                             ${q.gclwama_tag ? `<span class="inline-block text-xs font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Tag: ${q.gclwama_tag}</span>` : ''}
                         </div>
                         <div class="flex gap-2 shrink-0">
@@ -147,6 +152,7 @@
             document.getElementById('questionModalTitle').innerText = 'Edit Soal';
             document.getElementById('questionSubmitBtn').innerText = 'Simpan Perubahan';
             document.getElementById('type').value = q.type;
+            document.getElementById('time_limit_seconds').value = q.time_limit_seconds || 60;
             document.getElementById('gclwama_tag').value = q.gclwama_tag || '';
             document.getElementById('question_text').value = q.question_text;
             toggleQuestionType(q.type);
@@ -160,6 +166,7 @@
         } else {
             document.getElementById('questionModalTitle').innerText = 'Tambah Soal Baru';
             document.getElementById('questionSubmitBtn').innerText = 'Simpan Soal';
+            document.getElementById('time_limit_seconds').value = 60;
             toggleQuestionType('multiple_choice');
         }
 
@@ -189,6 +196,7 @@
 
         const body = {
             type,
+            time_limit_seconds: parseInt(document.getElementById('time_limit_seconds').value) || 60,
             gclwama_tag: document.getElementById('gclwama_tag').value || null,
             question_text: document.getElementById('question_text').value,
             options,

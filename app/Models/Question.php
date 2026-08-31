@@ -13,8 +13,9 @@ class Question extends Model
 
     protected $fillable = [
         'exam_id',
-        'type',          // 'multiple_choice', 'essay', 'image_upload'
-        'gclwama_tag',   // 'G', 'C', 'L', 'W', 'A_animasi', 'M', 'A_algoritma'
+        'type',
+        'time_limit_seconds',
+        'gclwama_tag',
         'question_text',
         'options',
         'correct_answer',
@@ -25,7 +26,8 @@ class Question extends Model
     ];
 
     protected $casts = [
-        'options' => 'array',
+        'options'            => 'array',
+        'time_limit_seconds' => 'integer',
     ];
 
     public function exam(): BelongsTo

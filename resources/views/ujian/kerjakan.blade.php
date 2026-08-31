@@ -4,11 +4,29 @@
 @section('content')
 <div x-data="examFlow({{ (int) $examId }})" class="min-h-[calc(100vh-4rem)] bg-[#F8F9FA] flex flex-col justify-center py-10 px-4">
 
+    {{-- ==================== SCREEN 0: KETIKA UJIAN DITUTUP / DILUAR JADWAL ==================== --}}
+    <div x-show="step === 'closed'" x-cloak class="max-w-xl w-full mx-auto text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
+        <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+            ⏱
+        </div>
+        <h2 class="font-display font-black text-2xl text-slate-900" x-text="periodTitle || 'Ujian Belum Tersedia'"></h2>
+        <p class="text-sm text-slate-600 leading-relaxed" x-text="lockMessage"></p>
+        <div>
+            <a href="{{ route('beranda') }}" class="btn-primary inline-block text-xs px-6 py-2.5">
+                ← Kembali ke Beranda
+            </a>
+        </div>
+    </div>
+
     {{-- ==================== SCREEN 1: DESKTOP - 11 (SUDAH SIAP?) ==================== --}}
     <div x-show="step === 'ready'" x-cloak class="max-w-4xl w-full mx-auto text-center space-y-10">
-        <h1 class="font-display font-extrabold text-4xl sm:text-5xl text-slate-900 tracking-tight">
-            Sudah siap?
-        </h1>
+        <div class="space-y-2">
+            <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+                  x-text="exam?.period_title || 'PSB 2026/2027'"></span>
+            <h1 class="font-display font-extrabold text-4xl sm:text-5xl text-slate-900 tracking-tight">
+                Sudah siap?
+            </h1>
+        </div>
 
         {{-- 3 Instruksi Card Container --}}
         <div class="bg-[#ECEAE4] p-6 sm:p-10 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-6 shadow-xs">
@@ -24,7 +42,7 @@
             </div>
             <div class="bg-white p-8 rounded-2xl flex items-center justify-center text-center shadow-xs">
                 <p class="font-medium text-sm sm:text-base text-slate-800 leading-snug">
-                    Pilih yang paling menggambarkan dirimu
+                    Tiap soal memiliki batas waktu khusus
                 </p>
             </div>
         </div>
@@ -37,11 +55,18 @@
         </div>
     </div>
 
-    {{-- ==================== SCREEN 2: DESKTOP - 12 (PENGERJAAN KUIS) ==================== --}}
-    <div x-show="step === 'exam'" x-cloak class="max-w-4xl w-full mx-auto space-y-8">
+    {{-- ==================== SCREEN 2: DESKTOP - 12 (PENGERJAAN KUIS + TIMER PER SOAL) ==================== --}}
+    <div x-show="step === 'exam'" x-cloak class="max-w-4xl w-full mx-auto space-y-6">
+        
         {{-- Top Bar Quiz --}}
         <div class="flex items-center justify-between gap-4">
-            <div class="w-24 sm:w-36 h-9 bg-[#8C8C8C] rounded-lg"></div>
+            {{-- Timer Bar Per Soal --}}
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Waktu Soal:</span>
+                <span class="font-mono font-bold text-base sm:text-lg"
+                      :class="questionTimeRemaining <= 10 ? 'text-rose-600 animate-pulse' : 'text-slate-900'"
+                      x-text="questionTimeRemaining + 's'"></span>
+            </div>
 
             {{-- Progress Count & Bar --}}
             <div class="flex-1 max-w-md space-y-1.5 text-center">
@@ -60,6 +85,12 @@
             <a href="{{ route('beranda') }}" class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-800 text-xs sm:text-sm font-bold px-5 py-2 rounded-lg transition">
                 Keluar
             </a>
+        </div>
+
+        {{-- Waktu Mundur Progress Line --}}
+        <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-indigo-600 transition-all duration-1000 ease-linear"
+                 :style="`width: ${(questionTimeRemaining / currentQuestionTimeLimit) * 100}%`"></div>
         </div>
 
         {{-- Badge Kategori Soal --}}
@@ -166,12 +197,10 @@
             </p>
         </div>
 
-        {{-- Circular Placeholder Graphic --}}
         <div class="w-48 h-48 sm:w-60 sm:h-60 mx-auto rounded-full bg-[#ECEAE4] flex items-center justify-center relative overflow-hidden border border-slate-200">
             <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#8C8C8C_1.5px,transparent_1.5px)] [background-size:12px_12px] animate-pulse"></div>
         </div>
 
-        {{-- Horizontal Progress Animation --}}
         <div class="max-w-md mx-auto h-3.5 rounded-full bg-[#D9D9D9] overflow-hidden p-0.5">
             <div class="h-full bg-slate-800 rounded-full animate-[progress_2s_ease-in-out_infinite]" style="width: 70%"></div>
         </div>
@@ -183,13 +212,20 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('examFlow', (examId) => ({
         examId,
-        step: 'ready', // 'ready' -> 'exam' -> 'analyzing'
+        step: 'ready', // 'ready' -> 'exam' -> 'analyzing' -> 'closed'
         exam: null,
+        periodTitle: '',
+        lockMessage: '',
         questions: [],
         currentIndex: 0,
         jawaban: {},
         imageFiles: {},
         imagePreviews: {},
+        
+        // Timer state per soal
+        questionTimeRemaining: 60,
+        currentQuestionTimeLimit: 60,
+        timerInterval: null,
 
         get currentQuestion() {
             return this.questions[this.currentIndex] || null;
@@ -217,11 +253,39 @@ document.addEventListener('alpine:init', () => {
                     }
                 });
                 const json = await res.json();
+
+                if (res.status === 403) {
+                    this.step = 'closed';
+                    this.periodTitle = json?.period_title || 'Ujian Terkunci';
+                    this.lockMessage = json?.message || 'Ujian belum dapat diakses.';
+                    return;
+                }
+
                 this.exam = json?.data?.exam;
                 this.questions = json?.data?.questions || [];
             } catch (err) {
                 console.error(err);
             }
+        },
+
+        resetQuestionTimer() {
+            clearInterval(this.timerInterval);
+            this.currentQuestionTimeLimit = this.currentQuestion?.time_limit_seconds || 60;
+            this.questionTimeRemaining = this.currentQuestionTimeLimit;
+
+            this.timerInterval = setInterval(() => {
+                if (this.questionTimeRemaining > 0) {
+                    this.questionTimeRemaining--;
+                } else {
+                    clearInterval(this.timerInterval);
+                    // Waktu habis: Pindah otomatis ke soal berikutnya atau selesaikan jika di nomor terakhir
+                    if (this.isLast) {
+                        this.finishExam();
+                    } else {
+                        this.nextQuestion();
+                    }
+                }
+            }, 1000);
         },
 
         handleImageUpload(questionId, event) {
@@ -246,26 +310,32 @@ document.addEventListener('alpine:init', () => {
 
         startExam() {
             this.step = 'exam';
+            this.resetQuestionTimer();
         },
         nextQuestion() {
-            if (!this.isLast) this.currentIndex++;
+            if (!this.isLast) {
+                this.currentIndex++;
+                this.resetQuestionTimer();
+            }
         },
         prevQuestion() {
-            if (this.currentIndex > 0) this.currentIndex--;
+            if (this.currentIndex > 0) {
+                this.currentIndex--;
+                this.resetQuestionTimer();
+            }
         },
 
         async finishExam() {
+            clearInterval(this.timerInterval);
             this.step = 'analyzing';
 
             const formData = new FormData();
             formData.append('exam_id', this.examId);
 
-            // Append jawaban teks & PG
             Object.entries(this.jawaban).forEach(([question_id, answer_text], index) => {
                 formData.append(`answers[${index}][question_id]`, question_id);
                 formData.append(`answers[${index}][answer_text]`, answer_text);
 
-                // Append berkas jika tipe image_upload
                 if (this.imageFiles[question_id]) {
                     formData.append(`answers[${index}][file]`, this.imageFiles[question_id]);
                 }
@@ -294,4 +364,4 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
-@endsection
+@endsection 

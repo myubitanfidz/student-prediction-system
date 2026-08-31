@@ -10,6 +10,7 @@ use App\Models\StudentAnswer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ExamController extends Controller
@@ -26,13 +27,17 @@ class ExamController extends Controller
                 $completion = $completions->get($exam->id);
 
                 return [
-                    'id'             => $exam->id,
-                    'category'       => $exam->category,
-                    'subcategory'    => $exam->subcategory,
-                    'title'          => $exam->title,
-                    'description'    => $exam->description,
-                    'completed'      => (bool) $completion,
-                    'retake_allowed' => (bool) ($completion?->retake_allowed),
+                    'id'               => $exam->id,
+                    'category'         => $exam->category,
+                    'subcategory'      => $exam->subcategory,
+                    'title'            => $exam->title,
+                    'period_title'     => $exam->period_title,
+                    'description'      => $exam->description,
+                    'is_active'        => (bool) $exam->is_active,
+                    'start_time'       => $exam->start_time,
+                    'end_time'         => $exam->end_time,
+                    'completed'        => (bool) $completion,
+                    'retake_allowed'   => (bool) ($completion?->retake_allowed),
                 ];
             })
             ->groupBy('category');
@@ -52,13 +57,50 @@ class ExamController extends Controller
         }
 
         $user = $request->user();
+
+        // 1. Validasi Jadwal Periode PSB & Status Aktif (Khusus Santri)
+        if ($user->role === 'student') {
+            if (! $exam->is_active) {
+                return response()->json([
+                    'status'       => 'error',
+                    'period_title' => $exam->period_title,
+                    'message'      => 'Ujian ini sedang dinonaktifkan oleh administrator.',
+                ], 403);
+            }
+
+            $now = now();
+            if ($exam->start_time && $now->lt($exam->start_time)) {
+                return response()->json([
+                    'status'       => 'error',
+                    'period_title' => $exam->period_title,
+                    'message'      => "Ujian ({$exam->period_title}) belum dibuka. Waktu mulai: " . $exam->start_time->format('d M Y H:i'),
+                ], 403);
+            }
+
+            if ($exam->end_time && $now->gt($exam->end_time)) {
+                return response()->json([
+                    'status'       => 'error',
+                    'period_title' => $exam->period_title,
+                    'message'      => "Periode pengerjaan ({$exam->period_title}) telah berakhir pada: " . $exam->end_time->format('d M Y H:i'),
+                ], 403);
+            }
+        }
+
         $completion = ExamCompletion::where('user_id', $user->id)
             ->where('exam_id', $id)
             ->first();
 
-        $examPayload = $exam->only(['id', 'category', 'subcategory', 'title', 'description']);
+        $examPayload = [
+            'id'               => $exam->id,
+            'category'         => $exam->category,
+            'subcategory'      => $exam->subcategory,
+            'title'            => $exam->title,
+            'period_title'     => $exam->period_title,
+            'description'      => $exam->description,
+            'duration_minutes' => $exam->duration_minutes,
+        ];
 
-        // Finished & locked — show results only
+        // 2. Mode Hasil Selesai (Finished & Locked)
         if ($completion && ! $completion->retake_allowed) {
             $answers = StudentAnswer::where('user_id', $user->id)
                 ->whereIn('question_id', $exam->questions->pluck('id'))
@@ -74,54 +116,63 @@ class ExamController extends Controller
                 }
 
                 return [
-                    'id'              => $question->id,
-                    'category'        => $question->category, // Added category tracking
-                    'type'            => $question->type,
-                    'question_text'   => $question->question_text,
-                    'options'         => $question->options,
-                    'student_answer'  => $answer?->answer_text,
-                    'score'           => $answer?->score,
-                    'is_correct'      => $isCorrect,
-                    'correct_answer'  => $question->type === 'multiple_choice' ? $question->correct_answer : null,
+                    'id'                 => $question->id,
+                    'gclwama_tag'        => $question->gclwama_tag,
+                    'type'               => $question->type,
+                    'question_text'      => $question->question_text,
+                    'options'            => $question->options,
+                    'student_answer'     => $answer?->answer_text,
+                    'file_url'           => $answer?->file_path ? asset('storage/' . $answer->file_path) : null,
+                    'score'              => $answer?->score,
+                    'is_correct'         => $isCorrect,
+                    'correct_answer'     => $question->type === 'multiple_choice' ? $question->correct_answer : null,
                 ];
             })->values();
 
-            // --- SPS PREDICTION LOGIC ---
+            // --- Logika Agregasi Hasil GCLWAMA & 4 Karir IT ---
             $spsStats = [];
+            $careerPredictions = [];
             $highestCategory = null;
 
             if ($exam->subcategory === 'GCLWAMA') {
-                $categoryScores = [];
+                $tagScores = [
+                    'G'           => [],
+                    'C'           => [],
+                    'L'           => [],
+                    'W'           => [],
+                    'A_animasi'   => [],
+                    'M'           => [],
+                    'A_algoritma' => [],
+                ];
 
                 foreach ($results as $res) {
-                    $cat = $res['category'];
-                    if (!$cat) continue;
-
-                    if (!isset($categoryScores[$cat])) {
-                        $categoryScores[$cat] = ['total_score' => 0, 'count' => 0];
-                    }
-
-                    // Calculate score. Essays will have a null score until graded by a teacher.
-                    $score = $res['score'] ?? 0;
-                    $categoryScores[$cat]['total_score'] += (float)$score;
-                    $categoryScores[$cat]['count']++;
-                }
-
-                $maxScore = -1;
-                foreach ($categoryScores as $cat => $data) {
-                    $avg = $data['count'] > 0 ? ($data['total_score'] / $data['count']) : 0;
-                    $spsStats[$cat] = round($avg, 2);
-
-                    if ($avg > $maxScore) {
-                        $maxScore = $avg;
-                        $highestCategory = $cat;
+                    $tag = $res['gclwama_tag'];
+                    if ($tag && isset($tagScores[$tag]) && $res['score'] !== null) {
+                        $tagScores[$tag][] = (float) $res['score'];
                     }
                 }
 
-                // Sort so the highest inclination score is at the top of the array
-                arsort($spsStats);
+                $avgTag = [];
+                foreach ($tagScores as $tag => $scores) {
+                    $avgTag[$tag] = count($scores) > 0 ? round(array_sum($scores) / count($scores), 1) : 0;
+                }
+                $spsStats = $avgTag;
+
+                $calcCareer = function (...$tags) use ($avgTag) {
+                    $valid = collect($tags)->filter(fn ($t) => isset($avgTag[$t]));
+                    return $valid->count() > 0 ? round($valid->map(fn ($t) => $avgTag[$t])->average(), 1) : 0;
+                };
+
+                $careerPredictions = [
+                    'Komik'       => $calcCareer('G', 'W', 'A_animasi'),
+                    'DKV'         => $calcCareer('L', 'W'),
+                    'Videografi'  => $calcCareer('C', 'A_animasi'),
+                    'Programming' => $calcCareer('M', 'A_algoritma'),
+                ];
+
+                arsort($careerPredictions);
+                $highestCategory = array_key_first($careerPredictions);
             }
-            // -----------------------------
 
             return response()->json([
                 'status' => 'success',
@@ -133,13 +184,14 @@ class ExamController extends Controller
                     'results'        => $results,
                     'sps_prediction' => [
                         'highest_inclination' => $highestCategory,
-                        'category_scores'     => $spsStats
-                    ]
+                        'career_scores'       => $careerPredictions,
+                        'tag_scores'          => $spsStats,
+                    ],
                 ],
             ]);
         }
 
-        // Active attempt — shuffle questions (and MC options) each open
+        // 3. Mode Pengerjaan Aktif (Mengacak nomor dan opsi PG)
         $questions = $exam->questions->shuffle()->values()->map(function (Question $question) {
             $options = $question->options;
             if ($question->type === 'multiple_choice' && is_array($options)) {
@@ -147,11 +199,12 @@ class ExamController extends Controller
             }
 
             return [
-                'id'            => $question->id,
-                'category'      => $question->category, // Added category tracking
-                'type'          => $question->type,
-                'question_text' => $question->question_text,
-                'options'       => $options,
+                'id'                 => $question->id,
+                'gclwama_tag'        => $question->gclwama_tag,
+                'type'               => $question->type,
+                'time_limit_seconds' => $question->time_limit_seconds ?? 60,
+                'question_text'      => $question->question_text,
+                'options'            => $options,
             ];
         });
 
@@ -163,7 +216,7 @@ class ExamController extends Controller
                 'retake_allowed' => (bool) ($completion?->retake_allowed),
                 'questions'      => $questions,
                 'results'        => [],
-                'sps_prediction' => null
+                'sps_prediction' => null,
             ],
         ]);
     }
@@ -174,7 +227,8 @@ class ExamController extends Controller
             'exam_id'               => 'required|exists:exams,id',
             'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
-            'answers.*.answer_text' => 'required|string',
+            'answers.*.answer_text' => 'nullable|string',
+            'answers.*.file'        => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -199,21 +253,40 @@ class ExamController extends Controller
         $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
 
         DB::transaction(function () use ($request, $userId, $examId, $questions, $completion) {
+            // Jika izin ulang aktif, bersihkan jawaban lama
             if ($completion && $completion->retake_allowed) {
                 $examQuestionIds = Question::where('exam_id', $examId)->pluck('id');
+                $oldAnswers = StudentAnswer::where('user_id', $userId)
+                    ->whereIn('question_id', $examQuestionIds)
+                    ->get();
+
+                foreach ($oldAnswers as $old) {
+                    if ($old->file_path) {
+                        Storage::disk('public')->delete($old->file_path);
+                    }
+                }
+
                 StudentAnswer::where('user_id', $userId)
                     ->whereIn('question_id', $examQuestionIds)
                     ->delete();
             }
 
-            foreach ($request->answers as $ans) {
+            foreach ($request->answers as $index => $ans) {
                 $question = $questions->get($ans['question_id']);
                 $score = null;
+                $filePath = null;
 
+                // Auto-grading untuk Pilihan Ganda (PG)
                 if ($question?->type === 'multiple_choice') {
-                    $score = mb_strtolower(trim($ans['answer_text'])) === mb_strtolower(trim((string) $question->correct_answer))
+                    $score = mb_strtolower(trim((string) ($ans['answer_text'] ?? ''))) === mb_strtolower(trim((string) $question->correct_answer))
                         ? 100
                         : 0;
+                }
+
+                // Simpan berkas jika ada file upload (gambar G)
+                if ($request->hasFile("answers.{$index}.file")) {
+                    $uploadedFile = $request->file("answers.{$index}.file");
+                    $filePath = $uploadedFile->store('exam_answers', 'public');
                 }
 
                 StudentAnswer::updateOrCreate(
@@ -222,7 +295,8 @@ class ExamController extends Controller
                         'question_id' => $ans['question_id'],
                     ],
                     [
-                        'answer_text' => $ans['answer_text'],
+                        'answer_text' => $ans['answer_text'] ?? ($filePath ? '[Uploaded File]' : ''),
+                        'file_path'   => $filePath,
                         'score'       => $score,
                     ]
                 );
