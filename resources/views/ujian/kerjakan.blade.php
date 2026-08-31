@@ -70,13 +70,19 @@
 
         {{-- Main Quiz Box --}}
         <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-12 shadow-sm space-y-6">
-            <div class="inline-block bg-[#D9D9D9] text-slate-800 font-semibold text-xs px-4 py-1 rounded-full"
-                 x-text="`Pertanyaan ${currentIndex + 1}`"></div>
+            <div class="flex items-center gap-2">
+                <span class="inline-block bg-[#D9D9D9] text-slate-800 font-semibold text-xs px-4 py-1 rounded-full"
+                      x-text="`Pertanyaan ${currentIndex + 1}`"></span>
+                <template x-if="currentQuestion?.gclwama_tag">
+                    <span class="inline-block bg-indigo-100 text-indigo-800 font-bold text-xs px-2.5 py-0.5 rounded-full"
+                          x-text="`Tag: ${currentQuestion.gclwama_tag}`"></span>
+                </template>
+            </div>
 
             <h2 class="font-display font-bold text-lg sm:text-2xl text-slate-900 leading-relaxed"
                 x-text="currentQuestion?.question_text"></h2>
 
-            {{-- Opsi Pilihan Ganda --}}
+            {{-- 1. Opsi Pilihan Ganda --}}
             <div class="space-y-3 pt-2" x-show="currentQuestion?.type === 'multiple_choice'">
                 <template x-for="(opsi, idx) in (currentQuestion?.options || [])" :key="idx">
                     <label class="flex items-center gap-4 p-4 rounded-xl border border-slate-900/80 cursor-pointer transition-colors"
@@ -88,10 +94,45 @@
                 </template>
             </div>
 
-            {{-- Input Esai jika ada --}}
+            {{-- 2. Input Esai (Cerita / Teks) --}}
             <div x-show="currentQuestion?.type === 'essay'" class="pt-2">
-                <textarea rows="4" placeholder="Tuliskan jawaban Anda di sini..." x-model="jawaban[currentQuestion.id]"
+                <textarea rows="5" placeholder="Tuliskan jawaban atau narasi ceritamu di sini..." x-model="jawaban[currentQuestion.id]"
                           class="w-full rounded-xl border border-slate-900/80 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"></textarea>
+            </div>
+
+            {{-- 3. Input Upload Gambar (Khusus Tag G / image_upload) --}}
+            <div x-show="currentQuestion?.type === 'image_upload'" class="pt-2 space-y-4">
+                <label class="block w-full border-2 border-dashed border-slate-400 hover:border-slate-800 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition bg-slate-50/50 hover:bg-slate-50">
+                    <input type="file" accept="image/*" class="hidden" @change="handleImageUpload(currentQuestion.id, $event)">
+                    
+                    <div class="space-y-2">
+                        <svg class="w-10 h-10 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="font-bold text-sm sm:text-base text-slate-800">
+                            Klik atau seret foto/gambar karya kamu ke sini
+                        </p>
+                        <p class="text-xs text-slate-500">
+                            Mendukung JPG, PNG, WEBP (Maks. 10MB)
+                        </p>
+                    </div>
+                </label>
+
+                {{-- Image Preview Container --}}
+                <template x-if="imagePreviews[currentQuestion?.id]">
+                    <div class="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                        <div class="flex items-center gap-4 min-w-0">
+                            <img :src="imagePreviews[currentQuestion.id]" class="w-16 h-16 object-cover rounded-xl border border-emerald-300">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-emerald-900 truncate" x-text="imageFiles[currentQuestion.id]?.name"></p>
+                                <p class="text-[11px] text-emerald-700">Gambar berhasil dimuat ✓</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="removeUploadedImage(currentQuestion.id)" class="text-rose-600 hover:text-rose-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-rose-200 bg-white">
+                            Ganti / Hapus
+                        </button>
+                    </div>
+                </template>
             </div>
         </div>
 
@@ -147,6 +188,8 @@ document.addEventListener('alpine:init', () => {
         questions: [],
         currentIndex: 0,
         jawaban: {},
+        imageFiles: {},
+        imagePreviews: {},
 
         get currentQuestion() {
             return this.questions[this.currentIndex] || null;
@@ -155,7 +198,10 @@ document.addEventListener('alpine:init', () => {
             return this.currentIndex === (this.questions.length - 1);
         },
         get answeredCount() {
-            return Object.values(this.jawaban).filter(v => v !== undefined && v !== '').length;
+            const textAnswers = Object.keys(this.jawaban).filter(k => this.jawaban[k] !== undefined && this.jawaban[k] !== '');
+            const imageAnswers = Object.keys(this.imageFiles).filter(k => this.imageFiles[k] !== undefined && this.imageFiles[k] !== null);
+            const unionKeys = new Set([...textAnswers, ...imageAnswers]);
+            return unionKeys.size;
         },
         get progressPercentage() {
             if (!this.questions.length) return 0;
@@ -178,6 +224,26 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        handleImageUpload(questionId, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            this.imageFiles[questionId] = file;
+            this.jawaban[questionId] = `[Uploaded File: ${file.name}]`;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.imagePreviews[questionId] = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
+
+        removeUploadedImage(questionId) {
+            delete this.imageFiles[questionId];
+            delete this.imagePreviews[questionId];
+            delete this.jawaban[questionId];
+        },
+
         startExam() {
             this.step = 'exam';
         },
@@ -191,26 +257,30 @@ document.addEventListener('alpine:init', () => {
         async finishExam() {
             this.step = 'analyzing';
 
-            const payloadAnswers = Object.entries(this.jawaban).map(([question_id, answer_text]) => ({
-                question_id: parseInt(question_id),
-                answer_text: answer_text
-            }));
+            const formData = new FormData();
+            formData.append('exam_id', this.examId);
+
+            // Append jawaban teks & PG
+            Object.entries(this.jawaban).forEach(([question_id, answer_text], index) => {
+                formData.append(`answers[${index}][question_id]`, question_id);
+                formData.append(`answers[${index}][answer_text]`, answer_text);
+
+                // Append berkas jika tipe image_upload
+                if (this.imageFiles[question_id]) {
+                    formData.append(`answers[${index}][file]`, this.imageFiles[question_id]);
+                }
+            });
 
             try {
                 await fetch('/api/exams/submit', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        exam_id: this.examId,
-                        answers: payloadAnswers
-                    })
+                    body: formData
                 });
 
-                // Tunda sejenak agar animasi loading menganalisis tampil
                 setTimeout(() => {
                     window.location.href = '/dashboard';
                 }, 2200);
