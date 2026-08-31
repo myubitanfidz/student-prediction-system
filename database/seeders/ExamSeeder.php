@@ -11,77 +11,281 @@ class ExamSeeder extends Seeder
 {
     public function run(): void
     {
+        // 1. Akun Default Penguji & Santri
         User::firstOrCreate(['email' => 'guru@sekolah.sch.id'], [
-            'name' => 'Ustadz / Guru Penguji', 'password' => 'password123', 'role' => 'admin',
+            'name'     => 'Ustadz / Guru Penguji',
+            'password' => 'password123',
+            'role'     => 'admin',
         ]);
         User::firstOrCreate(['email' => 'guru2@sekolah.sch.id'], [
-            'name' => 'Bu Guru (Teacher)', 'password' => 'password123', 'role' => 'teacher',
+            'name'     => 'Bu Guru (Teacher)',
+            'password' => 'password123',
+            'role'     => 'teacher',
         ]);
         User::firstOrCreate(['email' => 'santri@sekolah.sch.id'], [
-            'name' => 'Ahmad Santri', 'password' => 'password123', 'role' => 'student',
+            'name'     => 'Ahmad Santri',
+            'password' => 'password123',
+            'role'     => 'student',
         ]);
 
+        // 2. Daftar Ujian & Butir Soal Terpadu
         $examList = [
-            ['category' => 'Bahasa', 'subcategory' => 'Inggris', 'title' => 'Tes Penempatan Bahasa Inggris', 'description' => 'Grammar, reading, dan writing dasar.', 'duration_minutes' => 30, 'questions' => [
-                ['category' => null, 'type' => 'multiple_choice', 'question_text' => 'Choose the correct form: “She ___ to the library every morning.”', 'options' => ['goes', 'go', 'going', 'gone'], 'correct_answer' => 'goes'],
-                ['category' => null, 'type' => 'essay', 'question_text' => 'Write 3–5 sentences introducing yourself and one learning goal.', 'options' => null, 'correct_answer' => null],
-            ]],
-            ['category' => 'Bahasa', 'subcategory' => 'Arab', 'title' => 'Tes Kemampuan Bahasa Arab', 'description' => 'Kosakata dan penyusunan kalimat sederhana.', 'duration_minutes' => 30, 'questions' => [
-                ['category' => null, 'type' => 'multiple_choice', 'question_text' => 'Apa arti kata Arab “كِتَابٌ”?', 'options' => ['Buku', 'Pena', 'Meja', 'Pintu'], 'correct_answer' => 'Buku'],
-                ['category' => null, 'type' => 'essay', 'question_text' => 'Tuliskan satu kalimat bahasa Arab tentang kegiatan sehari-hari beserta artinya.', 'options' => null, 'correct_answer' => null],
-            ]],
-            
-            // THE GCLWAMA SUPER TEST
-            // THE GCLWAMA SUPER TEST (21 Questions)
-            ['category' => 'IT', 'subcategory' => 'GCLWAMA', 'title' => 'Ujian Fundamental IT (GCLWAMA)', 'description' => 'Kombinasi Gambar, Cerita, Layout, Warna, Animasi, Matematika, dan Algoritma untuk SPS.', 'duration_minutes' => 30, 'questions' => [
-                
-                // 1. GAMBAR (Drawing) - 3 Questions
-                ['category' => 'Gambar', 'type' => 'multiple_choice', 'question_text' => 'Apa tujuan utama dari membuat sketsa (sketching) sebelum menggambar karya akhir?', 'options' => ['Menentukan komposisi dan bentuk dasar', 'Memberikan warna langsung', 'Menghapus latar belakang', 'Membuat gambar menjadi 3D'], 'correct_answer' => 'Menentukan komposisi dan bentuk dasar'],
-                ['category' => 'Gambar', 'type' => 'multiple_choice', 'question_text' => 'Dalam menggambar, titik di mana garis-garis sejajar tampak bertemu di kejauhan disebut...', 'options' => ['Titik Hilang (Vanishing Point)', 'Titik Fokus', 'Garis Horizon', 'Titik Buta'], 'correct_answer' => 'Titik Hilang (Vanishing Point)'],
-                ['category' => 'Gambar', 'type' => 'multiple_choice', 'question_text' => 'Fungsi utama memberikan arsiran (shading) pada sebuah gambar adalah...', 'options' => ['Memberikan kesan volume dan 3D', 'Memperjelas garis tepi (outline)', 'Menghapus kesalahan', 'Membuat gambar menjadi abstrak'], 'correct_answer' => 'Memberikan kesan volume dan 3D'],
+            // ==================== UJIAN BAHASA INGGRIS ====================
+            [
+                'category'         => 'Bahasa',
+                'subcategory'      => 'Inggris',
+                'title'            => 'Tes Penempatan Bahasa Inggris',
+                'description'      => 'Ujian penempatan grammar, reading, dan writing dasar.',
+                'duration_minutes' => 30,
+                'questions'        => [
+                    [
+                        'gclwama_tag'    => null,
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Choose the correct form: “She ___ to the library every morning.”',
+                        'options'        => ['goes', 'go', 'going', 'gone'],
+                        'correct_answer' => 'goes',
+                    ],
+                    [
+                        'gclwama_tag'    => null,
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Which sentence is in the Past Tense?',
+                        'options'        => ['He wrote a letter yesterday', 'He writes a letter', 'He is writing a letter', 'He will write a letter'],
+                        'correct_answer' => 'He wrote a letter yesterday',
+                    ],
+                    [
+                        'gclwama_tag'    => null,
+                        'type'           => 'essay',
+                        'question_text'  => 'Write 3–5 sentences introducing yourself, your hobby, and your main learning goal.',
+                        'options'        => null,
+                        'correct_answer' => null,
+                    ],
+                ],
+            ],
 
-                // 2. CERITA (Storytelling) - 3 Essays
-                ['category' => 'Cerita', 'type' => 'essay', 'question_text' => 'Tuliskan sebuah cerita pendek (1-2 paragraf) tentang seorang karakter yang menemukan pintu rahasia di kamarnya.', 'options' => null, 'correct_answer' => null],
-                ['category' => 'Cerita', 'type' => 'essay', 'question_text' => 'Deskripsikan secara detail penampilan fisik dan sifat dari karakter utama yang baru saja kamu buat di pertanyaan sebelumnya.', 'options' => null, 'correct_answer' => null],
-                ['category' => 'Cerita', 'type' => 'essay', 'question_text' => 'Buatlah sebuah dialog singkat antara karakter utamamu dengan penjaga pintu rahasia tersebut.', 'options' => null, 'correct_answer' => null],
+            // ==================== UJIAN BAHASA ARAB ====================
+            [
+                'category'         => 'Bahasa',
+                'subcategory'      => 'Arab',
+                'title'            => 'Tes Kemampuan Bahasa Arab',
+                'description'      => 'Ujian pemahaman kosakata, kaidah nahwu-sharaf, dan insya sederhana.',
+                'duration_minutes' => 30,
+                'questions'        => [
+                    [
+                        'gclwama_tag'    => null,
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Apa arti dari kata bahasa Arab “كِتَابٌ”?',
+                        'options'        => ['Buku', 'Pena', 'Meja', 'Pintu'],
+                        'correct_answer' => 'Buku',
+                    ],
+                    [
+                        'gclwama_tag'    => null,
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Manakah susunan jumlah ismiyyah yang benar di bawah ini?',
+                        'options'        => ['الطَّالِبُ نَشِيْطٌ', 'نَشِيْطٌ الطَّالِبُ', 'يَكْتُبُ الطَّالِبُ', 'طَالِبٌ فِي المَدْرَسَةِ'],
+                        'correct_answer' => 'الطَّالِبُ نَشِيْطٌ',
+                    ],
+                    [
+                        'gclwama_tag'    => null,
+                        'type'           => 'essay',
+                        'question_text'  => 'Tuliskan 2 kalimat bahasa Arab tentang kegiatan sehari-hari di pesantren beserta terjemahannya.',
+                        'options'        => null,
+                        'correct_answer' => null,
+                    ],
+                ],
+            ],
 
-                // 3. LAYOUT (Tata Letak) - 3 Questions
-                ['category' => 'Layout', 'type' => 'multiple_choice', 'question_text' => 'Dalam desain tata letak, area kosong di antara elemen-elemen desain disebut...', 'options' => ['White space / Negative space', 'Grid system', 'Typography', 'Margin border'], 'correct_answer' => 'White space / Negative space'],
-                ['category' => 'Layout', 'type' => 'multiple_choice', 'question_text' => 'Prinsip mengarahkan mata pembaca ke elemen paling penting terlebih dahulu disebut...', 'options' => ['Hierarki Visual', 'Kontras', 'Keseimbangan', 'Proporsi'], 'correct_answer' => 'Hierarki Visual'],
-                ['category' => 'Layout', 'type' => 'multiple_choice', 'question_text' => 'Membagi bidang desain menjadi 9 kotak yang sama besar untuk menempatkan objek utama disebut aturan...', 'options' => ['Rule of Thirds', 'Golden Ratio', 'Symmetry', 'Alignment'], 'correct_answer' => 'Rule of Thirds'],
+            // ==================== THE GCLWAMA SUPER TEST (IT) ====================
+            [
+                'category'         => 'IT',
+                'subcategory'      => 'GCLWAMA',
+                'title'            => 'Ujian Pemetaan Bakat IT (GCLWAMA)',
+                'description'      => 'Tes pemetaan minat dan bakat meliputi Gambar, Cerita, Layout, Warna, Animasi, Matematika, dan Algoritma.',
+                'duration_minutes' => 45,
+                'questions'        => [
 
-                // 4. WARNA (Colouring) - 3 Questions
-                ['category' => 'Warna', 'type' => 'multiple_choice', 'question_text' => 'Manakah di bawah ini yang merupakan warna primer murni?', 'options' => ['Merah, Kuning, Biru', 'Hijau, Oranye, Ungu', 'Hitam, Putih, Abu-abu', 'Cyan, Magenta, Cokelat'], 'correct_answer' => 'Merah, Kuning, Biru'],
-                ['category' => 'Warna', 'type' => 'multiple_choice', 'question_text' => 'Mode warna yang standar digunakan untuk tampilan layar digital (monitor/HP) adalah...', 'options' => ['RGB', 'CMYK', 'Grayscale', 'Pantone'], 'correct_answer' => 'RGB'],
-                ['category' => 'Warna', 'type' => 'multiple_choice', 'question_text' => 'Dua warna yang saling berhadapan di dalam roda warna (color wheel) disebut warna...', 'options' => ['Komplementer', 'Analogus', 'Monokromatik', 'Tersier'], 'correct_answer' => 'Komplementer'],
+                    // 1. G - GAMBAR (Foto / Image Upload Tugas)
+                    [
+                        'gclwama_tag'    => 'G',
+                        'type'           => 'image_upload',
+                        'question_text'  => 'Buatlah sketsa karakter/objek sederhana di kertas menggunakan pensil/pulpen, lalu foto dan unggah hasilnya di sini.',
+                        'options'        => null,
+                        'correct_answer' => null,
+                    ],
+                    [
+                        'gclwama_tag'    => 'G',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Dalam perspektif menggambar, titik di mana garis-garis sejajar tampak menyatu di kejauhan disebut...',
+                        'options'        => ['Titik Hilang (Vanishing Point)', 'Titik Fokus', 'Garis Horizon', 'Titik Buta'],
+                        'correct_answer' => 'Titik Hilang (Vanishing Point)',
+                    ],
+                    [
+                        'gclwama_tag'    => 'G',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Fungsi utama memberikan teknik arsiran (shading) pada sketsa objek adalah...',
+                        'options'        => ['Memberikan kesan volume, dimensi, dan pencahayaan', 'Menghilangkan garis bentuk dasar', 'Membuat gambar menjadi abstrak', 'Menyamarkan kesalahan garis'],
+                        'correct_answer' => 'Memberikan kesan volume, dimensi, dan pencahayaan',
+                    ],
 
-                // 5. ANIMASI (Animation) - 3 Questions
-                ['category' => 'Animasi', 'type' => 'multiple_choice', 'question_text' => 'Jumlah gambar statis yang ditampilkan per detik untuk menciptakan ilusi gerakan disebut...', 'options' => ['Frame Rate (FPS)', 'Resolusi', 'Aspect Ratio', 'Keyframe'], 'correct_answer' => 'Frame Rate (FPS)'],
-                ['category' => 'Animasi', 'type' => 'multiple_choice', 'question_text' => 'Prinsip animasi yang membuat objek terlihat lentur, seperti bola yang memipih saat jatuh ke tanah, disebut...', 'options' => ['Squash and Stretch', 'Anticipation', 'Timing', 'Exaggeration'], 'correct_answer' => 'Squash and Stretch'],
-                ['category' => 'Animasi', 'type' => 'multiple_choice', 'question_text' => 'Sketsa berurutan yang digunakan untuk merencanakan alur adegan animasi sebelum dibuat disebut...', 'options' => ['Storyboard', 'Script', 'Rigging', 'Rendering'], 'correct_answer' => 'Storyboard'],
+                    // 2. C - CERITA (Storytelling / Essay)
+                    [
+                        'gclwama_tag'    => 'C',
+                        'type'           => 'essay',
+                        'question_text'  => 'Tuliskan cerita pendek (1-2 paragraf) tentang seorang santri yang menemukan komputer tua misterius yang dapat memprogram masa depan.',
+                        'options'        => null,
+                        'correct_answer' => null,
+                    ],
+                    [
+                        'gclwama_tag'    => 'C',
+                        'type'           => 'essay',
+                        'question_text'  => 'Deskripsikan secara singkat sifat, kepribadian, dan ciri khas dari tokoh utama dalam cerita yang baru saja kamu tulis.',
+                        'options'        => null,
+                        'correct_answer' => null,
+                    ],
 
-                // 6. MATEMATIKA (Math) - 3 Questions
-                ['category' => 'Matematika', 'type' => 'multiple_choice', 'question_text' => 'Berapakah hasil dari operasi perhitungan berikut: 10 + 5 x 2 ?', 'options' => ['20', '30', '17', '15'], 'correct_answer' => '20'],
-                ['category' => 'Matematika', 'type' => 'multiple_choice', 'question_text' => 'Jika sebuah persegi panjang memiliki panjang 8 cm dan lebar 4 cm, berapakah luasnya?', 'options' => ['32 cm²', '24 cm²', '12 cm²', '16 cm²'], 'correct_answer' => '32 cm²'],
-                ['category' => 'Matematika', 'type' => 'multiple_choice', 'question_text' => 'Berapakah 20% dari angka 150?', 'options' => ['30', '20', '15', '50'], 'correct_answer' => '30'],
+                    // 3. L - LAYOUT (Tata Letak Desain)
+                    [
+                        'gclwama_tag'    => 'L',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Dalam tata letak desain grafis, area kosong di sekitar teks atau elemen grafis yang memberi ruang bernapas disebut...',
+                        'options'        => ['White Space / Negative Space', 'Grid Border', 'Margin Offset', 'Bleed Area'],
+                        'correct_answer' => 'White Space / Negative Space',
+                    ],
+                    [
+                        'gclwama_tag'    => 'L',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Prinsip desain yang mengatur ukuran, kontras, dan penempatan elemen agar mata audiens melihat info paling penting terlebih dahulu disebut...',
+                        'options'        => ['Hierarki Visual', 'Simetri', 'Proporsi', 'Keseimbangan Statis'],
+                        'correct_answer' => 'Hierarki Visual',
+                    ],
+                    [
+                        'gclwama_tag'    => 'L',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Aturan komposisi visual yang membagi layar menjadi 9 kotak simetris untuk menentukan titik fokus objek disebut...',
+                        'options'        => ['Rule of Thirds', 'Golden Ratio', 'Diagonal Alignment', 'Center Focal'],
+                        'correct_answer' => 'Rule of Thirds',
+                    ],
 
-                // 7. ALGORITMA (Algorithm) - 3 Questions
-                ['category' => 'Algoritma', 'type' => 'multiple_choice', 'question_text' => 'Dalam dasar pemrograman, apa itu sebuah "Variabel"?', 'options' => ['Tempat atau wadah untuk menyimpan nilai dan data', 'Perintah untuk menghentikan program', 'Error di dalam kode sintaks', 'Desain tampilan antarmuka (UI)'], 'correct_answer' => 'Tempat atau wadah untuk menyimpan nilai dan data'],
-                ['category' => 'Algoritma', 'type' => 'multiple_choice', 'question_text' => 'Struktur logika yang digunakan untuk membuat keputusan "Jika A terjadi, maka lakukan B" disebut...', 'options' => ['If-Else (Pengkondisian)', 'Loop (Perulangan)', 'Array', 'Function'], 'correct_answer' => 'If-Else (Pengkondisian)'],
-                ['category' => 'Algoritma', 'type' => 'multiple_choice', 'question_text' => 'Jika kita ingin komputer mencetak teks "Halo" sebanyak 100 kali tanpa menulis kodenya 100 kali, kita menggunakan...', 'options' => ['Looping (Perulangan)', 'Variabel', 'Database', 'Kalkulator'], 'correct_answer' => 'Looping (Perulangan)'],
-            ]],
+                    // 4. W - WARNA (Color Harmony & Modes)
+                    [
+                        'gclwama_tag'    => 'W',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Format mode warna standar yang digunakan untuk tampilan media layar digital (HP, monitor, web) adalah...',
+                        'options'        => ['RGB', 'CMYK', 'Grayscale', 'Pantone Spot'],
+                        'correct_answer' => 'RGB',
+                    ],
+                    [
+                        'gclwama_tag'    => 'W',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Dua warna yang posisinya saling berseberangan langsung pada roda warna (color wheel) dinamakan warna...',
+                        'options'        => ['Komplementer', 'Analogus', 'Monokromatik', 'Triadik'],
+                        'correct_answer' => 'Komplementer',
+                    ],
+                    [
+                        'gclwama_tag'    => 'W',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Kombinasi warna merah, kuning, dan biru dalam teori warna dasar digolongkan sebagai...',
+                        'options'        => ['Warna Primer', 'Warna Sekunder', 'Warna Tersier', 'Warna Netral'],
+                        'correct_answer' => 'Warna Primer',
+                    ],
+
+                    // 5. A - ANIMASI (Animation Principles & Motion)
+                    [
+                        'gclwama_tag'    => 'A_animasi',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Jumlah frame gambar individual yang ditampilkan dalam rentang satu detik untuk menghasilkan ilusi gerakan disebut...',
+                        'options'        => ['FPS (Frames Per Second)', 'DPI (Dots Per Inch)', 'Aspect Ratio', 'Keyframe Interval'],
+                        'correct_answer' => 'FPS (Frames Per Second)',
+                    ],
+                    [
+                        'gclwama_tag'    => 'A_animasi',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Prinsip animasi fundamental yang memberikan efek kelenturan dan elastisitas ketika sebuah objek bergerak atau menabrak bidang datar adalah...',
+                        'options'        => ['Squash and Stretch', 'Anticipation', 'Staging', 'Slow In and Slow Out'],
+                        'correct_answer' => 'Squash and Stretch',
+                    ],
+                    [
+                        'gclwama_tag'    => 'A_animasi',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Rangkaian gambar sketsa berurutan yang memetakan alur adegan video/animasi sebelum diproduksi dinamakan...',
+                        'options'        => ['Storyboard', 'Timeline Sequence', 'Rendering Map', 'Moodboard'],
+                        'correct_answer' => 'Storyboard',
+                    ],
+
+                    // 6. M - MATEMATIKA (Logika Angka)
+                    [
+                        'gclwama_tag'    => 'M',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Berapakah hasil dari operasi perhitungan urutan operator berikut: 12 + 6 × 3 - 4 ?',
+                        'options'        => ['26', '50', '22', '34'],
+                        'correct_answer' => '26',
+                    ],
+                    [
+                        'gclwama_tag'    => 'M',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Jika sebuah gambar beresolusi 1920 × 1080 piksel, rasio aspek (aspect ratio) perbandingannya adalah...',
+                        'options'        => ['16:9', '4:3', '21:9', '1:1'],
+                        'correct_answer' => '16:9',
+                    ],
+                    [
+                        'gclwama_tag'    => 'M',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Berapakah nilai 25% dari total 240 file aset grafis?',
+                        'options'        => ['60', '48', '75', '80'],
+                        'correct_answer' => '60',
+                    ],
+
+                    // 7. A - ALGORITMA (Computational Thinking & Code Flow)
+                    [
+                        'gclwama_tag'    => 'A_algoritma',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Dalam pemrograman dasar, sebuah container penampung memori untuk menyimpan nilai atau data yang dapat berubah disebut...',
+                        'options'        => ['Variabel', 'Konstanta Statis', 'Tipe Data Void', 'Loop Counter'],
+                        'correct_answer' => 'Variabel',
+                    ],
+                    [
+                        'gclwama_tag'    => 'A_algoritma',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Struktur kendali logika percabangan untuk mengeksekusi instruksi tertentu hanya jika syarat bernilai benar (True) adalah...',
+                        'options'        => ['If - Else', 'While Loop', 'Array Index', 'Function Callback'],
+                        'correct_answer' => 'If - Else',
+                    ],
+                    [
+                        'gclwama_tag'    => 'A_algoritma',
+                        'type'           => 'multiple_choice',
+                        'question_text'  => 'Proses menjalankan baris kode yang sama secara berulang-ulang hingga kondisi terminasi terpenuhi disebut...',
+                        'options'        => ['Looping (Perulangan)', 'Inheritance', 'Parsing', 'Compiling'],
+                        'correct_answer' => 'Looping (Perulangan)',
+                    ],
+                ],
+            ],
         ];
 
+        // 3. Masukkan ke Database
         foreach ($examList as $item) {
             $exam = Exam::updateOrCreate(
-                ['category' => $item['category'], 'subcategory' => $item['subcategory']],
-                ['title' => $item['title'], 'description' => $item['description'], 'duration_minutes' => $item['duration_minutes'] ?? 30],
+                [
+                    'category'    => $item['category'],
+                    'subcategory' => $item['subcategory'],
+                ],
+                [
+                    'title'            => $item['title'],
+                    'description'      => $item['description'],
+                    'duration_minutes' => $item['duration_minutes'] ?? 30,
+                ]
             );
 
             foreach ($item['questions'] as $question) {
                 Question::updateOrCreate(
-                    ['exam_id' => $exam->id, 'question_text' => $question['question_text']],
-                    ['type' => $question['type'], 'options' => $question['options'], 'correct_answer' => $question['correct_answer'], 'category' => $question['category'] ?? null],
+                    [
+                        'exam_id'       => $exam->id,
+                        'question_text' => $question['question_text'],
+                    ],
+                    [
+                        'gclwama_tag'    => $question['gclwama_tag'],
+                        'type'           => $question['type'],
+                        'options'        => $question['options'],
+                        'correct_answer' => $question['correct_answer'],
+                    ]
                 );
             }
         }
