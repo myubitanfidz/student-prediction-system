@@ -118,13 +118,9 @@
         {{-- Main Box Pertanyaan --}}
         <template x-if="currentQuestion">
             <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-12 shadow-sm space-y-6">
-                <div class="flex items-center gap-2">
+                <div>
                     <span class="inline-block bg-[#D9D9D9] text-slate-800 font-semibold text-xs px-4 py-1 rounded-full"
                           x-text="`Pertanyaan ${currentIndex + 1} dari ${questions.length}`"></span>
-                    <template x-if="currentQuestion?.gclwama_tag">
-                        <span class="inline-block bg-indigo-100 text-indigo-800 font-bold text-xs px-2.5 py-0.5 rounded-full"
-                              x-text="`Tag: ${currentQuestion.gclwama_tag}`"></span>
-                    </template>
                 </div>
 
                 <h2 class="font-display font-bold text-lg sm:text-2xl text-slate-900 leading-relaxed"
@@ -227,7 +223,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('examFlow', (examId) => ({
         examId,
-        step: 'loading', // 'loading' -> 'ready' | 'exam' | 'analyzing' | 'closed' | 'empty'
+        step: 'loading',
         exam: null,
         periodTitle: '',
         lockMessage: '',
@@ -407,4 +403,4 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
-@endsection
+@endsection 
