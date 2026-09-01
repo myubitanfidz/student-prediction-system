@@ -232,6 +232,7 @@ document.addEventListener('alpine:init', () => {
         lockMessage: '',
         questions: [],
         currentIndex: 0,
+        sessionNonce: '', // 🌟 Variabel Token Session
         jawaban: {},
         imageFiles: {},
         imagePreviews: {},
@@ -282,6 +283,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.exam = json?.data?.exam || null;
+                this.sessionNonce = this.exam?.session_nonce || ''; // 🌟 Tangkap Token Sesi
                 this.questions = json?.data?.questions || [];
 
                 if (json?.data?.completed && !json?.data?.retake_allowed) {
@@ -368,13 +370,13 @@ document.addEventListener('alpine:init', () => {
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
             const formData = new FormData();
             formData.append('exam_id', this.examId);
-
+            formData.append('session_nonce', this.sessionNonce); // 🌟 Lampirkan Token Sesi
+            
             let idx = 0;
             for (const q of this.questions) {
                 formData.append(`answers[${idx}][question_id]`, q.id);
                 formData.append(`answers[${idx}][answer_text]`, this.jawaban[q.id] || '');
                 
-                // Pastikan file terlampir jika berupa objek File/Blob
                 if (this.imageFiles[q.id] instanceof File) {
                     formData.append(`answers[${idx}][file]`, this.imageFiles[q.id]);
                 }
@@ -387,7 +389,6 @@ document.addEventListener('alpine:init', () => {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json'
-                        // Catatan: Jangan tambahkan 'Content-Type', biarkan browser menetapkan multipart/form-data boundary
                     },
                     body: formData
                 });

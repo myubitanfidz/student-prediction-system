@@ -11,14 +11,17 @@ class ExamCompletion extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'exam_id',
-        'completed_at',
-        'retake_allowed',
+        'user_id', 
+        'exam_id', 
+        'started_at',     // Baru
+        'session_nonce',  // Baru
+        'completed_at', 
+        'retake_allowed'
     ];
 
     protected $casts = [
-        'completed_at' => 'datetime',
+        'started_at'     => 'datetime',
+        'completed_at'   => 'datetime',
         'retake_allowed' => 'boolean',
     ];
 
