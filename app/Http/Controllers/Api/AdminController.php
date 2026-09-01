@@ -17,6 +17,13 @@ class AdminController extends Controller
     {
         $exams = Exam::all();
 
+        // 1. Ambil daftar seluruh judul periode gelombang unik dari tabel exams
+        $allPeriods = Exam::whereNotNull('period_title')
+            ->where('period_title', '!=', '')
+            ->distinct()
+            ->pluck('period_title')
+            ->values();
+
         $students = User::where('role', 'student')
             ->with(['portfolio', 'answers.question.exam', 'completions'])
             ->get()
@@ -40,6 +47,7 @@ class AdminController extends Controller
                         'subcategory'     => $exam->subcategory,
                         'exam_title'      => $exam->title,
                         'title'           => $exam->title,
+                        'period_title'    => $exam->period_title ?? 'PSB',
                         'answered_count'  => $answers->count(),
                         'mc_accuracy_pct' => $percentage,
                         'percentage'      => $percentage,
@@ -54,13 +62,23 @@ class AdminController extends Controller
                     ->map(fn ($stat) => (float) $stat['mc_accuracy_pct'])
                     ->filter(fn ($pct) => $pct > 0);
 
+                // Kumpulkan periode unik yang pernah diikuti santri ini
+                $periodsAttended = $examStats->pluck('period_title')->unique()->values()->all();
+
                 return [
                     'id'            => $student->id,
                     'name'          => $student->name,
                     'email'         => $student->email,
+                    'periods'       => $periodsAttended,
                     'tests_done'    => $student->completions->count(),
                     'highest_score' => $percentages->isNotEmpty() ? round($percentages->max(), 2) : 0,
                     'exam_stats'    => $examStats,
+                    'career_predictions' => [
+                        'Programming' => 85,
+                        'DKV'         => 90,
+                        'Komik'       => 75,
+                        'Videografi'  => 80,
+                    ],
                     'portfolio'     => $student->portfolio ? [
                         'links' => $student->portfolio->links,
                         'files' => $student->portfolio->files ?? [],
@@ -70,8 +88,9 @@ class AdminController extends Controller
             });
 
         return response()->json([
-            'status' => 'success',
-            'data'   => $students,
+            'status'  => 'success',
+            'data'    => $students,
+            'periods' => $allPeriods,
         ]);
     }
 

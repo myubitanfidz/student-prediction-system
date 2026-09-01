@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            {{-- 🌟 Data Table with Search, Filter Periode, Sort & Pagination 🌟 --}}
+            {{-- Data Table with Search, Filter Periode, Sort & Pagination --}}
             <div class="card shadow-sm border border-line rounded-2xl">
                 
                 {{-- Table Controls: Search, Filter Periode & Sort --}}
@@ -48,35 +48,56 @@
                         </svg>
                     </div>
 
-                    <!-- Right Controls: Filter Periode & Sort Dropdown -->
+                    <!-- Right Controls: Filter Periode Dropdown & Sort Menu -->
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                        <!-- Filter Periode Dropdown -->
-                        <div class="w-full sm:w-auto flex items-center gap-2">
-                            <label class="text-xs font-semibold uppercase text-slate-500 shrink-0">Periode:</label>
-                            <select x-model="filterPeriod" 
-                                    class="w-full sm:w-auto px-3.5 py-2 text-xs font-bold border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none text-slate-700">
-                                <option value="">Semua Periode / Gelombang</option>
+                        
+                        <!-- Filter Gelombang / Periode Dropdown -->
+                        <div class="relative w-full sm:w-auto">
+                            <button type="button" @click="periodDropdownOpen = !periodDropdownOpen" 
+                                    class="w-full sm:w-auto flex items-center justify-between gap-2.5 px-4 py-2 text-xs font-bold border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors text-slate-800 shadow-xs">
+                                <span class="flex items-center gap-1.5 truncate max-w-[200px]">
+                                    <span class="text-slate-400 font-normal">Gelombang:</span>
+                                    <span class="text-indigo-600" x-text="filterPeriod || 'Semua Periode'"></span>
+                                </span>
+                                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            
+                            <div x-show="periodDropdownOpen" @click.away="periodDropdownOpen = false" x-cloak 
+                                 class="absolute left-0 sm:left-auto sm:right-0 mt-2 w-64 bg-white border border-line rounded-2xl shadow-2xl z-30 py-1.5 overflow-hidden">
+                                <button type="button" @click="setPeriod('')" 
+                                        class="w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 flex items-center justify-between"
+                                        :class="!filterPeriod ? 'text-indigo-600 font-bold bg-indigo-50/60' : 'text-slate-700'">
+                                    <span>Semua Periode / Gelombang</span>
+                                    <span x-show="!filterPeriod">✓</span>
+                                </button>
+                                <div class="border-t border-slate-100 my-1"></div>
                                 <template x-for="p in availablePeriods" :key="p">
-                                    <option :value="p" x-text="p"></option>
+                                    <button type="button" @click="setPeriod(p)" 
+                                            class="w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 flex items-center justify-between"
+                                            :class="filterPeriod === p ? 'text-indigo-600 font-bold bg-indigo-50/60' : 'text-slate-700'">
+                                        <span class="truncate" x-text="p"></span>
+                                        <span x-show="filterPeriod === p">✓</span>
+                                    </button>
                                 </template>
-                            </select>
+                            </div>
                         </div>
 
                         <!-- Sort Popup Menu -->
                         <div class="relative w-full sm:w-auto">
-                            <button @click="sortDropdownOpen = !sortDropdownOpen" 
-                                    class="w-full sm:w-auto flex items-center justify-between gap-2.5 px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors text-slate-700">
+                            <button type="button" @click="sortDropdownOpen = !sortDropdownOpen" 
+                                    class="w-full sm:w-auto flex items-center justify-between gap-2.5 px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors text-slate-700 shadow-xs">
                                 <span x-text="sortBy === 'default' ? 'Urutkan: Default' : (sortBy === 'highest_score' ? 'Skor Tertinggi' : 'Abjad (A-Z)')"></span>
                                 <svg class="w-3.5 h-3.5 text-ink/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             
                             <div x-show="sortDropdownOpen" @click.away="sortDropdownOpen = false" x-cloak 
-                                 class="absolute right-0 mt-2 w-52 bg-white border border-line rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                                <button @click="setSort('default')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'default' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Pendaftar Awal (Default)</button>
-                                <button @click="setSort('highest_score')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'highest_score' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Skor Tertinggi ke Terendah</button>
-                                <button @click="setSort('alphabetical')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'alphabetical' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Abjad (A - Z)</button>
+                                 class="absolute right-0 mt-2 w-52 bg-white border border-line rounded-2xl shadow-2xl z-30 py-1.5 overflow-hidden">
+                                <button type="button" @click="setSort('default')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'default' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Pendaftar Awal (Default)</button>
+                                <button type="button" @click="setSort('highest_score')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'highest_score' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Skor Tertinggi ke Terendah</button>
+                                <button type="button" @click="setSort('alphabetical')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'alphabetical' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Abjad (A - Z)</button>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -112,7 +133,7 @@
                                     <td class="px-5 py-4 text-center font-mono font-bold text-brand-blue text-base" x-text="testsDone(student)"></td>
                                     <td class="px-5 py-4 text-center font-mono font-bold text-brand-orange text-base" x-text="portfolioFiles(student).length"></td>
                                     <td class="px-5 py-4 text-center">
-                                        <button @click="activeStudent = student; setTimeout(() => modalAnim = true, 150)" 
+                                        <button type="button" @click="activeStudent = student; setTimeout(() => modalAnim = true, 150)" 
                                                 class="bg-slate-800 text-white text-xs font-semibold px-5 py-2 rounded-lg hover:bg-slate-700 transition-colors">
                                             Expand
                                         </button>
@@ -122,7 +143,7 @@
                             
                             <tr x-show="paginatedStudents.length === 0">
                                 <td colspan="6" class="px-5 py-12 text-center text-ink/40">
-                                    Tidak ada santri yang cocok dengan filter pencarian / periode ini.
+                                    Tidak ada santri yang cocok dengan filter gelombang / pencarian ini.
                                 </td>
                             </tr>
                         </tbody>
@@ -131,12 +152,12 @@
 
                 {{-- Pagination Controls --}}
                 <div class="flex items-center justify-between px-6 py-4 border-t border-line bg-slate-50/50 rounded-b-2xl">
-                    <button @click="prevPage" :disabled="currentPage === 1" 
+                    <button type="button" @click="prevPage" :disabled="currentPage === 1" 
                             class="px-4 py-2 text-sm font-medium border border-line rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         ← Sebelumnya
                     </button>
                     <span class="text-sm font-medium text-ink/60" x-text="`Halaman ${currentPage} dari ${totalPages || 1}`"></span>
-                    <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" 
+                    <button type="button" @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" 
                             class="px-4 py-2 text-sm font-medium border border-line rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         Selanjutnya →
                     </button>
@@ -149,7 +170,7 @@
         Belum ada santri terdaftar.
     </div>
 
-    {{-- 🌟 Detail Modal Popup 🌟 --}}
+    {{-- Detail Modal Popup --}}
     <div x-show="activeStudent" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div @click.away="modalAnim = false; setTimeout(() => activeStudent = null, 300)" 
              x-show="activeStudent" 

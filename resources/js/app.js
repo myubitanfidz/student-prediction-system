@@ -159,7 +159,7 @@ Alpine.data('berandaPage', () => ({
 // ---------- 4. Pengerjaan Ujian (Flow UI & Timer Per Soal) ----------
 Alpine.data('examFlow', (examId) => ({
     examId,
-    step: 'ready',
+    step: 'loading',
     exam: null,
     periodTitle: '',
     lockMessage: '',
@@ -174,16 +174,16 @@ Alpine.data('examFlow', (examId) => ({
     timerInterval: null,
 
     get currentQuestion() {
+        if (!this.questions || this.questions.length === 0) return null;
         return this.questions[this.currentIndex] || null;
     },
     get isLast() {
-        return this.currentIndex === (this.questions.length - 1);
+        return this.currentIndex >= (this.questions.length - 1);
     },
     get answeredCount() {
-        const textAnswers = Object.keys(this.jawaban).filter(k => this.jawaban[k] !== undefined && this.jawaban[k] !== '');
-        const imageAnswers = Object.keys(this.imageFiles).filter(k => this.imageFiles[k] !== undefined && this.imageFiles[k] !== null);
-        const unionKeys = new Set([...textAnswers, ...imageAnswers]);
-        return unionKeys.size;
+        const textKeys = Object.keys(this.jawaban).filter(k => this.jawaban[k] !== undefined && this.jawaban[k] !== '');
+        const imgKeys = Object.keys(this.imageFiles).filter(k => this.imageFiles[k] !== undefined && this.imageFiles[k] !== null);
+        return new Set([...textKeys, ...imgKeys]).size;
     },
     get progressPercentage() {
         if (!this.questions.length) return 0;
@@ -191,10 +191,11 @@ Alpine.data('examFlow', (examId) => ({
     },
 
     async init() {
+        const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
         try {
             const res = await fetch(`/api/exams/${this.examId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
                 }
             });
@@ -207,16 +208,35 @@ Alpine.data('examFlow', (examId) => ({
                 return;
             }
 
-            this.exam = json?.data?.exam;
+            if (!res.ok) {
+                this.step = 'closed';
+                this.lockMessage = json?.message || 'Terjadi kendala saat memuat ujian.';
+                return;
+            }
+
+            this.exam = json?.data?.exam || null;
             this.questions = json?.data?.questions || [];
+
+            if (json?.data?.completed && !json?.data?.retake_allowed) {
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            if (this.questions.length === 0) {
+                this.step = 'empty';
+            } else {
+                this.step = 'ready';
+            }
         } catch (err) {
             console.error(err);
+            this.step = 'closed';
+            this.lockMessage = 'Gagal terhubung ke server.';
         }
     },
 
     resetQuestionTimer() {
         clearInterval(this.timerInterval);
-        this.currentQuestionTimeLimit = this.currentQuestion?.time_limit_seconds || 60;
+        this.currentQuestionTimeLimit = Number(this.currentQuestion?.time_limit_seconds) || 60;
         this.questionTimeRemaining = this.currentQuestionTimeLimit;
 
         this.timerInterval = setInterval(() => {
@@ -238,7 +258,7 @@ Alpine.data('examFlow', (examId) => ({
         if (!file) return;
 
         this.imageFiles[questionId] = file;
-        this.jawaban[questionId] = `[Uploaded File: ${file.name}]`;
+        this.jawaban[questionId] = `[Uploaded: ${file.name}]`;
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -254,15 +274,19 @@ Alpine.data('examFlow', (examId) => ({
     },
 
     startExam() {
+        if (!this.questions.length) return;
         this.step = 'exam';
+        this.currentIndex = 0;
         this.resetQuestionTimer();
     },
+
     nextQuestion() {
         if (!this.isLast) {
             this.currentIndex++;
             this.resetQuestionTimer();
         }
     },
+
     prevQuestion() {
         if (this.currentIndex > 0) {
             this.currentIndex--;
@@ -274,29 +298,34 @@ Alpine.data('examFlow', (examId) => ({
         clearInterval(this.timerInterval);
         this.step = 'analyzing';
 
+        const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
         const formData = new FormData();
         formData.append('exam_id', this.examId);
 
-        Object.entries(this.jawaban).forEach(([question_id, answer_text], index) => {
-            formData.append(`answers[${index}][question_id]`, question_id);
-            formData.append(`answers[${index}][answer_text]`, answer_text);
-
-            if (this.imageFiles[question_id]) {
-                formData.append(`answers[${index}][file]`, this.imageFiles[question_id]);
+        let idx = 0;
+        for (const q of this.questions) {
+            formData.append(`answers[${idx}][question_id]`, q.id);
+            formData.append(`answers[${idx}][answer_text]`, this.jawaban[q.id] || '');
+            if (this.imageFiles[q.id]) {
+                formData.append(`answers[${idx}][file]`, this.imageFiles[q.id]);
             }
-        });
+            idx++;
+        }
 
         try {
             await fetch('/api/exams/submit', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
                 },
                 body: formData
             });
 
-            window.notifySuccess('Ujian selesai & jawaban terkirim!');
+            if (window.notifySuccess) {
+                window.notifySuccess('Ujian selesai & jawaban terkirim!');
+            }
+
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 2000);
@@ -451,10 +480,12 @@ Alpine.data('adminDashboardPage', () => ({
     loading: true,
     error: '',
     students: [],
+    availablePeriods: [],
     searchQuery: '',
     filterPeriod: '',
     sortBy: 'default',
     sortDropdownOpen: false,
+    periodDropdownOpen: false,
     currentPage: 1,
     itemsPerPage: 10,
     activeStudent: null,
@@ -473,8 +504,20 @@ Alpine.data('adminDashboardPage', () => ({
         this.$watch('filterPeriod', () => { this.currentPage = 1; });
 
         try {
-            const json = await api.getAdminStudents();
-            this.students = json?.data ?? json ?? [];
+            const res = await api.getAdminStudents();
+            this.students = res?.data ?? [];
+            
+            // Ambil daftar periode global dari backend
+            if (res?.periods && Array.isArray(res.periods) && res.periods.length > 0) {
+                this.availablePeriods = res.periods;
+            } else {
+                const setP = new Set();
+                this.students.forEach(s => {
+                    (s.periods || []).forEach(p => setP.add(p));
+                    (s.exam_stats || []).forEach(e => { if (e.period_title) setP.add(e.period_title); });
+                });
+                this.availablePeriods = Array.from(setP);
+            }
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -483,7 +526,7 @@ Alpine.data('adminDashboardPage', () => ({
     },
 
     studentName(student) {
-        return student?.name || student?.student_name || student?.full_name || '-';
+        return student?.name || student?.student_name || '-';
     },
 
     studentEmail(student) {
@@ -501,31 +544,24 @@ Alpine.data('adminDashboardPage', () => ({
     },
 
     studentPeriods(s) {
+        if (Array.isArray(s.periods) && s.periods.length > 0) return s.periods;
         const periods = new Set();
-        const stats = s.exam_stats || [];
-        stats.forEach(a => {
+        (s.exam_stats || []).forEach(a => {
             if (a.period_title) periods.add(a.period_title);
         });
         return Array.from(periods);
     },
 
-    get availablePeriods() {
-        const all = new Set();
-        this.students.forEach(s => {
-            this.studentPeriods(s).forEach(p => all.add(p));
-        });
-        return Array.from(all);
-    },
-
     get filteredStudents() {
         return this.students.filter(s => {
-            const q = this.searchQuery.toLowerCase();
+            const q = this.searchQuery.toLowerCase().trim();
             const nameMatch = this.studentName(s).toLowerCase().includes(q);
             const emailMatch = this.studentEmail(s).toLowerCase().includes(q);
-            const matchesQuery = nameMatch || emailMatch;
+            const matchesQuery = !q || (nameMatch || emailMatch);
 
-            const periods = this.studentPeriods(s);
-            const matchesPeriod = !this.filterPeriod || periods.includes(this.filterPeriod);
+            // Filter gelombang/periode
+            const studentP = this.studentPeriods(s);
+            const matchesPeriod = !this.filterPeriod || studentP.includes(this.filterPeriod) || (s.exam_stats || []).some(e => e.period_title === this.filterPeriod);
 
             return matchesQuery && matchesPeriod;
         });
@@ -558,6 +594,12 @@ Alpine.data('adminDashboardPage', () => ({
     setSort(type) {
         this.sortBy = type;
         this.sortDropdownOpen = false;
+        this.currentPage = 1;
+    },
+
+    setPeriod(period) {
+        this.filterPeriod = period;
+        this.periodDropdownOpen = false;
         this.currentPage = 1;
     },
 
@@ -611,7 +653,9 @@ Alpine.data('adminDashboardPage', () => ({
         try {
             await api.allowRetake({ user_id: student.id, exam_id: item.exam_id });
             item.retake_allowed = true;
-            window.notifySuccess(`Izin ulang ujian diberikan kepada ${student.name}!`);
+            if (window.notifySuccess) {
+                window.notifySuccess(`Izin ulang ujian diberikan kepada ${student.name}!`);
+            }
         } catch (e) {
             alert(e.message || 'Gagal memberikan izin ulang');
         } finally {
