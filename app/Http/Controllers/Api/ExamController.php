@@ -208,7 +208,7 @@ class ExamController extends Controller
         $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
 
         DB::transaction(function () use ($request, $userId, $examId, $questions, $completion) {
-            // Jika izin ulang aktif, bersihkan jawaban lama
+            // Bersihkan file & jawaban lama jika izin retake aktif
             if ($completion && $completion->retake_allowed) {
                 $examQuestionIds = Question::where('exam_id', $examId)->pluck('id');
                 $oldAnswers = StudentAnswer::where('user_id', $userId)
@@ -216,7 +216,7 @@ class ExamController extends Controller
                     ->get();
 
                 foreach ($oldAnswers as $old) {
-                    if ($old->file_path) {
+                    if ($old->file_path && Storage::disk('public')->exists($old->file_path)) {
                         Storage::disk('public')->delete($old->file_path);
                     }
                 }
@@ -227,18 +227,19 @@ class ExamController extends Controller
             }
 
             foreach ($request->answers as $index => $ans) {
-                $question = $questions->get($ans['question_id']);
+                $questionId = (int) $ans['question_id'];
+                $question = $questions->get($questionId);
                 $score = null;
                 $filePath = null;
 
-                // Auto-grading untuk Pilihan Ganda (PG)
+                // 1. Auto-grading untuk Pilihan Ganda (PG)
                 if ($question?->type === 'multiple_choice') {
                     $score = mb_strtolower(trim((string) ($ans['answer_text'] ?? ''))) === mb_strtolower(trim((string) $question->correct_answer))
                         ? 100
                         : 0;
                 }
 
-                // Simpan berkas jika ada file upload (gambar G)
+                // 2. Simpan Berkas Gambar (Upload Karya Gambar)
                 if ($request->hasFile("answers.{$index}.file")) {
                     $uploadedFile = $request->file("answers.{$index}.file");
                     $filePath = $uploadedFile->store('exam_answers', 'public');
@@ -247,7 +248,7 @@ class ExamController extends Controller
                 StudentAnswer::updateOrCreate(
                     [
                         'user_id'     => $userId,
-                        'question_id' => $ans['question_id'],
+                        'question_id' => $questionId,
                     ],
                     [
                         'answer_text' => $ans['answer_text'] ?? ($filePath ? '[Uploaded File]' : ''),
@@ -268,7 +269,7 @@ class ExamController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Jawaban ujian berhasil dikirim',
+            'message' => 'Jawaban dan berkas ujian berhasil dikirim dan disimpan',
         ]);
     }
 }

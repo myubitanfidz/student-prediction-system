@@ -370,21 +370,29 @@ document.addEventListener('alpine:init', () => {
             for (const q of this.questions) {
                 formData.append(`answers[${idx}][question_id]`, q.id);
                 formData.append(`answers[${idx}][answer_text]`, this.jawaban[q.id] || '');
-                if (this.imageFiles[q.id]) {
+                
+                // Pastikan file terlampir jika berupa objek File/Blob
+                if (this.imageFiles[q.id] instanceof File) {
                     formData.append(`answers[${idx}][file]`, this.imageFiles[q.id]);
                 }
                 idx++;
             }
 
             try {
-                await fetch('/api/exams/submit', {
+                const res = await fetch('/api/exams/submit', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json'
+                        // Catatan: Jangan tambahkan 'Content-Type', biarkan browser menetapkan multipart/form-data boundary
                     },
                     body: formData
                 });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error('Submit error:', errData);
+                }
 
                 if (window.notifySuccess) {
                     window.notifySuccess('Ujian selesai & jawaban terkirim!');
