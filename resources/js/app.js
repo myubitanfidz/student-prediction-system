@@ -70,7 +70,6 @@ Alpine.data('berandaPage', () => ({
     error: '',
     exams: {},
     openCategory: null,
-
     categoryOrder: ['Bahasa', 'IT', 'Karakter'],
 
     get orderedCategories() {
@@ -129,123 +128,159 @@ Alpine.data('berandaPage', () => ({
     },
 }));
 
-// ---------- 4. Pengerjaan Ujian ----------
-// ---------- 4. Pengerjaan Ujian ----------
-Alpine.data('examPage', (examId) => ({
-    loading: true,
-    submitting: false,
-    error: '',
+// ---------- 4. Pengerjaan Ujian (Flow UI & Timer Per Soal) ----------
+Alpine.data('examFlow', (examId) => ({
+    examId,
+    step: 'ready', // 'ready' -> 'exam' -> 'analyzing' -> 'closed'
     exam: null,
+    periodTitle: '',
+    lockMessage: '',
     questions: [],
-    results: [],
-    completed: false,
-    retakeAllowed: false,
     currentIndex: 0,
     jawaban: {},
+    imageFiles: {},
+    imagePreviews: {},
     
-    // --- NEW: Timer and SPS Variables ---
-    spsPrediction: null,
-    timeRemaining: 0,
+    // Timer state per soal
+    questionTimeRemaining: 60,
+    currentQuestionTimeLimit: 60,
     timerInterval: null,
 
-    // Format seconds into MM:SS for the frontend
-    get formattedTime() {
-        let minutes = Math.floor(this.timeRemaining / 60);
-        let seconds = this.timeRemaining % 60;
-        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    },
-
-    startTimer() {
-        if (this.timerInterval) clearInterval(this.timerInterval);
-        
-        this.timerInterval = setInterval(() => {
-            if (this.timeRemaining > 0) {
-                this.timeRemaining--;
-            } else {
-                clearInterval(this.timerInterval);
-                alert('Waktu habis! Jawaban Anda otomatis dikumpulkan.');
-                this.submit(); // Auto-submit when time is up
-            }
-        }, 1000);
-    },
-    // ------------------------------------
-
     get currentQuestion() {
-        return this.questions[this.currentIndex] ?? null;
+        return this.questions[this.currentIndex] || null;
     },
-
     get isLast() {
-        return this.currentIndex >= this.questions.length - 1;
+        return this.currentIndex === (this.questions.length - 1);
     },
-
-    // ... (Keep your existing getter functions like answeredCount, mcTotal, etc.) ...
+    get answeredCount() {
+        const textAnswers = Object.keys(this.jawaban).filter(k => this.jawaban[k] !== undefined && this.jawaban[k] !== '');
+        const imageAnswers = Object.keys(this.imageFiles).filter(k => this.imageFiles[k] !== undefined && this.imageFiles[k] !== null);
+        const unionKeys = new Set([...textAnswers, ...imageAnswers]);
+        return unionKeys.size;
+    },
+    get progressPercentage() {
+        if (!this.questions.length) return 0;
+        return Math.round((this.answeredCount / this.questions.length) * 100);
+    },
 
     async init() {
         try {
-            const json = await api.getExam(examId);
-            const data = json?.data ?? json;
-            this.exam = { ...data.exam, warna: categoryColor(data.exam?.category) };
-            this.completed = !!data.completed;
-            this.retakeAllowed = !!data.retake_allowed;
-            this.results = data.results ?? [];
-            this.questions = data.questions ?? [];
-            this.currentIndex = 0;
-            
-            // --- NEW: Load SPS and start timer ---
-            this.spsPrediction = data.sps_prediction ?? null;
-            
-            // If the exam isn't completed yet, start the countdown
-            if (!this.completed && this.questions.length > 0) {
-                // Fallback to 30 mins if duration_minutes isn't set
-                this.timeRemaining = (this.exam.duration_minutes || 30) * 60; 
-                this.startTimer();
-            }
-            // -------------------------------------
+            const res = await fetch(`/api/exams/${this.examId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                    'Accept': 'application/json'
+                }
+            });
+            const json = await res.json();
 
-        } catch (e) {
-            this.error = e.message;
-        } finally {
-            this.loading = false;
+            if (res.status === 403) {
+                this.step = 'closed';
+                this.periodTitle = json?.period_title || 'Ujian Terkunci';
+                this.lockMessage = json?.message || 'Ujian belum dapat diakses.';
+                return;
+            }
+
+            this.exam = json?.data?.exam;
+            this.questions = json?.data?.questions || [];
+        } catch (err) {
+            console.error(err);
         }
     },
 
-    async submit() {
-        this.submitting = true;
-        this.error = '';
+    resetQuestionTimer() {
+        clearInterval(this.timerInterval);
+        this.currentQuestionTimeLimit = this.currentQuestion?.time_limit_seconds || 60;
+        this.questionTimeRemaining = this.currentQuestionTimeLimit;
 
-        // --- NEW: Clear the timer on manual submit ---
-        if (this.timerInterval) clearInterval(this.timerInterval);
-        // ---------------------------------------------
+        this.timerInterval = setInterval(() => {
+            if (this.questionTimeRemaining > 0) {
+                this.questionTimeRemaining--;
+            } else {
+                clearInterval(this.timerInterval);
+                if (this.isLast) {
+                    this.finishExam();
+                } else {
+                    this.nextQuestion();
+                }
+            }
+        }, 1000);
+    },
 
-        // ... (Keep the rest of your submit logic exactly the same) ...
+    handleImageUpload(questionId, event) {
+        const file = event.target.files[0];
+        if (!file) return;
 
-        const unanswered = this.questions.filter((q) => {
-            const v = this.jawaban[q.id];
-            return v === undefined || v === null || String(v).trim() === '';
+        this.imageFiles[questionId] = file;
+        this.jawaban[questionId] = `[Uploaded File: ${file.name}]`;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.imagePreviews[questionId] = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    },
+
+    removeUploadedImage(questionId) {
+        delete this.imageFiles[questionId];
+        delete this.imagePreviews[questionId];
+        delete this.jawaban[questionId];
+    },
+
+    startExam() {
+        this.step = 'exam';
+        this.resetQuestionTimer();
+    },
+    nextQuestion() {
+        if (!this.isLast) {
+            this.currentIndex++;
+            this.resetQuestionTimer();
+        }
+    },
+    prevQuestion() {
+        if (this.currentIndex > 0) {
+            this.currentIndex--;
+            this.resetQuestionTimer();
+        }
+    },
+
+    async finishExam() {
+        clearInterval(this.timerInterval);
+        this.step = 'analyzing';
+
+        const formData = new FormData();
+        formData.append('exam_id', this.examId);
+
+        Object.entries(this.jawaban).forEach(([question_id, answer_text], index) => {
+            formData.append(`answers[${index}][question_id]`, question_id);
+            formData.append(`answers[${index}][answer_text]`, answer_text);
+
+            if (this.imageFiles[question_id]) {
+                formData.append(`answers[${index}][file]`, this.imageFiles[question_id]);
+            }
         });
 
-        if (unanswered.length) {
-            this.error = `Masih ada ${unanswered.length} soal yang belum dijawab. Periksa kembali sebelum mengumpulkan.`;
-            this.submitting = false;
-            return;
-        }
-
-        const answers = Object.entries(this.jawaban)
-            .filter(([, v]) => v !== '' && v != null)
-            .map(([question_id, answer_text]) => ({ question_id: Number(question_id), answer_text }));
-
         try {
-            await api.submitExam({ exam_id: this.exam.id, answers });
-            window.location.href = '/ujian/' + this.exam.id;
-        } catch (e) {
-            this.error = e.message;
-        } finally {
-            this.submitting = false;
+            await fetch('/api/exams/submit', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('ts_token')}`,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 2200);
+        } catch (err) {
+            console.error(err);
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1500);
         }
-    },
+    }
 }));
 
-// ---------- 5. Portofolio ----------
 // ---------- 5. Portofolio ----------
 Alpine.data('portofolioPage', () => ({
     links: [''],
@@ -298,7 +333,7 @@ Alpine.data('portofolioPage', () => ({
     },
 }));
 
-// ---------- 6. Profile & Prediksi Kemampuan ----------
+// ---------- 6. Profile & Prediksi Hasil ----------
 Alpine.data('profilePage', () => ({
     loading: true,
     error: '',
@@ -312,12 +347,6 @@ Alpine.data('profilePage', () => ({
 
     get totalAnswered() {
         return this.stats.reduce((sum, item) => sum + (Number(item.answered_count) || 0), 0);
-    },
-
-    get totalQuestionsCount() {
-        // Asumsi estimasi total seluruh butir soal dari semua kategori (atau hitung dinamis)
-        const total = this.stats.length * 3; // jika rata-rata tiap exam 3 soal
-        return total > 0 ? total : (this.totalAnswered || 1);
     },
 
     get overallProgress() {
@@ -371,7 +400,7 @@ Alpine.data('profilePage', () => ({
     },
 }));
 
-// ---------- Animated Counter (global) ----------
+// ---------- Animated Counter Helper ----------
 Alpine.data('animatedCounter', (target = 0, ms = 700) => ({
     display: 0,
     start() {
@@ -386,88 +415,40 @@ Alpine.data('animatedCounter', (target = 0, ms = 700) => ({
     },
 }));
 
-// ---------- 7. Admin Dashboard ----------
-// ---------- 7. Admin Dashboard ----------
-// ---------- 7. Admin Dashboard ----------
+// ---------- 7. Admin Dashboard (Daftar Santri & Filter Periode) ----------
 Alpine.data('adminDashboardPage', () => ({
     loading: true,
     error: '',
     students: [],
-    expanded: {},
-    retakeBusy: null,
-
-    // --- NEW: Modal Controls ---
-    activeStudent: null,
-    modalAnim: false,
-
-    // --- NEW: Table Controls (Search, Sort, Pagination) ---
     searchQuery: '',
+    filterPeriod: '', // Filter periode/gelombang ujian
     sortBy: 'default',
     sortDropdownOpen: false,
     currentPage: 1,
-    itemsPerPage: 20,
+    itemsPerPage: 10,
+    activeStudent: null,
+    modalAnim: false,
+    retakeBusy: null,
 
-    get processedStudents() {
-        let result = [...this.students]; // Copy array
-
-// ... (keep the rest of the code exactly the same) ...
-
-        // 1. Search Filter
-        if (this.searchQuery.trim() !== '') {
-            const q = this.searchQuery.toLowerCase();
-            result = result.filter(s => 
-                (s.name && s.name.toLowerCase().includes(q)) || 
-                (s.email && s.email.toLowerCase().includes(q))
-            );
+    async init() {
+        const user = getUser();
+        if (!user || !['admin', 'teacher'].includes(user.role)) {
+            this.error = 'Akses ditolak. Halaman ini khusus Admin / Guru.';
+            this.loading = false;
+            return;
         }
 
-        // 2. Sort Logic
-        if (this.sortBy === 'highest_score') {
-            result.sort((a, b) => (b.highest_score || 0) - (a.highest_score || 0));
-        } else if (this.sortBy === 'alphabetical') {
-            result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        this.$watch('searchQuery', () => { this.currentPage = 1; });
+        this.$watch('filterPeriod', () => { this.currentPage = 1; });
+
+        try {
+            const json = await api.getAdminStudents();
+            this.students = json?.data ?? json ?? [];
+        } catch (e) {
+            this.error = e.message;
+        } finally {
+            this.loading = false;
         }
-        // 'default' leaves it in the original order (who signed up first)
-
-        return result;
-    },
-
-    get paginatedStudents() {
-        const start = (this.currentPage - 1) * this.itemsPerPage;
-        return this.processedStudents.slice(start, start + this.itemsPerPage);
-    },
-
-    get totalPages() {
-        return Math.max(1, Math.ceil(this.processedStudents.length / this.itemsPerPage));
-    },
-
-    nextPage() {
-        if (this.currentPage < this.totalPages) this.currentPage++;
-    },
-
-    prevPage() {
-        if (this.currentPage > 1) this.currentPage--;
-    },
-
-    setSort(type) {
-        this.sortBy = type;
-        this.sortDropdownOpen = false;
-        this.currentPage = 1; // Reset to page 1 on new sort
-    },
-
-    // --- Existing Getters & Methods ---
-    get summaryTotal() {
-        return this.students.length;
-    },
-
-    get summaryTestsDone() {
-        return this.students.reduce((sum, s) => sum + this.testsDone(s), 0);
-    },
-
-    get summaryAvgHighest() {
-        if (!this.students.length) return 0;
-        const sum = this.students.reduce((acc, s) => acc + this.highestScore(s), 0);
-        return Math.round(sum / this.students.length);
     },
 
     studentName(student) {
@@ -482,14 +463,99 @@ Alpine.data('adminDashboardPage', () => ({
         return Number(student?.tests_done ?? student?.exam_count ?? 0);
     },
 
-    highestScore(student) {
-        return Number(student?.highest_score ?? student?.max_score ?? 0) || 0;
-    },
-
     portfolioFiles(student) {
         if (Array.isArray(student?.portfolio?.files)) return student.portfolio.files;
         if (Array.isArray(student?.files)) return student.files;
         return [];
+    },
+
+    // Ambil daftar periode ujian yang diikuti santri
+    studentPeriods(s) {
+        const periods = new Set();
+        const stats = s.exam_stats || s.stats || s.answers || [];
+        stats.forEach(a => {
+            const p = a.period_title || a.exam?.period_title;
+            if (p) periods.add(p);
+        });
+        return Array.from(periods);
+    },
+
+    // Ambil semua daftar opsi periode unik yang tersedia
+    get availablePeriods() {
+        const all = new Set();
+        this.students.forEach(s => {
+            this.studentPeriods(s).forEach(p => all.add(p));
+        });
+        return Array.from(all);
+    },
+
+    get filteredStudents() {
+        return this.students.filter(s => {
+            const q = this.searchQuery.toLowerCase();
+            const nameMatch = this.studentName(s).toLowerCase().includes(q);
+            const emailMatch = this.studentEmail(s).toLowerCase().includes(q);
+            const matchesQuery = nameMatch || emailMatch;
+
+            const periods = this.studentPeriods(s);
+            const matchesPeriod = !this.filterPeriod || periods.includes(this.filterPeriod);
+
+            return matchesQuery && matchesPeriod;
+        });
+    },
+
+    get sortedStudents() {
+        const list = [...this.filteredStudents];
+        if (this.sortBy === 'highest_score') {
+            return list.sort((a, b) => {
+                const maxA = Math.max(0, ...Object.values(a.career_predictions || {}));
+                const maxB = Math.max(0, ...Object.values(b.career_predictions || {}));
+                return maxB - maxA;
+            });
+        }
+        if (this.sortBy === 'alphabetical') {
+            return list.sort((a, b) => this.studentName(a).localeCompare(this.studentName(b)));
+        }
+        return list;
+    },
+
+    get paginatedStudents() {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        return this.sortedStudents.slice(start, start + this.itemsPerPage);
+    },
+
+    get totalPages() {
+        return Math.max(1, Math.ceil(this.sortedStudents.length / this.itemsPerPage));
+    },
+
+    setSort(type) {
+        this.sortBy = type;
+        this.sortDropdownOpen = false;
+        this.currentPage = 1;
+    },
+
+    nextPage() {
+        if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+
+    prevPage() {
+        if (this.currentPage > 1) this.currentPage--;
+    },
+
+    get summaryTotal() {
+        return this.students.length;
+    },
+
+    get summaryTestsDone() {
+        return this.students.reduce((sum, s) => sum + this.testsDone(s), 0);
+    },
+
+    get summaryAvgHighest() {
+        if (!this.students.length) return 0;
+        const sum = this.students.reduce((acc, s) => {
+            const scores = Object.values(s.career_predictions || {});
+            return acc + (scores.length ? Math.max(...scores) : 0);
+        }, 0);
+        return Math.round(sum / this.students.length);
     },
 
     groupedStats(student) {
@@ -505,22 +571,15 @@ Alpine.data('adminDashboardPage', () => ({
         }, { Bahasa: [], Karakter: [], IT: [] });
     },
 
-    statTitle(stat) {
-        return stat?.exam_title || stat?.title || stat?.name || '-';
-    },
-
-    statValue(stat) {
-        return Number(stat?.mc_accuracy_pct ?? stat?.percentage ?? stat?.score ?? 0) || 0;
-    },
-
     revealBars(student) {
         const raw = this.groupedStats(student);
         return Object.entries(raw).map(([label, items]) => ({
             label,
             items: items.map((item) => ({
                 exam_id: item.exam_id,
-                title: this.statTitle(item),
-                value: this.statValue(item),
+                title: item.exam_title || item.title || item.name || '-',
+                period_title: item.period_title || item.exam?.period_title || 'PSB',
+                value: Number(item.mc_accuracy_pct ?? item.score ?? 0),
                 completed: !!item.completed,
                 retake_allowed: !!item.retake_allowed,
             })),
@@ -538,27 +597,6 @@ Alpine.data('adminDashboardPage', () => ({
             alert(e.message || 'Gagal memberikan izin ulang');
         } finally {
             this.retakeBusy = null;
-        }
-    },
-
-    async init() {
-        const user = getUser();
-        if (!user || !['admin', 'teacher'].includes(user.role)) {
-            this.error = 'Akses ditolak. Halaman ini khusus Admin / Guru.';
-            this.loading = false;
-            return;
-        }
-
-        // Watch search input to auto-reset pagination
-        this.$watch('searchQuery', () => { this.currentPage = 1; });
-
-        try {
-            const json = await api.getAdminStudents();
-            this.students = json?.data ?? json ?? [];
-        } catch (e) {
-            this.error = e.message;
-        } finally {
-            this.loading = false;
         }
     },
 }));

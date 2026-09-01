@@ -12,15 +12,15 @@
             <div class="flex items-end justify-between gap-4 flex-wrap">
                 <div>
                     <h1 class="font-display font-bold text-2xl">Daftar Rekap Santri</h1>
-                    <p class="text-sm text-ink/50">Tinjau nilai, portofolio, dan analitik potensi karir seluruh santri.</p>
+                    <p class="text-sm text-ink/50">Tinjau nilai, portofolio, dan analitik potensi karir berdasarkan gelombang &amp; periode ujian.</p>
                 </div>
             </div>
 
             {{-- Statistik ringkas --}}
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="card p-5 border-l-4 border-l-brand-blue space-y-1 shadow-sm">
-                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Santri</p>
-                    <p class="font-mono font-bold text-2xl" x-data="animatedCounter(summaryTotal)" x-init="start()" x-text="display"></p>
+                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Santri Tampil</p>
+                    <p class="font-mono font-bold text-2xl" x-text="filteredStudents.length"></p>
                 </div>
                 <div class="card p-5 border-l-4 border-l-brand-green space-y-1 shadow-sm">
                     <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Test Selesai</p>
@@ -34,33 +34,48 @@
                 </div>
             </div>
 
-            {{-- 🌟 NEW: Data Table with Search, Sort & Pagination 🌟 --}}
+            {{-- 🌟 Data Table with Search, Filter Periode, Sort & Pagination 🌟 --}}
             <div class="card shadow-sm border border-line rounded-2xl">
                 
-                {{-- Table Controls: Search & Sort --}}
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 border-b border-line bg-slate-50/50 rounded-t-2xl">
+                {{-- Table Controls: Search, Filter Periode & Sort --}}
+                <div class="flex flex-col lg:flex-row justify-between items-center gap-4 p-5 border-b border-line bg-slate-50/50 rounded-t-2xl">
                     <!-- Search Input -->
-                    <div class="relative w-full sm:w-80">
+                    <div class="relative w-full lg:w-72">
                         <input type="text" x-model="searchQuery" placeholder="Cari nama atau email santri..." 
-                               class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-shadow">
-                        <svg class="w-5 h-5 text-ink/40 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               class="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-shadow bg-white">
+                        <svg class="w-4 h-4 text-ink/40 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </div>
 
-                    <!-- Sort Popup Menu -->
-                    <div class="relative w-full sm:w-auto">
-                        <button @click="sortDropdownOpen = !sortDropdownOpen" 
-                                class="w-full sm:w-auto flex items-center justify-between gap-3 px-5 py-2.5 text-sm font-medium border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors">
-                            <span x-text="sortBy === 'default' ? 'Urutkan: Pendaftar Awal' : (sortBy === 'highest_score' ? 'Urutkan: Skor Tertinggi' : 'Urutkan: Abjad (A-Z)')"></span>
-                            <svg class="w-4 h-4 text-ink/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        
-                        <div x-show="sortDropdownOpen" @click.away="sortDropdownOpen = false" x-cloak 
-                             class="absolute right-0 mt-2 w-56 bg-white border border-line rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                            <button @click="setSort('default')" class="w-full text-left px-5 py-3 text-sm hover:bg-slate-50 transition-colors" :class="sortBy === 'default' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Pendaftar Awal (Default)</button>
-                            <button @click="setSort('highest_score')" class="w-full text-left px-5 py-3 text-sm hover:bg-slate-50 transition-colors" :class="sortBy === 'highest_score' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Skor Tertinggi ke Terendah</button>
-                            <button @click="setSort('alphabetical')" class="w-full text-left px-5 py-3 text-sm hover:bg-slate-50 transition-colors" :class="sortBy === 'alphabetical' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Abjad (A - Z)</button>
+                    <!-- Right Controls: Filter Periode & Sort Dropdown -->
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                        <!-- Filter Periode Dropdown -->
+                        <div class="w-full sm:w-auto flex items-center gap-2">
+                            <label class="text-xs font-semibold uppercase text-slate-500 shrink-0">Periode:</label>
+                            <select x-model="filterPeriod" 
+                                    class="w-full sm:w-auto px-3.5 py-2 text-xs font-bold border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none text-slate-700">
+                                <option value="">Semua Periode / Gelombang</option>
+                                <template x-for="p in availablePeriods" :key="p">
+                                    <option :value="p" x-text="p"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- Sort Popup Menu -->
+                        <div class="relative w-full sm:w-auto">
+                            <button @click="sortDropdownOpen = !sortDropdownOpen" 
+                                    class="w-full sm:w-auto flex items-center justify-between gap-2.5 px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors text-slate-700">
+                                <span x-text="sortBy === 'default' ? 'Urutkan: Default' : (sortBy === 'highest_score' ? 'Skor Tertinggi' : 'Abjad (A-Z)')"></span>
+                                <svg class="w-3.5 h-3.5 text-ink/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            
+                            <div x-show="sortDropdownOpen" @click.away="sortDropdownOpen = false" x-cloak 
+                                 class="absolute right-0 mt-2 w-52 bg-white border border-line rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                                <button @click="setSort('default')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'default' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Pendaftar Awal (Default)</button>
+                                <button @click="setSort('highest_score')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'highest_score' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Skor Tertinggi ke Terendah</button>
+                                <button @click="setSort('alphabetical')" class="w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition-colors" :class="sortBy === 'alphabetical' ? 'text-brand-blue font-bold bg-brand-blue-soft/30' : 'text-slate-700'">Abjad (A - Z)</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -72,8 +87,9 @@
                             <tr>
                                 <th class="px-5 py-4 font-semibold text-center w-16">No</th>
                                 <th class="px-5 py-4 font-semibold">Nama Santri</th>
+                                <th class="px-5 py-4 font-semibold">Periode Ujian Diikuti</th>
                                 <th class="px-5 py-4 font-semibold text-center w-32">Test Kelar</th>
-                                <th class="px-5 py-4 font-semibold text-center w-32">Porto (Total)</th>
+                                <th class="px-5 py-4 font-semibold text-center w-32">Porto</th>
                                 <th class="px-5 py-4 font-semibold text-center w-32">Aksi</th>
                             </tr>
                         </thead>
@@ -84,6 +100,14 @@
                                     <td class="px-5 py-4">
                                         <p class="font-bold text-slate-900 text-base" x-text="studentName(student)"></p>
                                         <p class="text-xs text-ink/50" x-text="studentEmail(student)"></p>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <div class="flex flex-wrap gap-1 max-w-xs">
+                                            <template x-for="p in studentPeriods(student)" :key="p">
+                                                <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="p"></span>
+                                            </template>
+                                            <span x-show="studentPeriods(student).length === 0" class="text-xs text-slate-400 italic">Belum Mengikuti Ujian</span>
+                                        </div>
                                     </td>
                                     <td class="px-5 py-4 text-center font-mono font-bold text-brand-blue text-base" x-text="testsDone(student)"></td>
                                     <td class="px-5 py-4 text-center font-mono font-bold text-brand-orange text-base" x-text="portfolioFiles(student).length"></td>
@@ -97,8 +121,8 @@
                             </template>
                             
                             <tr x-show="paginatedStudents.length === 0">
-                                <td colspan="5" class="px-5 py-12 text-center text-ink/40">
-                                    Pencarian tidak menemukan santri yang cocok.
+                                <td colspan="6" class="px-5 py-12 text-center text-ink/40">
+                                    Tidak ada santri yang cocok dengan filter pencarian / periode ini.
                                 </td>
                             </tr>
                         </tbody>
@@ -111,8 +135,8 @@
                             class="px-4 py-2 text-sm font-medium border border-line rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         ← Sebelumnya
                     </button>
-                    <span class="text-sm font-medium text-ink/60" x-text="`Halaman ${currentPage} dari ${totalPages}`"></span>
-                    <button @click="nextPage" :disabled="currentPage === totalPages" 
+                    <span class="text-sm font-medium text-ink/60" x-text="`Halaman ${currentPage} dari ${totalPages || 1}`"></span>
+                    <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" 
                             class="px-4 py-2 text-sm font-medium border border-line rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         Selanjutnya →
                     </button>
@@ -200,7 +224,7 @@
                         </div>
                     </section>
 
-                    {{-- Exam Scores List --}}
+                    {{-- Exam Scores List with Period Badge --}}
                     <section class="border border-line rounded-2xl p-5 bg-white shadow-sm space-y-3">
                         <h3 class="font-display font-bold text-sm mb-2">Skor per Ujian</h3>
                         <template x-if="activeStudent">
@@ -209,7 +233,10 @@
                                     <template x-for="item in group.items" :key="item.exam_id">
                                         <div class="flex items-center justify-between p-3 rounded-lg border border-line hover:bg-slate-50 transition-colors">
                                             <div class="min-w-0 pr-4">
-                                                <p class="text-xs font-semibold text-brand-blue uppercase tracking-wider mb-0.5" x-text="group.label"></p>
+                                                <div class="flex items-center gap-2 mb-0.5">
+                                                    <span class="text-xs font-semibold text-brand-blue uppercase tracking-wider" x-text="group.label"></span>
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600" x-text="item.period_title || 'PSB'"></span>
+                                                </div>
                                                 <p class="text-sm font-medium text-slate-800 truncate" x-text="item.title"></p>
                                             </div>
                                             <div class="flex items-center gap-4 shrink-0">
@@ -231,7 +258,7 @@
                     {{-- Action Button --}}
                     <div class="flex justify-end pt-2">
                         <template x-if="activeStudent">
-                            <a :href="'/admin/koreksi/' + activeStudent.id" class="btn-primary text-sm px-6 py-2.5 shadow-md">Buka Halaman Koreksi Essay</a>
+                            <a :href="'/admin/koreksi/' + activeStudent.id" class="btn-primary text-sm px-6 py-2.5 shadow-md">Buka Halaman Koreksi Essay &amp; Gambar</a>
                         </template>
                     </div>
 
