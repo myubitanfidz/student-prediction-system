@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\SecureId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,13 +23,20 @@ class Question extends Model
     ];
 
     protected $hidden = [
-        'correct_answer',
+        'correct_answer', // Secara default disembunyikan
     ];
 
     protected $casts = [
         'options'            => 'array',
         'time_limit_seconds' => 'integer',
     ];
+
+    protected $appends = ['hash_id'];
+
+    public function getHashIdAttribute(): string
+    {
+        return SecureId::encode($this->id, 'question');
+    }
 
     public function exam(): BelongsTo
     {

@@ -28,7 +28,7 @@ class ExamController extends Controller
                 $completion = $completions->get($exam->id);
 
                 return [
-                    'id'               => $exam->hash_id, // Gunakan hash_id
+                    'id'               => $exam->hash_id, 
                     'raw_id'           => $exam->id,
                     'category'         => $exam->category,
                     'subcategory'      => $exam->subcategory,
@@ -52,29 +52,21 @@ class ExamController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
-        // 1. Decode Identifier Token
         $realId = SecureId::decode($id, 'exam');
         if (!$realId) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Tautan ujian tidak valid atau telah kedaluwarsa.'
-            ], 404);
+            return response()->json(['status' => 'error', 'message' => 'Tautan ujian tidak valid atau telah kedaluwarsa.'], 404);
         }
 
         $exam = Exam::with('questions')->find($realId);
 
         if (! $exam) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Paket ujian tidak ditemukan di database.'
-            ], 404);
+            return response()->json(['status' => 'error', 'message' => 'Paket ujian tidak ditemukan di database.'], 404);
         }
 
         $user = $request->user();
 
-        // 2. Validasi Jadwal Periode PSB & Status Aktif (Khusus Santri)
+        // Validasi Waktu
         if ($user && $user->role === 'student') {
-            // Cek status aktif
             if (! (bool) $exam->is_active) {
                 return response()->json([
                     'status'       => 'error',
@@ -83,34 +75,31 @@ class ExamController extends Controller
                 ], 403);
             }
 
-            $now = now();
+            $now = now()->timezone('Asia/Jakarta');
 
-            // Cek Waktu Mulai
             if ($exam->start_time) {
-                $start = \Carbon\Carbon::parse($exam->start_time);
+                $start = \Carbon\Carbon::parse($exam->start_time)->timezone('Asia/Jakarta');
                 if ($now->lessThan($start)) {
                     return response()->json([
                         'status'       => 'error',
                         'period_title' => $exam->period_title,
-                        'message'      => "Ujian ({$exam->period_title}) belum dimulai. Jadwal buka: " . $start->format('d M Y, H:i') . " WIB.",
+                        'message'      => "Ujian belum dimulai. Jadwal buka: " . $start->format('d M Y, H:i') . " WIB.",
                     ], 403);
                 }
             }
 
-            // Cek Waktu Selesai
             if ($exam->end_time) {
-                $end = \Carbon\Carbon::parse($exam->end_time);
+                $end = \Carbon\Carbon::parse($exam->end_time)->timezone('Asia/Jakarta');
                 if ($now->greaterThan($end)) {
                     return response()->json([
                         'status'       => 'error',
                         'period_title' => $exam->period_title,
-                        'message'      => "Periode pengerjaan ujian ({$exam->period_title}) telah berakhir pada: " . $end->format('d M Y, H:i') . " WIB.",
+                        'message'      => "Periode ujian telah berakhir pada: " . $end->format('d M Y, H:i') . " WIB.",
                     ], 403);
                 }
             }
         }
 
-        // 3. Cek Status Penyelesaian Santri
         $completion = $user ? ExamCompletion::where('user_id', $user->id)
             ->where('exam_id', $realId)
             ->first() : null;
@@ -125,35 +114,8 @@ class ExamController extends Controller
             'duration_minutes' => $exam->duration_minutes,
         ];
 
-        // 4. Mode Hasil Selesai (Jika sudah beres & retake tidak diizinkan)
+        // 🌟 Jika Ujian Selesai, Hapus Total Kunci Jawaban dari Response
         if ($completion && ! (bool) $completion->retake_allowed) {
-            $answers = StudentAnswer::where('user_id', $user->id)
-                ->whereIn('question_id', $exam->questions->pluck('id'))
-                ->get()
-                ->keyBy('question_id');
-
-            $results = $exam->questions->map(function (Question $question) use ($answers) {
-                $answer = $answers->get($question->id);
-                $isCorrect = null;
-
-                if ($question->type === 'multiple_choice') {
-                    $isCorrect = $answer !== null && (float) $answer->score >= 100;
-                }
-
-                return [
-                    'id'                 => $question->id,
-                    'gclwama_tag'        => $question->gclwama_tag,
-                    'type'               => $question->type,
-                    'question_text'      => $question->question_text,
-                    'options'            => $question->options,
-                    'student_answer'     => $answer?->answer_text,
-                    'file_url'           => $answer?->file_path ? asset('storage/' . $answer->file_path) : null,
-                    'score'              => $answer?->score,
-                    'is_correct'         => $isCorrect,
-                    'correct_answer'     => $question->type === 'multiple_choice' ? $question->correct_answer : null,
-                ];
-            })->values();
-
             return response()->json([
                 'status' => 'success',
                 'data'   => [
@@ -161,24 +123,35 @@ class ExamController extends Controller
                     'completed'      => true,
                     'retake_allowed' => false,
                     'questions'      => [],
-                    'results'        => $results,
+                    'results'        => [], // Kosongkan agar tidak ada celah kebocoran
                 ],
             ]);
         }
 
-        // 5. Mode Pengerjaan Aktif (Soal & Pilihan Ganda Teracak)
-        $questions = $exam->questions->shuffle()->values()->map(function (Question $question) {
+        // 🌟 Option Tokenization & Obfuscation
+        $appKey = config('app.key') ?: 'ts-secret-salt';
+        $questions = $exam->questions->shuffle()->values()->map(function (Question $question) use ($appKey) {
             $options = $question->options;
+            $hashedOptions = [];
+
             if ($question->type === 'multiple_choice' && is_array($options)) {
                 $options = collect($options)->shuffle()->values()->all();
+                foreach ($options as $opt) {
+                    // Buat Token Acak berdasarkan kombinasi ID Soal + Teks Opsi
+                    $token = substr(hash_hmac('sha256', $question->id . '#' . $opt, $appKey), 0, 16);
+                    $hashedOptions[] = [
+                        'token' => $token,
+                        'text'  => (string) $opt,
+                    ];
+                }
             }
 
             return [
-                'id'                 => $question->id,
+                'id'                 => $question->hash_id, // Gunakan Hash ID
                 'type'               => $question->type,
                 'time_limit_seconds' => (int) ($question->time_limit_seconds ?: 60),
                 'question_text'      => $question->question_text,
-                'options'            => is_array($options) ? $options : [],
+                'options'            => $hashedOptions,
             ];
         });
 
@@ -196,11 +169,23 @@ class ExamController extends Controller
 
     public function submit(Request $request): JsonResponse
     {
-        // Decode exam_id jika dikirim dalam bentuk hash
         $rawExamId = $request->exam_id;
         $decodedExamId = is_numeric($rawExamId) ? (int)$rawExamId : SecureId::decode($rawExamId, 'exam');
         
-        $request->merge(['exam_id_resolved' => $decodedExamId]);
+        // 🌟 Dekode array Jawaban (Question Hash ID)
+        $answers = $request->input('answers', []);
+        $resolvedAnswers = [];
+        foreach ($answers as $index => $ans) {
+            $qRaw = $ans['question_id'] ?? null;
+            $qId = SecureId::decode($qRaw, 'question') ?: $qRaw;
+            $resolvedAnswers[$index] = $ans;
+            $resolvedAnswers[$index]['question_id'] = $qId;
+        }
+        
+        $request->merge([
+            'exam_id_resolved' => $decodedExamId,
+            'answers'          => $resolvedAnswers
+        ]);
 
         $validator = Validator::make($request->all(), [
             'exam_id_resolved'      => 'required|exists:exams,id',
@@ -217,36 +202,26 @@ class ExamController extends Controller
         $userId = $request->user()->id;
         $examId = (int) $decodedExamId;
 
-        $completion = ExamCompletion::where('user_id', $userId)
-            ->where('exam_id', $examId)
-            ->first();
+        $completion = ExamCompletion::where('user_id', $userId)->where('exam_id', $examId)->first();
 
         if ($completion && ! $completion->retake_allowed) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Anda sudah menyelesaikan ujian ini. Minta izin ulang ke guru/admin untuk mengerjakan lagi.',
-            ], 403);
+            return response()->json(['status' => 'error', 'message' => 'Ujian sudah diselesaikan.'], 403);
         }
 
         $questionIds = collect($request->answers)->pluck('question_id');
         $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
+        $appKey = config('app.key') ?: 'ts-secret-salt';
 
-        DB::transaction(function () use ($request, $userId, $examId, $questions, $completion) {
+        DB::transaction(function () use ($request, $userId, $examId, $questions, $completion, $appKey) {
             if ($completion && $completion->retake_allowed) {
                 $examQuestionIds = Question::where('exam_id', $examId)->pluck('id');
-                $oldAnswers = StudentAnswer::where('user_id', $userId)
-                    ->whereIn('question_id', $examQuestionIds)
-                    ->get();
-
+                $oldAnswers = StudentAnswer::where('user_id', $userId)->whereIn('question_id', $examQuestionIds)->get();
                 foreach ($oldAnswers as $old) {
                     if ($old->file_path && Storage::disk('public')->exists($old->file_path)) {
                         Storage::disk('public')->delete($old->file_path);
                     }
                 }
-
-                StudentAnswer::where('user_id', $userId)
-                    ->whereIn('question_id', $examQuestionIds)
-                    ->delete();
+                StudentAnswer::where('user_id', $userId)->whereIn('question_id', $examQuestionIds)->delete();
             }
 
             foreach ($request->answers as $index => $ans) {
@@ -254,43 +229,47 @@ class ExamController extends Controller
                 $question = $questions->get($questionId);
                 $score = null;
                 $filePath = null;
+                $answerTextToSave = $ans['answer_text'] ?? '';
 
+                // 🌟 Server-Side Verification Hash
                 if ($question?->type === 'multiple_choice') {
-                    $score = mb_strtolower(trim((string) ($ans['answer_text'] ?? ''))) === mb_strtolower(trim((string) $question->correct_answer))
-                        ? 100
-                        : 0;
+                    $submittedToken = trim((string) $answerTextToSave);
+                    $correctToken = substr(hash_hmac('sha256', $question->id . '#' . $question->correct_answer, $appKey), 0, 16);
+                    
+                    $score = hash_equals($correctToken, $submittedToken) ? 100 : 0;
+                    
+                    // Kembalikan token menjadi teks asli untuk dibaca admin di dashboard koreksi
+                    $actualText = '';
+                    if (is_array($question->options)) {
+                        foreach ($question->options as $opt) {
+                            $tok = substr(hash_hmac('sha256', $question->id . '#' . $opt, $appKey), 0, 16);
+                            if (hash_equals($tok, $submittedToken)) {
+                                $actualText = $opt;
+                                break;
+                            }
+                        }
+                    }
+                    $answerTextToSave = $actualText ?: $submittedToken;
                 }
 
                 if ($request->hasFile("answers.{$index}.file")) {
                     $uploadedFile = $request->file("answers.{$index}.file");
                     $filePath = $uploadedFile->store('exam_answers', 'public');
+                    $answerTextToSave = '[Uploaded File]';
                 }
 
                 StudentAnswer::updateOrCreate(
-                    [
-                        'user_id'     => $userId,
-                        'question_id' => $questionId,
-                    ],
-                    [
-                        'answer_text' => $ans['answer_text'] ?? ($filePath ? '[Uploaded File]' : ''),
-                        'file_path'   => $filePath,
-                        'score'       => $score,
-                    ]
+                    ['user_id' => $userId, 'question_id' => $questionId],
+                    ['answer_text' => $answerTextToSave, 'file_path' => $filePath, 'score' => $score]
                 );
             }
 
             ExamCompletion::updateOrCreate(
                 ['user_id' => $userId, 'exam_id' => $examId],
-                [
-                    'completed_at'   => now(),
-                    'retake_allowed' => false,
-                ]
+                ['completed_at' => now(), 'retake_allowed' => false]
             );
         });
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Jawaban dan berkas ujian berhasil dikirim dan disimpan',
-        ]);
+        return response()->json(['status' => 'success', 'message' => 'Jawaban disimpan']);
     }
 }

@@ -126,14 +126,17 @@
                 <h2 class="font-display font-bold text-lg sm:text-2xl text-slate-900 leading-relaxed"
                     x-text="currentQuestion?.question_text"></h2>
 
-                {{-- 1. Pilihan Ganda --}}
+                {{-- 1. Pilihan Ganda Terenkripsi --}}
                 <div class="space-y-3 pt-2" x-show="currentQuestion?.type === 'multiple_choice'">
                     <template x-for="(opsi, idx) in (currentQuestion?.options || [])" :key="idx">
                         <label class="flex items-center gap-4 p-4 rounded-xl border border-slate-900/80 cursor-pointer transition-colors"
-                               :class="jawaban[currentQuestion.id] === opsi ? 'bg-slate-100 border-slate-950 font-bold' : 'hover:bg-slate-50'">
-                            <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi" x-model="jawaban[currentQuestion.id]" class="hidden">
+                               :class="jawaban[currentQuestion.id] === opsi.token ? 'bg-slate-100 border-slate-950 font-bold' : 'hover:bg-slate-50'">
+                            
+                            <!-- Value yang disubmit adalah Token Hash, bukan teks opsi -->
+                            <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi.token" x-model="jawaban[currentQuestion.id]" class="hidden">
+                            
                             <span class="font-bold text-slate-900 text-sm sm:text-base" x-text="String.fromCharCode(65 + idx) + '.'"></span>
-                            <span class="text-sm sm:text-base text-slate-800" x-text="opsi"></span>
+                            <span class="text-sm sm:text-base text-slate-800" x-text="opsi.text"></span>
                         </label>
                     </template>
                 </div>
