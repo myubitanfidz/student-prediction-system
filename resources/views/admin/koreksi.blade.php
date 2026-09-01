@@ -8,17 +8,23 @@
 
     <template x-if="!loading && student">
         <div class="space-y-6">
-            {{-- Header Santri --}}
-            <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-line shadow-xs">
+            {{-- Header Santri & Info Ujian Terpilih --}}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-6 rounded-2xl border border-line shadow-xs gap-4">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-brand-blue text-white text-base font-display font-bold flex items-center justify-center shadow-xs"
+                    <div class="w-12 h-12 rounded-full bg-brand-blue text-white text-base font-display font-bold flex items-center justify-center shadow-xs shrink-0"
                          x-text="student.name.charAt(0).toUpperCase()"></div>
                     <div>
                         <h1 class="font-display font-bold text-xl text-slate-900" x-text="student.name"></h1>
                         <p class="text-xs text-slate-500" x-text="student.email"></p>
+                        <template x-if="selectedExam">
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="selectedExam.period_title"></span>
+                                <span class="text-xs font-bold text-slate-800" x-text="selectedExam.title"></span>
+                            </div>
+                        </template>
                     </div>
                 </div>
-                <a href="{{ route('admin.dashboard') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-4 py-2 rounded-xl transition">
+                <a href="{{ route('admin.dashboard') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-4 py-2 rounded-xl transition inline-flex items-center gap-1 self-start sm:self-center">
                     ← Kembali ke Dashboard
                 </a>
             </div>
@@ -66,7 +72,7 @@
                                 </div>
                             </div>
 
-                            {{-- KONTEN 1: PENAMPIL GAMBAR KARYA (Tipe image_upload) --}}
+                            {{-- Penampil Gambar Karya (image_upload) --}}
                             <template x-if="answer.question_type === 'image_upload'">
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                                     <p class="text-xs font-bold text-slate-700">Hasil Karya Gambar / Foto yang Diunggah:</p>
@@ -94,7 +100,7 @@
                                 </div>
                             </template>
 
-                            {{-- KONTEN 2: JAWABAN TEKS / ESAI --}}
+                            {{-- Jawaban Teks / Esai --}}
                             <template x-if="answer.question_type !== 'image_upload'">
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
                                     <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Jawaban Santri:</p>
@@ -102,7 +108,7 @@
                                 </div>
                             </template>
 
-                            {{-- FORM INPUT NILAI LANGSUNG (Khusus Essay & Image Upload) --}}
+                            {{-- Form Input Nilai (Essay & Image Upload) --}}
                             <template x-if="['essay', 'image_upload'].includes(answer.question_type)">
                                 <div class="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-100">
                                     <div class="flex items-center gap-2">
@@ -123,12 +129,12 @@
             </template>
 
             <div x-show="!answers.length" class="card p-8 text-center text-sm text-ink/40">
-                Santri ini belum mengerjakan ujian apapun.
+                Santri ini belum memiliki jawaban yang perlu dikoreksi pada ujian ini.
             </div>
         </div>
     </template>
 
-    {{-- Lightbox Modal Full-Size Image Preview --}}
+    {{-- Lightbox Zoom Image Modal --}}
     <div x-show="previewModalImg" x-cloak 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs"
          @click="previewModalImg = null">

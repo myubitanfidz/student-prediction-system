@@ -94,7 +94,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function getStudentAnswers($userId): JsonResponse
+    public function getStudentAnswers(Request $request, $userId): JsonResponse
     {
         $student = User::with(['portfolio', 'answers.question.exam'])->find($userId);
 
@@ -102,13 +102,40 @@ class AdminController extends Controller
             return response()->json(['message' => 'Santri tidak ditemukan'], 404);
         }
 
+        $examId = $request->query('exam_id');
+
+        $answersQuery = $student->answers->filter(function ($ans) use ($examId) {
+            if (!$ans->question) return false;
+            if ($examId) {
+                return (int) $ans->question->exam_id === (int) $examId;
+            }
+            return true;
+        });
+
+        // Ambil info ujian yang sedang dikoreksi jika ada exam_id
+        $selectedExam = null;
+        if ($examId) {
+            $examModel = Exam::find($examId);
+            if ($examModel) {
+                $selectedExam = [
+                    'id'           => $examModel->id,
+                    'title'        => $examModel->title,
+                    'category'     => $examModel->category,
+                    'subcategory'  => $examModel->subcategory,
+                    'period_title' => $examModel->period_title ?? 'PSB',
+                ];
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'data'   => [
-                'student'   => $student->only(['id', 'name', 'email']),
-                'portfolio' => $student->portfolio,
-                'answers'   => $student->answers->map(fn ($ans) => [
+                'student'       => $student->only(['id', 'name', 'email']),
+                'selected_exam' => $selectedExam,
+                'portfolio'     => $student->portfolio,
+                'answers'       => $answersQuery->map(fn ($ans) => [
                     'answer_id'      => $ans->id,
+                    'exam_id'        => $ans->question?->exam_id,
                     'exam_title'     => $ans->question?->exam?->title ?? '-',
                     'gclwama_tag'    => $ans->question?->gclwama_tag,
                     'question_type'  => $ans->question?->type,
@@ -116,7 +143,7 @@ class AdminController extends Controller
                     'student_answer' => $ans->answer_text,
                     'file_url'       => $ans->file_path ? asset('storage/' . $ans->file_path) : null,
                     'current_score'  => $ans->score,
-                ]),
+                ])->values(),
             ],
         ]);
     }

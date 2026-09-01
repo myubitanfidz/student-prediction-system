@@ -679,8 +679,10 @@ Alpine.data('adminKoreksiPage', () => ({
     loading: true,
     error: '',
     student: null,
+    selectedExam: null,
     answers: [],
     scores: {},
+    previewModalImg: null,
 
     async init() {
         const user = getUser();
@@ -692,11 +694,27 @@ Alpine.data('adminKoreksiPage', () => ({
 
         const parts = window.location.pathname.split('/').filter(Boolean);
         const userId = parts[parts.length - 1];
+        const urlParams = new URLSearchParams(window.location.search);
+        const examId = urlParams.get('exam_id');
 
         try {
-            const json = await api.getAdminStudentAnswers(userId);
-            const data = json?.data ?? json ?? {};
+            let endpoint = `/admin/students/${userId}/answers`;
+            if (examId) {
+                endpoint += `?exam_id=${examId}`;
+            }
+
+            const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
+            const res = await fetch(`/api${endpoint}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            const json = await res.json();
+            const data = json?.data ?? {};
+
             this.student = data.student ?? null;
+            this.selectedExam = data.selected_exam ?? null;
             this.answers = data.answers ?? [];
             this.answers.forEach((a) => {
                 if (a.current_score != null) this.scores[a.answer_id] = a.current_score;
@@ -710,8 +728,8 @@ Alpine.data('adminKoreksiPage', () => ({
 
     async saveScore(answerId) {
         const score = this.scores[answerId];
-        if (score === undefined || score === '') {
-            alert('Masukkan nilai 0-100 terlebih dahulu');
+        if (score === undefined || score === '' || isNaN(score)) {
+            alert('Masukkan angka nilai valid antara 0–100');
             return;
         }
 
@@ -719,9 +737,11 @@ Alpine.data('adminKoreksiPage', () => ({
             await api.gradeAnswer({ answer_id: answerId, score: parseFloat(score) });
             const answer = this.answers.find((a) => a.answer_id === answerId);
             if (answer) answer.current_score = parseFloat(score);
-            window.notifySuccess('Nilai koreksi berhasil disimpan!');
+            if (window.notifySuccess) {
+                window.notifySuccess('Nilai koreksi berhasil disimpan!');
+            }
         } catch (e) {
-            alert(e.message);
+            alert(e.message || 'Gagal menyimpan nilai');
         }
     },
 }));
