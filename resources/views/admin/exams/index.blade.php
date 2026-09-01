@@ -9,7 +9,7 @@
             <p class="text-sm text-ink/50">Atur periode gelombang PSB, jadwal buka-tutup ujian, dan butir soal.</p>
         </div>
         
-        <!-- Action Buttons (Sebelah Kanan) -->
+        <!-- Action Buttons -->
         <div class="flex items-center gap-2.5 w-full sm:w-auto">
             <button onclick="openBulkStartModal()" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -40,7 +40,7 @@
     </div>
 </div>
 
-<!-- Modal 1: Mulai Gelombang Serentak -->
+<!-- Modal 1: Mulai Gelombang Serentak (Support Ketik Manual & Datalist Rekomendasi) -->
 <div id="bulkStartModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-xs">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-4 shadow-2xl border border-slate-100">
         <div class="flex items-center gap-3">
@@ -49,16 +49,22 @@
             </div>
             <div>
                 <h3 class="text-lg font-bold text-slate-900">Mulai Gelombang Serentak</h3>
-                <p class="text-xs text-slate-500">Buka seluruh ujian pada periode yang sama secara bersamaan.</p>
+                <p class="text-xs text-slate-500">Ketik nama gelombang baru atau pilih dari yang sudah ada.</p>
             </div>
         </div>
 
         <form id="bulkStartForm" class="space-y-4 pt-1">
             <div>
-                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Pilih Judul Gelombang / Periode</label>
-                <select id="bulk_period_title" class="w-full rounded-xl border border-line p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none" required>
-                    <option value="">-- Pilih Periode --</option>
-                </select>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nama Periode / Gelombang Ujian</label>
+                <input type="text" 
+                       id="bulk_period_title" 
+                       list="period_suggestions" 
+                       placeholder="Contoh: PSB Gelombang 2 - 2026/2027" 
+                       class="w-full rounded-xl border border-line p-2.5 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 outline-none" 
+                       required>
+                <!-- Datalist untuk autocomplete/rekomendasi -->
+                <datalist id="period_suggestions"></datalist>
+                <span class="text-[10px] text-slate-400 mt-1 block">Anda bisa mengetik nama periode baru atau memilih rekomendasi di atas.</span>
             </div>
 
             <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
@@ -206,21 +212,19 @@
 
     // Modal Mulai Gelombang Serentak
     function openBulkStartModal() {
-        const select = document.getElementById('bulk_period_title');
-        select.innerHTML = '<option value="">-- Pilih Gelombang --</option>';
+        const datalist = document.getElementById('period_suggestions');
+        datalist.innerHTML = '';
 
+        // Kumpulkan saran nama gelombang yang sudah pernah dibuat
         const distinctPeriods = Array.from(new Set(examsCache.map(e => e.period_title).filter(Boolean)));
-        
-        if (distinctPeriods.length === 0) {
-            distinctPeriods.push('PSB 2026/2027');
-        }
-
         distinctPeriods.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p;
-            opt.textContent = p;
-            select.appendChild(opt);
+            datalist.appendChild(opt);
         });
+
+        // Set input teks default
+        document.getElementById('bulk_period_title').value = distinctPeriods[0] || 'PSB 2026/2027';
 
         // Default start time = sekarang
         const now = new Date();
@@ -237,9 +241,9 @@
 
     document.getElementById('bulkStartForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const periodTitle = document.getElementById('bulk_period_title').value;
+        const periodTitle = document.getElementById('bulk_period_title').value.trim();
         if (!periodTitle) {
-            alert('Pilih periode gelombang terlebih dahulu!');
+            alert('Tuliskan nama periode gelombang terlebih dahulu!');
             return;
         }
 
@@ -259,7 +263,7 @@
             closeBulkStartModal();
             fetchExams();
             if (window.notifySuccess) {
-                window.notifySuccess(`Seluruh ujian gelombang '${periodTitle}' berhasil dimulai serentak!`);
+                window.notifySuccess(`Seluruh ujian pada gelombang '${periodTitle}' berhasil dimulai serentak!`);
             }
         } else {
             const err = await res.json().catch(() => ({}));
@@ -267,7 +271,7 @@
         }
     });
 
-    // Modal Edit / Tambah Paket Ujian Tunggal
+    // Modal Edit / Tambah Paket Ujian
     function openExamModal(id = null) {
         const form = document.getElementById('examForm');
         form.reset();
