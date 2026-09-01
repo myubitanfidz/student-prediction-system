@@ -3,6 +3,28 @@ import { api, getUser, clearSession, categoryColor } from './api.js';
 
 window.Alpine = Alpine;
 
+// ---------- Global Success Modal Helper ----------
+window.notifySuccess = function(msg = 'Aksi berhasil dilakukan!') {
+    window.dispatchEvent(new CustomEvent('show-center-success', { detail: { message: msg } }));
+};
+
+Alpine.data('centerSuccessModal', () => ({
+    show: false,
+    message: '',
+    timeout: null,
+
+    init() {
+        window.addEventListener('show-center-success', (e) => {
+            this.message = e.detail?.message || 'Aksi berhasil dilakukan!';
+            this.show = true;
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(() => {
+                this.show = false;
+            }, 1800);
+        });
+    }
+}));
+
 // ---------- Global Auth Store ----------
 Alpine.store('auth', {
     user: getUser(),
@@ -32,7 +54,10 @@ Alpine.data('loginPage', () => ({
             const res = await api.login({ email: this.email, password: this.password });
             const user = getUser() || res.user;
             Alpine.store('auth').user = user;
-            window.location.href = ['admin', 'teacher'].includes(user?.role) ? '/admin/dashboard' : '/beranda';
+            window.notifySuccess('Berhasil login!');
+            setTimeout(() => {
+                window.location.href = ['admin', 'teacher'].includes(user?.role) ? '/admin/dashboard' : '/beranda';
+            }, 800);
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -55,7 +80,10 @@ Alpine.data('registerPage', () => ({
         try {
             const res = await api.register({ name: this.name, email: this.email, password: this.password });
             Alpine.store('auth').user = getUser() || res.user;
-            window.location.href = '/beranda';
+            window.notifySuccess('Registrasi berhasil!');
+            setTimeout(() => {
+                window.location.href = '/beranda';
+            }, 800);
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -131,7 +159,7 @@ Alpine.data('berandaPage', () => ({
 // ---------- 4. Pengerjaan Ujian (Flow UI & Timer Per Soal) ----------
 Alpine.data('examFlow', (examId) => ({
     examId,
-    step: 'ready', // 'ready' -> 'exam' -> 'analyzing' -> 'closed'
+    step: 'ready',
     exam: null,
     periodTitle: '',
     lockMessage: '',
@@ -141,7 +169,6 @@ Alpine.data('examFlow', (examId) => ({
     imageFiles: {},
     imagePreviews: {},
     
-    // Timer state per soal
     questionTimeRemaining: 60,
     currentQuestionTimeLimit: 60,
     timerInterval: null,
@@ -269,9 +296,10 @@ Alpine.data('examFlow', (examId) => ({
                 body: formData
             });
 
+            window.notifySuccess('Ujian selesai & jawaban terkirim!');
             setTimeout(() => {
                 window.location.href = '/dashboard';
-            }, 2200);
+            }, 2000);
         } catch (err) {
             console.error(err);
             setTimeout(() => {
@@ -324,7 +352,10 @@ Alpine.data('portofolioPage', () => ({
             this.success = true;
             this.files = [];
             this.links = [''];
-            window.location.href = '/dashboard';
+            window.notifySuccess('Portofolio berhasil diunggah!');
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1200);
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -421,7 +452,7 @@ Alpine.data('adminDashboardPage', () => ({
     error: '',
     students: [],
     searchQuery: '',
-    filterPeriod: '', // Filter periode/gelombang ujian
+    filterPeriod: '',
     sortBy: 'default',
     sortDropdownOpen: false,
     currentPage: 1,
@@ -460,7 +491,7 @@ Alpine.data('adminDashboardPage', () => ({
     },
 
     testsDone(student) {
-        return Number(student?.tests_done ?? student?.exam_count ?? 0);
+        return (student?.exam_stats || []).filter(e => e.completed).length;
     },
 
     portfolioFiles(student) {
@@ -469,18 +500,15 @@ Alpine.data('adminDashboardPage', () => ({
         return [];
     },
 
-    // Ambil daftar periode ujian yang diikuti santri
     studentPeriods(s) {
         const periods = new Set();
-        const stats = s.exam_stats || s.stats || s.answers || [];
+        const stats = s.exam_stats || [];
         stats.forEach(a => {
-            const p = a.period_title || a.exam?.period_title;
-            if (p) periods.add(p);
+            if (a.period_title) periods.add(a.period_title);
         });
         return Array.from(periods);
     },
 
-    // Ambil semua daftar opsi periode unik yang tersedia
     get availablePeriods() {
         const all = new Set();
         this.students.forEach(s => {
@@ -558,32 +586,22 @@ Alpine.data('adminDashboardPage', () => ({
         return Math.round(sum / this.students.length);
     },
 
-    groupedStats(student) {
-        const stats = student?.exam_stats ?? student?.stats ?? [];
-        if (!Array.isArray(stats)) return { Bahasa: [], Karakter: [], IT: [] };
-
-        return stats.reduce((groups, item) => {
-            const key = String(item?.category || '').trim().toLowerCase();
-            if (key === 'bahasa') groups.Bahasa.push(item);
-            else if (key === 'karakter') groups.Karakter.push(item);
-            else if (key === 'it') groups.IT.push(item);
-            return groups;
-        }, { Bahasa: [], Karakter: [], IT: [] });
-    },
-
     revealBars(student) {
-        const raw = this.groupedStats(student);
-        return Object.entries(raw).map(([label, items]) => ({
-            label,
-            items: items.map((item) => ({
+        const stats = student?.exam_stats || [];
+        const groups = {};
+        stats.forEach(item => {
+            const cat = item.category || 'Umum';
+            if (!groups[cat]) groups[cat] = { label: cat, items: [] };
+            groups[cat].items.push({
                 exam_id: item.exam_id,
-                title: item.exam_title || item.title || item.name || '-',
-                period_title: item.period_title || item.exam?.period_title || 'PSB',
+                title: item.title || '-',
+                period_title: item.period_title || 'PSB',
                 value: Number(item.mc_accuracy_pct ?? item.score ?? 0),
                 completed: !!item.completed,
                 retake_allowed: !!item.retake_allowed,
-            })),
-        }));
+            });
+        });
+        return Object.values(groups);
     },
 
     async allowRetake(student, item) {
@@ -593,6 +611,7 @@ Alpine.data('adminDashboardPage', () => ({
         try {
             await api.allowRetake({ user_id: student.id, exam_id: item.exam_id });
             item.retake_allowed = true;
+            window.notifySuccess(`Izin ulang ujian diberikan kepada ${student.name}!`);
         } catch (e) {
             alert(e.message || 'Gagal memberikan izin ulang');
         } finally {
@@ -646,7 +665,7 @@ Alpine.data('adminKoreksiPage', () => ({
             await api.gradeAnswer({ answer_id: answerId, score: parseFloat(score) });
             const answer = this.answers.find((a) => a.answer_id === answerId);
             if (answer) answer.current_score = parseFloat(score);
-            alert('Nilai berhasil disimpan');
+            window.notifySuccess('Nilai koreksi berhasil disimpan!');
         } catch (e) {
             alert(e.message);
         }

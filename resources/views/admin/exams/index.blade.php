@@ -225,5 +225,50 @@
     }
 
     fetchExams();
+
+    document.getElementById('examForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('examId').value;
+        const body = {
+            category: document.getElementById('category').value,
+            subcategory: document.getElementById('subcategory').value,
+            title: document.getElementById('title').value,
+            period_title: document.getElementById('period_title').value,
+            is_active: document.getElementById('is_active').checked,
+            start_time: document.getElementById('start_time').value || null,
+            end_time: document.getElementById('end_time').value || null,
+            description: document.getElementById('description').value
+        };
+
+        const url = id ? `/api/admin/exams/${id}` : '/api/admin/exams';
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            closeExamModal();
+            fetchExams();
+            window.notifySuccess(id ? 'Paket ujian berhasil diperbarui!' : 'Paket ujian baru berhasil dibuat!');
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message || 'Gagal menyimpan paket ujian');
+        }
+    });
+
+    async function deleteExam(id) {
+        if (!confirm('Hapus paket ujian ini beserta seluruh butir soalnya?')) return;
+        const res = await fetch(`/api/admin/exams/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+            fetchExams();
+            window.notifySuccess('Paket ujian berhasil dihapus!');
+        }
+    }   
 </script>
 @endsection

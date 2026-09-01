@@ -237,5 +237,64 @@
     }
 
     loadQuestions();
+
+    document.getElementById('questionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('questionId').value;
+        const type = document.getElementById('type').value;
+        let options = null;
+        let correct = null;
+
+        if (type === 'multiple_choice') {
+            options = [
+                document.getElementById('opt_0').value,
+                document.getElementById('opt_1').value,
+                document.getElementById('opt_2').value,
+                document.getElementById('opt_3').value,
+            ].filter(Boolean);
+            correct = document.getElementById('correct_answer').value;
+        }
+
+        const body = {
+            type,
+            time_limit_seconds: parseInt(document.getElementById('time_limit_seconds').value) || 60,
+            gclwama_tag: document.getElementById('gclwama_tag').value || null,
+            question_text: document.getElementById('question_text').value,
+            options,
+            correct_answer: correct,
+        };
+
+        if (!id) body.exam_id = examId;
+
+        const url = id ? `/api/admin/questions/${id}` : '/api/admin/questions';
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            closeQuestionModal();
+            loadQuestions();
+            window.notifySuccess(id ? 'Butir soal berhasil diperbarui!' : 'Butir soal berhasil ditambahkan!');
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message || 'Gagal menyimpan soal');
+        }
+    });
+
+    async function deleteQuestion(id) {
+        if (!confirm('Hapus soal ini?')) return;
+        const res = await fetch(`/api/admin/questions/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+            loadQuestions();
+            window.notifySuccess('Butir soal berhasil dihapus!');
+        }
+    }
 </script>
 @endsection
