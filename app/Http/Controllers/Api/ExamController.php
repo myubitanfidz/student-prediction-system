@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\SecureId;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamCompletion;
@@ -27,7 +28,8 @@ class ExamController extends Controller
                 $completion = $completions->get($exam->id);
 
                 return [
-                    'id'               => $exam->id,
+                    'id'               => $exam->hash_id, // Gunakan hash_id
+                    'raw_id'           => $exam->id,
                     'category'         => $exam->category,
                     'subcategory'      => $exam->subcategory,
                     'title'            => $exam->title,
@@ -50,54 +52,71 @@ class ExamController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
-        $exam = Exam::with('questions')->find($id);
+        // 1. Decode Identifier Token
+        $realId = SecureId::decode($id, 'exam');
+        if (!$realId) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Tautan ujian tidak valid atau telah kedaluwarsa.'
+            ], 404);
+        }
+
+        $exam = Exam::with('questions')->find($realId);
 
         if (! $exam) {
-            return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Paket ujian tidak ditemukan di database.'
+            ], 404);
         }
 
         $user = $request->user();
 
-        // 1. Validasi Jadwal Periode PSB & Status Aktif (Khusus Santri)
+        // 2. Validasi Jadwal Periode PSB & Status Aktif (Khusus Santri)
         if ($user && $user->role === 'student') {
-            if (! $exam->is_active) {
+            // Cek status aktif
+            if (! (bool) $exam->is_active) {
                 return response()->json([
                     'status'       => 'error',
                     'period_title' => $exam->period_title,
-                    'message'      => 'Ujian ini sedang dinonaktifkan oleh administrator.',
+                    'message'      => 'Ujian ini sedang dinonaktifkan oleh administrator/guru.',
                 ], 403);
             }
 
             $now = now();
+
+            // Cek Waktu Mulai
             if ($exam->start_time) {
                 $start = \Carbon\Carbon::parse($exam->start_time);
-                if ($now->lt($start)) {
+                if ($now->lessThan($start)) {
                     return response()->json([
                         'status'       => 'error',
                         'period_title' => $exam->period_title,
-                        'message'      => "Ujian ({$exam->period_title}) belum dibuka. Waktu mulai: " . $start->format('d M Y H:i'),
+                        'message'      => "Ujian ({$exam->period_title}) belum dimulai. Jadwal buka: " . $start->format('d M Y, H:i') . " WIB.",
                     ], 403);
                 }
             }
 
+            // Cek Waktu Selesai
             if ($exam->end_time) {
                 $end = \Carbon\Carbon::parse($exam->end_time);
-                if ($now->gt($end)) {
+                if ($now->greaterThan($end)) {
                     return response()->json([
                         'status'       => 'error',
                         'period_title' => $exam->period_title,
-                        'message'      => "Periode pengerjaan ({$exam->period_title}) telah berakhir pada: " . $end->format('d M Y H:i'),
+                        'message'      => "Periode pengerjaan ujian ({$exam->period_title}) telah berakhir pada: " . $end->format('d M Y, H:i') . " WIB.",
                     ], 403);
                 }
             }
         }
 
-        $completion = ExamCompletion::where('user_id', $user->id)
-            ->where('exam_id', $id)
-            ->first();
+        // 3. Cek Status Penyelesaian Santri
+        $completion = $user ? ExamCompletion::where('user_id', $user->id)
+            ->where('exam_id', $realId)
+            ->first() : null;
 
         $examPayload = [
-            'id'               => $exam->id,
+            'id'               => $exam->hash_id,
             'category'         => $exam->category,
             'subcategory'      => $exam->subcategory,
             'title'            => $exam->title,
@@ -106,8 +125,8 @@ class ExamController extends Controller
             'duration_minutes' => $exam->duration_minutes,
         ];
 
-        // 2. Mode Hasil Selesai (Finished & Locked)
-        if ($completion && ! $completion->retake_allowed) {
+        // 4. Mode Hasil Selesai (Jika sudah beres & retake tidak diizinkan)
+        if ($completion && ! (bool) $completion->retake_allowed) {
             $answers = StudentAnswer::where('user_id', $user->id)
                 ->whereIn('question_id', $exam->questions->pluck('id'))
                 ->get()
@@ -147,7 +166,7 @@ class ExamController extends Controller
             ]);
         }
 
-        // 3. Mode Pengerjaan Aktif (Mengacak nomor & opsi PG, memastikan array options valid)
+        // 5. Mode Pengerjaan Aktif (Soal & Pilihan Ganda Teracak)
         $questions = $exam->questions->shuffle()->values()->map(function (Question $question) {
             $options = $question->options;
             if ($question->type === 'multiple_choice' && is_array($options)) {
@@ -156,7 +175,6 @@ class ExamController extends Controller
 
             return [
                 'id'                 => $question->id,
-                'gclwama_tag'        => $question->gclwama_tag,
                 'type'               => $question->type,
                 'time_limit_seconds' => (int) ($question->time_limit_seconds ?: 60),
                 'question_text'      => $question->question_text,
@@ -178,8 +196,14 @@ class ExamController extends Controller
 
     public function submit(Request $request): JsonResponse
     {
+        // Decode exam_id jika dikirim dalam bentuk hash
+        $rawExamId = $request->exam_id;
+        $decodedExamId = is_numeric($rawExamId) ? (int)$rawExamId : SecureId::decode($rawExamId, 'exam');
+        
+        $request->merge(['exam_id_resolved' => $decodedExamId]);
+
         $validator = Validator::make($request->all(), [
-            'exam_id'               => 'required|exists:exams,id',
+            'exam_id_resolved'      => 'required|exists:exams,id',
             'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
             'answers.*.answer_text' => 'nullable|string',
@@ -191,7 +215,7 @@ class ExamController extends Controller
         }
 
         $userId = $request->user()->id;
-        $examId = (int) $request->exam_id;
+        $examId = (int) $decodedExamId;
 
         $completion = ExamCompletion::where('user_id', $userId)
             ->where('exam_id', $examId)
@@ -208,7 +232,6 @@ class ExamController extends Controller
         $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
 
         DB::transaction(function () use ($request, $userId, $examId, $questions, $completion) {
-            // Bersihkan file & jawaban lama jika izin retake aktif
             if ($completion && $completion->retake_allowed) {
                 $examQuestionIds = Question::where('exam_id', $examId)->pluck('id');
                 $oldAnswers = StudentAnswer::where('user_id', $userId)
@@ -232,14 +255,12 @@ class ExamController extends Controller
                 $score = null;
                 $filePath = null;
 
-                // 1. Auto-grading untuk Pilihan Ganda (PG)
                 if ($question?->type === 'multiple_choice') {
                     $score = mb_strtolower(trim((string) ($ans['answer_text'] ?? ''))) === mb_strtolower(trim((string) $question->correct_answer))
                         ? 100
                         : 0;
                 }
 
-                // 2. Simpan Berkas Gambar (Upload Karya Gambar)
                 if ($request->hasFile("answers.{$index}.file")) {
                     $uploadedFile = $request->file("answers.{$index}.file");
                     $filePath = $uploadedFile->store('exam_answers', 'public');

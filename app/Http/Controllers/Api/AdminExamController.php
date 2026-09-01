@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\SecureId;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\Question;
@@ -13,7 +14,10 @@ class AdminExamController extends Controller
 {
     public function index(): JsonResponse
     {
-        $exams = Exam::withCount('questions')->get();
+        $exams = Exam::withCount('questions')->get()->map(function ($exam) {
+            $exam->hash_id = $exam->hash_id;
+            return $exam;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -37,7 +41,6 @@ class AdminExamController extends Controller
         $startTime = $request->start_time ? \Carbon\Carbon::parse($request->start_time) : $now;
         $endTime = $request->end_time ? \Carbon\Carbon::parse($request->end_time) : null;
 
-        // Update seluruh paket ujian yang memiliki period_title tersebut menjadi aktif dan mulai sekarang
         $affected = Exam::where('period_title', $request->period_title)
             ->update([
                 'is_active'  => true,
@@ -77,14 +80,15 @@ class AdminExamController extends Controller
         }
 
         $exam = Exam::create([
-            'category'     => $request->category,
-            'subcategory'  => $request->subcategory,
-            'title'        => $request->title,
-            'period_title' => $request->period_title ?? 'PSB 2026/2027',
-            'description'  => $request->description,
-            'is_active'    => $request->boolean('is_active', true),
-            'start_time'   => $request->start_time,
-            'end_time'     => $request->end_time,
+            'category'         => $request->category,
+            'subcategory'      => $request->subcategory,
+            'title'            => $request->title,
+            'period_title'     => $request->period_title ?? 'PSB 2026/2027',
+            'description'      => $request->description,
+            'duration_minutes' => 60, // Menghindari error SQL strict mode jika duration null
+            'is_active'        => $request->boolean('is_active', true),
+            'start_time'       => $request->start_time,
+            'end_time'         => $request->end_time,
         ]);
 
         return response()->json([
@@ -96,7 +100,9 @@ class AdminExamController extends Controller
 
     public function updateExam(Request $request, $id): JsonResponse
     {
-        $exam = Exam::find($id);
+        // Decode ID Terenkripsi untuk mencegah error saat proses update
+        $realId = is_numeric($id) ? (int)$id : SecureId::decode($id, 'exam');
+        $exam = Exam::find($realId);
 
         if (!$exam) {
             return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
@@ -137,7 +143,8 @@ class AdminExamController extends Controller
 
     public function destroyExam($id): JsonResponse
     {
-        $exam = Exam::find($id);
+        $realId = is_numeric($id) ? (int)$id : SecureId::decode($id, 'exam');
+        $exam = Exam::find($realId);
 
         if (!$exam) {
             return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
@@ -153,7 +160,8 @@ class AdminExamController extends Controller
 
     public function getQuestionsByExam($examId)
     {
-        $exam = Exam::with('questions')->find($examId);
+        $realId = is_numeric($examId) ? (int)$examId : SecureId::decode($examId, 'exam');
+        $exam = Exam::with('questions')->find($realId);
     
         if (!$exam) {
             return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
@@ -172,8 +180,13 @@ class AdminExamController extends Controller
 
     public function storeQuestion(Request $request): JsonResponse
     {
+        $rawExamId = $request->exam_id;
+        $realExamId = is_numeric($rawExamId) ? (int)$rawExamId : SecureId::decode($rawExamId, 'exam');
+
+        $request->merge(['exam_id_resolved' => $realExamId]);
+
         $validator = Validator::make($request->all(), [
-            'exam_id'            => 'required|exists:exams,id',
+            'exam_id_resolved'   => 'required|exists:exams,id',
             'type'               => 'required|in:multiple_choice,essay,image_upload',
             'time_limit_seconds' => 'nullable|integer|min:5|max:1800',
             'gclwama_tag'        => 'nullable|in:G,C,L,W,A_animasi,M,A_algoritma',
@@ -187,7 +200,7 @@ class AdminExamController extends Controller
         }
 
         $question = Question::create([
-            'exam_id'            => $request->exam_id,
+            'exam_id'            => $realExamId,
             'type'               => $request->type,
             'time_limit_seconds' => $request->time_limit_seconds ?? 60,
             'gclwama_tag'        => $request->gclwama_tag,

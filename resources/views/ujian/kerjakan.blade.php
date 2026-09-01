@@ -2,7 +2,7 @@
 @section('title', 'Ujian — Talent Mapping')
 
 @section('content')
-<div x-data="examFlow({{ (int) $examId }})" class="min-h-[calc(100vh-4rem)] bg-[#F8F9FA] flex flex-col justify-center py-10 px-4">
+<div x-data="examFlow('{{ $examId }}')" class="min-h-[calc(100vh-4rem)] bg-[#F8F9FA] flex flex-col justify-center py-10 px-4">
 
     {{-- ==================== SCREEN: LOADING ==================== --}}
     <div x-show="step === 'loading'" class="max-w-md w-full mx-auto text-center space-y-4 py-16">

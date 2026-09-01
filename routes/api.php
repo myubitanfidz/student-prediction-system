@@ -16,13 +16,17 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Santri Endpoints
+    // 🌟 Santri Endpoints (Strict hanya untuk Santri)
     Route::middleware('role:student')->group(function () {
         Route::get('/exams', [ExamController::class, 'index']);
-        Route::get('/exams/{id}', [ExamController::class, 'show']);
         Route::post('/exams/submit', [ExamController::class, 'submit']);
         Route::post('/portfolios', [PortfolioController::class, 'store']);
         Route::get('/dashboard', [DashboardController::class, 'show']);
+    });
+
+    // 🌟 Endpoint Buka Ujian (Santri untuk Mengerjakan, Admin/Guru untuk Preview)
+    Route::middleware('role:student,admin,teacher')->group(function () {
+        Route::get('/exams/{id}', [ExamController::class, 'show']);
     });
 
     // Admin & Teacher — student overview and grading
@@ -36,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin only — exam package management
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/exams', [AdminExamController::class, 'index']);
+        Route::post('/exams/bulk-start-period', [AdminExamController::class, 'bulkStartPeriod']);
         Route::post('/exams', [AdminExamController::class, 'storeExam']);
         Route::put('/exams/{id}', [AdminExamController::class, 'updateExam']);
         Route::delete('/exams/{id}', [AdminExamController::class, 'destroyExam']);

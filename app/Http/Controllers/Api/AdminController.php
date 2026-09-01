@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\SecureId;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamCompletion;
@@ -17,7 +18,6 @@ class AdminController extends Controller
     {
         $exams = Exam::all();
 
-        // 1. Ambil daftar seluruh judul periode gelombang unik dari tabel exams
         $allPeriods = Exam::whereNotNull('period_title')
             ->where('period_title', '!=', '')
             ->distinct()
@@ -42,7 +42,8 @@ class AdminController extends Controller
                     $completed = (bool) $completion;
 
                     return [
-                        'exam_id'         => $exam->id,
+                        'exam_id'         => $exam->hash_id, // Hash exam ID
+                        'raw_exam_id'     => $exam->id,
                         'category'        => $exam->category,
                         'subcategory'     => $exam->subcategory,
                         'exam_title'      => $exam->title,
@@ -62,11 +63,11 @@ class AdminController extends Controller
                     ->map(fn ($stat) => (float) $stat['mc_accuracy_pct'])
                     ->filter(fn ($pct) => $pct > 0);
 
-                // Kumpulkan periode unik yang pernah diikuti santri ini
                 $periodsAttended = $examStats->pluck('period_title')->unique()->values()->all();
 
                 return [
-                    'id'            => $student->id,
+                    'id'            => $student->hash_id, // Hash user ID
+                    'raw_id'        => $student->id,
                     'name'          => $student->name,
                     'email'         => $student->email,
                     'periods'       => $periodsAttended,
@@ -96,29 +97,31 @@ class AdminController extends Controller
 
     public function getStudentAnswers(Request $request, $userId): JsonResponse
     {
-        $student = User::with(['portfolio', 'answers.question.exam'])->find($userId);
+        $realUserId = is_numeric($userId) ? (int)$userId : SecureId::decode($userId, 'user');
+        
+        $student = User::with(['portfolio', 'answers.question.exam'])->find($realUserId);
 
         if (! $student || $student->role !== 'student') {
-            return response()->json(['message' => 'Santri tidak ditemukan'], 404);
+            return response()->json(['message' => 'Santri tidak ditemukan atau tautan tidak valid.'], 404);
         }
 
-        $examId = $request->query('exam_id');
+        $rawExamId = $request->query('exam_id');
+        $realExamId = $rawExamId ? (is_numeric($rawExamId) ? (int)$rawExamId : SecureId::decode($rawExamId, 'exam')) : null;
 
-        $answersQuery = $student->answers->filter(function ($ans) use ($examId) {
+        $answersQuery = $student->answers->filter(function ($ans) use ($realExamId) {
             if (!$ans->question) return false;
-            if ($examId) {
-                return (int) $ans->question->exam_id === (int) $examId;
+            if ($realExamId) {
+                return (int) $ans->question->exam_id === (int) $realExamId;
             }
             return true;
         });
 
-        // Ambil info ujian yang sedang dikoreksi jika ada exam_id
         $selectedExam = null;
-        if ($examId) {
-            $examModel = Exam::find($examId);
+        if ($realExamId) {
+            $examModel = Exam::find($realExamId);
             if ($examModel) {
                 $selectedExam = [
-                    'id'           => $examModel->id,
+                    'id'           => $examModel->hash_id,
                     'title'        => $examModel->title,
                     'category'     => $examModel->category,
                     'subcategory'  => $examModel->subcategory,
@@ -130,12 +133,16 @@ class AdminController extends Controller
         return response()->json([
             'status' => 'success',
             'data'   => [
-                'student'       => $student->only(['id', 'name', 'email']),
+                'student'       => [
+                    'id'    => $student->hash_id,
+                    'name'  => $student->name,
+                    'email' => $student->email,
+                ],
                 'selected_exam' => $selectedExam,
                 'portfolio'     => $student->portfolio,
                 'answers'       => $answersQuery->map(fn ($ans) => [
                     'answer_id'      => $ans->id,
-                    'exam_id'        => $ans->question?->exam_id,
+                    'exam_id'        => SecureId::encode($ans->question?->exam_id, 'exam'),
                     'exam_title'     => $ans->question?->exam?->title ?? '-',
                     'gclwama_tag'    => $ans->question?->gclwama_tag,
                     'question_type'  => $ans->question?->type,
@@ -171,22 +178,16 @@ class AdminController extends Controller
 
     public function allowRetake(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'exam_id' => 'required|exists:exams,id',
-        ]);
+        $realUserId = is_numeric($request->user_id) ? (int)$request->user_id : SecureId::decode($request->user_id, 'user');
+        $realExamId = is_numeric($request->exam_id) ? (int)$request->exam_id : SecureId::decode($request->exam_id, 'exam');
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $student = User::find($request->user_id);
+        $student = User::find($realUserId);
         if (! $student || $student->role !== 'student') {
             return response()->json(['message' => 'Santri tidak ditemukan'], 404);
         }
 
-        $completion = ExamCompletion::where('user_id', $request->user_id)
-            ->where('exam_id', $request->exam_id)
+        $completion = ExamCompletion::where('user_id', $realUserId)
+            ->where('exam_id', $realExamId)
             ->first();
 
         if (! $completion) {

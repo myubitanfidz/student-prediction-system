@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\SecureId;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -25,6 +26,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    protected $appends = ['hash_id'];
+
+    public function getHashIdAttribute(): string
+    {
+        return SecureId::encode($this->id, 'user');
     }
 
     public function answers(): HasMany

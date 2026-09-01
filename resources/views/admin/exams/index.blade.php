@@ -169,7 +169,6 @@
     const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
     let examsCache = [];
 
-    // Inisialisasi Flatpickr
     const fpConfig = {
         enableTime: true,
         dateFormat: "Y-m-d H:i",
@@ -203,7 +202,9 @@
             }
 
             examsCache = result.data;
-            tbody.innerHTML = result.data.map(exam => `
+            tbody.innerHTML = result.data.map(exam => {
+                const examToken = exam.hash_id || exam.id;
+                return `
                 <tr class="hover:bg-slate-50/50">
                     <td class="p-4">
                         <span class="font-bold text-brand-blue">${escapeHtml(exam.category)}</span>
@@ -212,7 +213,7 @@
                     <td class="p-4 font-medium text-slate-700">${escapeHtml(exam.subcategory)}</td>
                     <td class="p-4 font-bold text-slate-900">${escapeHtml(exam.title)}</td>
                     <td class="p-4 text-center">
-                        <span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full ${exam.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                        <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full ${exam.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                             ${exam.is_active ? 'Aktif' : 'Non-aktif'}
                         </span>
                         <p class="text-[10px] text-slate-400 mt-1 font-mono">
@@ -222,13 +223,18 @@
                     <td class="p-4 text-center">
                         <span class="bg-slate-100 text-slate-700 font-bold px-2.5 py-0.5 rounded-full text-xs">${exam.questions_count || 0}</span>
                     </td>
-                    <td class="p-4 text-right space-x-1">
-                        <a href="/admin/exams/${exam.id}/questions" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg inline-block">Kelola Soal</a>
-                        <button onclick="openExamModal(${exam.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1.5 rounded-lg">Edit</button>
-                        <button onclick="deleteExam(${exam.id})" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1.5">Hapus</button>
+                    <td class="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        <!-- 🌟 Tombol Salin Link Ujian Terenkripsi 🌟 -->
+                        <button type="button" onclick="copyExamLink('${examToken}', '${escapeHtml(exam.title)}')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 transition inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span>Salin Link</span>
+                        </button>
+                        <a href="/admin/exams/${examToken}/questions" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg inline-block">Kelola Soal</a>
+                        <button onclick="openExamModal('${examToken}')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1.5 rounded-lg">Edit</button>
+                        <button onclick="deleteExam('${examToken}')" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1.5">Hapus</button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         } catch (err) {
             console.error(err);
         }
@@ -237,6 +243,20 @@
     function escapeHtml(str) {
         if (!str) return '';
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 🌟 Fungsi Salin Link Ujian Terenkripsi 🌟
+    function copyExamLink(token, examTitle) {
+        const fullUrl = `${window.location.origin}/ujian/${token}`;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            if (window.notifySuccess) {
+                window.notifySuccess(`Link ujian "${examTitle}" berhasil disalin ke clipboard!`);
+            } else {
+                alert(`Link ujian berhasil disalin:\n${fullUrl}`);
+            }
+        }).catch(() => {
+            prompt('Salin link ujian berikut:', fullUrl);
+        });
     }
 
     function openBulkStartModal() {
@@ -293,13 +313,13 @@
         }
     });
 
-    function openExamModal(id = null) {
+    function openExamModal(identifier = null) {
         const form = document.getElementById('examForm');
         form.reset();
-        document.getElementById('examId').value = id || '';
+        document.getElementById('examId').value = identifier || '';
 
-        if (id) {
-            const exam = examsCache.find(e => e.id === id);
+        if (identifier) {
+            const exam = examsCache.find(e => e.hash_id === identifier || String(e.id) === String(identifier));
             if (!exam) return;
             document.getElementById('examModalTitle').innerText = 'Edit Paket & Jadwal Ujian';
             document.getElementById('category').value = exam.category;

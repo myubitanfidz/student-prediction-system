@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('beranda'));
 
+// 🌟 Tambahkan baris ini untuk menangani redirect default Laravel 🌟
+Route::redirect('/home', '/beranda');
+
 // Autentikasi
 Route::get('/login', fn () => view('auth.login'))->name('login');
 Route::get('/register', fn () => view('auth.register'))->name('register');
@@ -13,6 +16,7 @@ Route::get('/beranda', fn () => view('beranda.index'))->name('beranda');
 Route::get('/beranda/bahasa', fn () => view('ujian.bahasa'))->name('beranda.bahasa');
 Route::get('/beranda/it', fn () => view('ujian.it'))->name('beranda.it');
 
+// Parameter Token Terenkripsi
 Route::get('/ujian/{id}', fn (string $id) => view('ujian.kerjakan', ['examId' => $id]))->name('ujian.kerjakan');
 Route::get('/portofolio', fn () => view('portofolio.index'))->name('portofolio.index');
 Route::get('/profile', fn () => view('dashboard.index'))->name('profile');
