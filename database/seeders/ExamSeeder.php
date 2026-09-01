@@ -12,17 +12,17 @@ class ExamSeeder extends Seeder
     public function run(): void
     {
         // 1. Akun Default Penguji & Santri
-        User::firstOrCreate(['email' => 'guru@sekolah.sch.id'], [
+        User::firstOrCreate(['email' => 'guru@sch'], [
             'name'     => 'Ustadz / Guru Penguji',
             'password' => 'password123',
             'role'     => 'admin',
         ]);
-        User::firstOrCreate(['email' => 'guru2@sekolah.sch.id'], [
+        User::firstOrCreate(['email' => 'guru2@sch'], [
             'name'     => 'Bu Guru (Teacher)',
             'password' => 'password123',
             'role'     => 'teacher',
         ]);
-        User::firstOrCreate(['email' => 'santri@sekolah.sch.id'], [
+        User::firstOrCreate(['email' => 'santri@sch'], [
             'name'     => 'Ahmad Santri',
             'password' => 'password123',
             'role'     => 'student',
