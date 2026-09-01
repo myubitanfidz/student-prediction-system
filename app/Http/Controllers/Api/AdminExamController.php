@@ -21,6 +21,44 @@ class AdminExamController extends Controller
         ]);
     }
 
+    public function bulkStartPeriod(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'period_title' => 'required|string|max:255',
+            'start_time'   => 'nullable|date',
+            'end_time'     => 'nullable|date|after_or_equal:start_time',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $now = now();
+        $startTime = $request->start_time ? \Carbon\Carbon::parse($request->start_time) : $now;
+        $endTime = $request->end_time ? \Carbon\Carbon::parse($request->end_time) : null;
+
+        // Update seluruh paket ujian yang memiliki period_title tersebut menjadi aktif dan mulai sekarang
+        $affected = Exam::where('period_title', $request->period_title)
+            ->update([
+                'is_active'  => true,
+                'start_time' => $startTime,
+                'end_time'   => $endTime,
+            ]);
+
+        if ($affected === 0) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => "Tidak ditemukan paket ujian dengan periode {$request->period_title}",
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => "Seluruh ujian pada gelombang '{$request->period_title}' berhasil dimulai secara serentak!",
+            'affected' => $affected,
+        ]);
+    }
+
     public function storeExam(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [

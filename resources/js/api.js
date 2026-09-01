@@ -4,7 +4,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export function getToken() {
-    return localStorage.getItem('ts_token');
+    return localStorage.getItem('ts_token') || localStorage.getItem('token');
 }
 
 export function getUser() {
@@ -16,12 +16,18 @@ export function getUser() {
 }
 
 export function setSession(token, user) {
-    if (token) localStorage.setItem('ts_token', token);
-    if (user) localStorage.setItem('ts_user', JSON.stringify(user));
+    if (token) {
+        localStorage.setItem('ts_token', token);
+        localStorage.setItem('token', token);
+    }
+    if (user) {
+        localStorage.setItem('ts_user', JSON.stringify(user));
+    }
 }
 
 export function clearSession() {
     localStorage.removeItem('ts_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('ts_user');
 }
 
@@ -91,7 +97,7 @@ export const api = {
         });
     },
 
-    // Santri Endpoints
+    // ---------- Santri Endpoints ----------
     getExams() {
         return request('/exams');
     },
@@ -101,8 +107,9 @@ export const api = {
     },
 
     submitExam(payload) {
-        // payload: { exam_id, answers: [{ question_id, answer_text }] }
-        return request('/exams/submit', { method: 'POST', body: payload });
+        // Mendukung object JSON biasa maupun FormData (jika ada file gambar karya santri)
+        const isForm = payload instanceof FormData;
+        return request('/exams/submit', { method: 'POST', body: payload, isForm });
     },
 
     submitPortfolio(formData) {
@@ -114,7 +121,7 @@ export const api = {
         return request('/dashboard');
     },
 
-    // Admin Endpoints
+    // ---------- Admin Endpoints ----------
     getAdminStudents() {
         return request('/admin/students');
     },
@@ -141,12 +148,17 @@ export const api = {
         return request('/admin/exams', { method: 'POST', body: payload });
     },
 
+    updateExam(id, payload) {
+        return request(`/admin/exams/${id}`, { method: 'PUT', body: payload });
+    },
+
     deleteExam(id) {
         return request(`/admin/exams/${id}`, { method: 'DELETE' });
     },
 
-    updateExam(id, payload) {
-        return request(`/admin/exams/${id}`, { method: 'PUT', body: payload });
+    bulkStartPeriod(payload) {
+        // payload: { period_title, start_time, end_time }
+        return request('/admin/exams/bulk-start-period', { method: 'POST', body: payload });
     },
 
     getAdminQuestions(examId) {
