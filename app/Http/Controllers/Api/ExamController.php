@@ -172,8 +172,11 @@ class ExamController extends Controller
         $validator = Validator::make($request->all(), [
             'exam_id_resolved'      => 'required|exists:exams,id',
             'session_nonce'         => 'required|string', 
+            'violation_count'       => 'nullable|integer|min:0',
             'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
+            'answers.*.answer_text' => 'nullable|string',
+            'answers.*.file'        => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -256,11 +259,12 @@ class ExamController extends Controller
                 );
             }
 
-            // 🛡️ Hancurkan Token Nonce
+            // 🛡️ Hancurkan Token Nonce & Simpan Catatan Pelanggaran
             $completion->update([
-                'completed_at'   => now(),
-                'retake_allowed' => false,
-                'session_nonce'  => null, 
+                'completed_at'    => now(),
+                'violation_count' => (int) $request->input('violation_count', 0),
+                'retake_allowed'  => false,
+                'session_nonce'   => null, 
             ]);
         });
 

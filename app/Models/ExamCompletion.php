@@ -13,16 +13,18 @@ class ExamCompletion extends Model
     protected $fillable = [
         'user_id', 
         'exam_id', 
-        'started_at',     // Baru
-        'session_nonce',  // Baru
+        'started_at',
+        'session_nonce',
+        'violation_count',
         'completed_at', 
         'retake_allowed'
     ];
 
     protected $casts = [
-        'started_at'     => 'datetime',
-        'completed_at'   => 'datetime',
-        'retake_allowed' => 'boolean',
+        'started_at'      => 'datetime',
+        'completed_at'    => 'datetime',
+        'violation_count' => 'integer',
+        'retake_allowed'  => 'boolean',
     ];
 
     public function user(): BelongsTo

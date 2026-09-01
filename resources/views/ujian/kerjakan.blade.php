@@ -2,7 +2,9 @@
 @section('title', 'Ujian — Talent Mapping')
 
 @section('content')
-<div x-data="examFlow('{{ $examId }}')" class="min-h-[calc(100vh-4rem)] bg-[#F8F9FA] flex flex-col justify-center py-10 px-4">
+<div x-data="examFlow('{{ $examId }}')" 
+     @contextmenu.prevent 
+     class="min-h-[calc(100vh-4rem)] bg-[#F8F9FA] flex flex-col justify-center py-10 px-4 select-none">
 
     {{-- ==================== SCREEN: LOADING ==================== --}}
     <div x-show="step === 'loading'" class="max-w-md w-full mx-auto text-center space-y-4 py-16">
@@ -10,11 +12,35 @@
         <p class="text-sm font-semibold text-slate-600">Menyiapkan butir soal ujian...</p>
     </div>
 
+    {{-- ==================== MODAL WARNING: PERINGATAN CURANG PINDAH TAB ==================== --}}
+    <div x-show="showWarningModal" x-cloak class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center space-y-6 shadow-2xl border border-rose-100">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-black animate-bounce">
+                ⚠️
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-xl font-extrabold text-slate-900">Peringatan Kecurangan!</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Anda terdeteksi meninggalkan halaman ujian / berpindah tab. 
+                </p>
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 inline-block">
+                    <p class="text-xs font-bold text-rose-700">
+                        Pelanggaran: <span class="text-base" x-text="violations"></span> / <span x-text="maxViolations"></span>
+                    </p>
+                </div>
+                <p class="text-[11px] text-slate-500">
+                    Jika mencapai batas maksimal, ujian akan otomatis diselesaikan dan dilaporkan ke pengawas.
+                </p>
+            </div>
+            <button type="button" @click="closeWarningModal()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95 text-sm">
+                Saya Mengerti &amp; Kembali Mengerjakan
+            </button>
+        </div>
+    </div>
+
     {{-- ==================== SCREEN 0: KETIKA UJIAN DITUTUP / DILUAR JADWAL ==================== --}}
     <div x-show="step === 'closed'" x-cloak class="max-w-xl w-full mx-auto text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
-        <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-            ⏱
-        </div>
+        <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">⏱</div>
         <h2 class="font-display font-black text-2xl text-slate-900" x-text="periodTitle || 'Ujian Belum Tersedia'"></h2>
         <p class="text-sm text-slate-600 leading-relaxed" x-text="lockMessage"></p>
         <div>
@@ -26,9 +52,7 @@
 
     {{-- ==================== SCREEN: SOAL KOSONG ==================== --}}
     <div x-show="step === 'empty'" x-cloak class="max-w-xl w-full mx-auto text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
-        <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-            📝
-        </div>
+        <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">📝</div>
         <h2 class="font-display font-black text-2xl text-slate-900">Belum Ada Soal</h2>
         <p class="text-sm text-slate-600 leading-relaxed">Paket ujian ini belum memiliki butir soal yang aktif.</p>
         <div>
@@ -51,7 +75,7 @@
         <div class="bg-[#ECEAE4] p-6 sm:p-10 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-6 shadow-xs">
             <div class="bg-white p-8 rounded-2xl flex items-center justify-center text-center shadow-xs">
                 <p class="font-medium text-sm sm:text-base text-slate-800 leading-snug">
-                    Tidak ada jawaban yang benar atau salah
+                    Dilarang berpindah tab atau membuka aplikasi lain
                 </p>
             </div>
             <div class="bg-white p-8 rounded-2xl flex items-center justify-center text-center shadow-xs">
@@ -76,8 +100,6 @@
 
     {{-- ==================== SCREEN 2: PENGERJAAN SOAL + TIMER ==================== --}}
     <div x-show="step === 'exam'" x-cloak class="max-w-4xl w-full mx-auto space-y-6">
-        
-        {{-- Top Bar Quiz --}}
         <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Waktu Soal:</span>
@@ -104,7 +126,6 @@
             </a>
         </div>
 
-        {{-- Waktu Mundur Progress Line --}}
         <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
             <div class="h-full bg-indigo-600 transition-all duration-1000 ease-linear"
                  :style="`width: ${(questionTimeRemaining / Math.max(1, currentQuestionTimeLimit)) * 100}%`"></div>
@@ -115,7 +136,6 @@
                   x-text="exam?.title ?? 'QUIZ PENGETAHUAN'"></span>
         </div>
 
-        {{-- Main Box Pertanyaan --}}
         <template x-if="currentQuestion">
             <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-12 shadow-sm space-y-6">
                 <div>
@@ -131,10 +151,7 @@
                     <template x-for="(opsi, idx) in (currentQuestion?.options || [])" :key="idx">
                         <label class="flex items-center gap-4 p-4 rounded-xl border border-slate-900/80 cursor-pointer transition-colors"
                                :class="jawaban[currentQuestion.id] === opsi.token ? 'bg-slate-100 border-slate-950 font-bold' : 'hover:bg-slate-50'">
-                            
-                            <!-- Value yang disubmit adalah Token Hash, bukan teks opsi -->
                             <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi.token" x-model="jawaban[currentQuestion.id]" class="hidden">
-                            
                             <span class="font-bold text-slate-900 text-sm sm:text-base" x-text="String.fromCharCode(65 + idx) + '.'"></span>
                             <span class="text-sm sm:text-base text-slate-800" x-text="opsi.text"></span>
                         </label>
@@ -151,14 +168,11 @@
                 <div x-show="currentQuestion?.type === 'image_upload'" class="pt-2 space-y-4">
                     <label class="block w-full border-2 border-dashed border-slate-400 hover:border-slate-800 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition bg-slate-50/50 hover:bg-slate-50">
                         <input type="file" accept="image/*" class="hidden" @change="handleImageUpload(currentQuestion.id, $event)">
-                        
                         <div class="space-y-2">
                             <svg class="w-10 h-10 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            <p class="font-bold text-sm sm:text-base text-slate-800">
-                                Klik atau seret foto/gambar karya kamu ke sini
-                            </p>
+                            <p class="font-bold text-sm sm:text-base text-slate-800">Klik atau seret foto/gambar karya kamu ke sini</p>
                             <p class="text-xs text-slate-500">Mendukung JPG, PNG, WEBP (Maks. 10MB)</p>
                         </div>
                     </label>
@@ -181,7 +195,6 @@
             </div>
         </template>
 
-        {{-- Navigasi Bawah --}}
         <div class="flex items-center justify-between pt-2">
             <button type="button" @click="prevQuestion()" :disabled="currentIndex === 0"
                     class="bg-[#D9D9D9] hover:bg-[#C8C8C8] disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 rounded-2xl transition">
@@ -203,18 +216,12 @@
     {{-- ==================== SCREEN 3: ANALYZING ==================== --}}
     <div x-show="step === 'analyzing'" x-cloak class="max-w-xl w-full mx-auto text-center space-y-8 py-16">
         <div class="space-y-2">
-            <h1 class="font-display font-black text-3xl sm:text-4xl text-slate-900">
-                Menganalisis bakatmu
-            </h1>
-            <p class="text-sm sm:text-base text-slate-600">
-                Kami sedang memetakan hasil jawaban mu!
-            </p>
+            <h1 class="font-display font-black text-3xl sm:text-4xl text-slate-900">Menganalisis bakatmu</h1>
+            <p class="text-sm sm:text-base text-slate-600">Kami sedang memetakan hasil jawaban mu!</p>
         </div>
-
         <div class="w-48 h-48 sm:w-60 sm:h-60 mx-auto rounded-full bg-[#ECEAE4] flex items-center justify-center relative overflow-hidden border border-slate-200">
             <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#8C8C8C_1.5px,transparent_1.5px)] [background-size:12px_12px] animate-pulse"></div>
         </div>
-
         <div class="max-w-md mx-auto h-3.5 rounded-full bg-[#D9D9D9] overflow-hidden p-0.5">
             <div class="h-full bg-slate-800 rounded-full animate-[progress_2s_ease-in-out_infinite]" style="width: 70%"></div>
         </div>
@@ -232,11 +239,16 @@ document.addEventListener('alpine:init', () => {
         lockMessage: '',
         questions: [],
         currentIndex: 0,
-        sessionNonce: '', // 🌟 Variabel Token Session
+        sessionNonce: '',
         jawaban: {},
         imageFiles: {},
         imagePreviews: {},
         
+        // 🌟 Anti-Cheat States
+        violations: 0,
+        maxViolations: 3,
+        showWarningModal: false,
+
         questionTimeRemaining: 60,
         currentQuestionTimeLimit: 60,
         timerInterval: null,
@@ -259,6 +271,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         async init() {
+            // Pasang proteksi shortcut keyboard
+            this.setupKeyGuards();
+
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
             try {
                 const res = await fetch(`/api/exams/${this.examId}`, {
@@ -283,7 +298,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.exam = json?.data?.exam || null;
-                this.sessionNonce = this.exam?.session_nonce || ''; // 🌟 Tangkap Token Sesi
+                this.sessionNonce = this.exam?.session_nonce || '';
                 this.questions = json?.data?.questions || [];
 
                 if (json?.data?.completed && !json?.data?.retake_allowed) {
@@ -301,6 +316,49 @@ document.addEventListener('alpine:init', () => {
                 this.step = 'closed';
                 this.lockMessage = 'Gagal terhubung ke server.';
             }
+        },
+
+        setupAntiCheatListeners() {
+            document.addEventListener('visibilitychange', () => {
+                if (this.step === 'exam' && document.hidden) {
+                    this.handleViolation();
+                }
+            });
+
+            window.addEventListener('blur', () => {
+                if (this.step === 'exam') {
+                    this.handleViolation();
+                }
+            });
+        },
+
+        setupKeyGuards() {
+            window.addEventListener('keydown', (e) => {
+                if (
+                    e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+                    (e.ctrlKey && ['U', 'C', 'V', 'S'].includes(e.key.toUpperCase()))
+                ) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        },
+
+        handleViolation() {
+            if (this.step !== 'exam') return;
+            this.violations++;
+
+            if (this.violations >= this.maxViolations) {
+                alert('Anda telah melebihi batas perpindahan tab (3 kali). Ujian Anda otomatis dikumpulkan!');
+                this.finishExam();
+            } else {
+                this.showWarningModal = true;
+            }
+        },
+
+        closeWarningModal() {
+            this.showWarningModal = false;
         },
 
         resetQuestionTimer() {
@@ -347,6 +405,7 @@ document.addEventListener('alpine:init', () => {
             this.step = 'exam';
             this.currentIndex = 0;
             this.resetQuestionTimer();
+            this.setupAntiCheatListeners();
         },
 
         nextQuestion() {
@@ -370,7 +429,8 @@ document.addEventListener('alpine:init', () => {
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
             const formData = new FormData();
             formData.append('exam_id', this.examId);
-            formData.append('session_nonce', this.sessionNonce); // 🌟 Lampirkan Token Sesi
+            formData.append('session_nonce', this.sessionNonce);
+            formData.append('violation_count', this.violations);
             
             let idx = 0;
             for (const q of this.questions) {
@@ -415,4 +475,4 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
-@endsection 
+@endsection
