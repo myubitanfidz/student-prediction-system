@@ -59,7 +59,7 @@ class ExamController extends Controller
         $user = $request->user();
 
         // 1. Validasi Jadwal Periode PSB & Status Aktif (Khusus Santri)
-        if ($user->role === 'student') {
+        if ($user && $user->role === 'student') {
             if (! $exam->is_active) {
                 return response()->json([
                     'status'       => 'error',
@@ -69,20 +69,26 @@ class ExamController extends Controller
             }
 
             $now = now();
-            if ($exam->start_time && $now->lt($exam->start_time)) {
-                return response()->json([
-                    'status'       => 'error',
-                    'period_title' => $exam->period_title,
-                    'message'      => "Ujian ({$exam->period_title}) belum dibuka. Waktu mulai: " . $exam->start_time->format('d M Y H:i'),
-                ], 403);
+            if ($exam->start_time) {
+                $start = \Carbon\Carbon::parse($exam->start_time);
+                if ($now->lt($start)) {
+                    return response()->json([
+                        'status'       => 'error',
+                        'period_title' => $exam->period_title,
+                        'message'      => "Ujian ({$exam->period_title}) belum dibuka. Waktu mulai: " . $start->format('d M Y H:i'),
+                    ], 403);
+                }
             }
 
-            if ($exam->end_time && $now->gt($exam->end_time)) {
-                return response()->json([
-                    'status'       => 'error',
-                    'period_title' => $exam->period_title,
-                    'message'      => "Periode pengerjaan ({$exam->period_title}) telah berakhir pada: " . $exam->end_time->format('d M Y H:i'),
-                ], 403);
+            if ($exam->end_time) {
+                $end = \Carbon\Carbon::parse($exam->end_time);
+                if ($now->gt($end)) {
+                    return response()->json([
+                        'status'       => 'error',
+                        'period_title' => $exam->period_title,
+                        'message'      => "Periode pengerjaan ({$exam->period_title}) telah berakhir pada: " . $end->format('d M Y H:i'),
+                    ], 403);
+                }
             }
         }
 
@@ -129,51 +135,6 @@ class ExamController extends Controller
                 ];
             })->values();
 
-            // --- Logika Agregasi Hasil GCLWAMA & 4 Karir IT ---
-            $spsStats = [];
-            $careerPredictions = [];
-            $highestCategory = null;
-
-            if ($exam->subcategory === 'GCLWAMA') {
-                $tagScores = [
-                    'G'           => [],
-                    'C'           => [],
-                    'L'           => [],
-                    'W'           => [],
-                    'A_animasi'   => [],
-                    'M'           => [],
-                    'A_algoritma' => [],
-                ];
-
-                foreach ($results as $res) {
-                    $tag = $res['gclwama_tag'];
-                    if ($tag && isset($tagScores[$tag]) && $res['score'] !== null) {
-                        $tagScores[$tag][] = (float) $res['score'];
-                    }
-                }
-
-                $avgTag = [];
-                foreach ($tagScores as $tag => $scores) {
-                    $avgTag[$tag] = count($scores) > 0 ? round(array_sum($scores) / count($scores), 1) : 0;
-                }
-                $spsStats = $avgTag;
-
-                $calcCareer = function (...$tags) use ($avgTag) {
-                    $valid = collect($tags)->filter(fn ($t) => isset($avgTag[$t]));
-                    return $valid->count() > 0 ? round($valid->map(fn ($t) => $avgTag[$t])->average(), 1) : 0;
-                };
-
-                $careerPredictions = [
-                    'Komik'       => $calcCareer('G', 'W', 'A_animasi'),
-                    'DKV'         => $calcCareer('L', 'W'),
-                    'Videografi'  => $calcCareer('C', 'A_animasi'),
-                    'Programming' => $calcCareer('M', 'A_algoritma'),
-                ];
-
-                arsort($careerPredictions);
-                $highestCategory = array_key_first($careerPredictions);
-            }
-
             return response()->json([
                 'status' => 'success',
                 'data'   => [
@@ -182,16 +143,11 @@ class ExamController extends Controller
                     'retake_allowed' => false,
                     'questions'      => [],
                     'results'        => $results,
-                    'sps_prediction' => [
-                        'highest_inclination' => $highestCategory,
-                        'career_scores'       => $careerPredictions,
-                        'tag_scores'          => $spsStats,
-                    ],
                 ],
             ]);
         }
 
-        // 3. Mode Pengerjaan Aktif (Mengacak nomor dan opsi PG)
+        // 3. Mode Pengerjaan Aktif (Mengacak nomor & opsi PG, memastikan array options valid)
         $questions = $exam->questions->shuffle()->values()->map(function (Question $question) {
             $options = $question->options;
             if ($question->type === 'multiple_choice' && is_array($options)) {
@@ -202,9 +158,9 @@ class ExamController extends Controller
                 'id'                 => $question->id,
                 'gclwama_tag'        => $question->gclwama_tag,
                 'type'               => $question->type,
-                'time_limit_seconds' => $question->time_limit_seconds ?? 60,
+                'time_limit_seconds' => (int) ($question->time_limit_seconds ?: 60),
                 'question_text'      => $question->question_text,
-                'options'            => $options,
+                'options'            => is_array($options) ? $options : [],
             ];
         });
 
@@ -216,7 +172,6 @@ class ExamController extends Controller
                 'retake_allowed' => (bool) ($completion?->retake_allowed),
                 'questions'      => $questions,
                 'results'        => [],
-                'sps_prediction' => null,
             ],
         ]);
     }
