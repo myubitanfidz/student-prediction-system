@@ -16,23 +16,6 @@
                 </div>
             </div>
 
-            {{-- Statistik Ringkas --}}
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="card p-5 border-l-4 border-l-brand-blue space-y-1 shadow-sm">
-                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Santri Tampil</p>
-                    <p class="font-mono font-bold text-2xl" x-text="filteredStudents.length"></p>
-                </div>
-                <div class="card p-5 border-l-4 border-l-brand-green space-y-1 shadow-sm">
-                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Total Test Selesai</p>
-                    <p class="font-mono font-bold text-2xl text-brand-green" x-data="animatedCounter(summaryTestsDone)" x-init="start()" x-text="display"></p>
-                </div>
-                <div class="card p-5 border-l-4 border-l-brand-orange space-y-1 shadow-sm">
-                    <p class="text-[11px] uppercase tracking-wide text-ink/40 font-semibold">Rata-rata Highest Score</p>
-                    <p class="font-mono font-bold text-2xl text-brand-orange">
-                        <span x-data="animatedCounter(summaryAvgHighest)" x-init="start()" x-text="display"></span>%
-                    </p>
-                </div>
-            </div>
 
             {{-- Data Table --}}
             <div class="card shadow-sm border border-line rounded-2xl">
