@@ -40,7 +40,7 @@
     </div>
 </div>
 
-<!-- Modal 1: Mulai Gelombang Serentak (Support Ketik Manual & Datalist Rekomendasi) -->
+<!-- Modal 1: Mulai Gelombang Serentak -->
 <div id="bulkStartModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-xs">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-4 shadow-2xl border border-slate-100">
         <div class="flex items-center gap-3">
@@ -62,28 +62,33 @@
                        placeholder="Contoh: PSB Gelombang 2 - 2026/2027" 
                        class="w-full rounded-xl border border-line p-2.5 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 outline-none" 
                        required>
-                <!-- Datalist untuk autocomplete/rekomendasi -->
                 <datalist id="period_suggestions"></datalist>
-                <span class="text-[10px] text-slate-400 mt-1 block">Anda bisa mengetik nama periode baru atau memilih rekomendasi di atas.</span>
+                <span class="text-[10px] text-slate-400 mt-1 block">Ketik nama periode baru atau pilih rekomendasi.</span>
             </div>
 
-            <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <p class="text-[11px] font-bold text-slate-700">Waktu Pelaksanaan Bersama</p>
+                
                 <div>
-                    <label class="block text-[10px] font-semibold uppercase text-slate-400">Waktu Buka (Mulai)</label>
-                    <input type="datetime-local" id="bulk_start_time" class="w-full rounded-lg border border-line p-2 text-xs bg-white mt-0.5">
-                    <span class="text-[10px] text-slate-400">Kosongkan jika ingin langsung dibuka sekarang.</span>
+                    <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Waktu Buka (Mulai)</label>
+                    <div class="relative">
+                        <input type="text" id="bulk_start_time" placeholder="Pilih tanggal & waktu..." class="datepicker-input w-full rounded-xl border border-line p-2.5 text-xs font-semibold bg-white pl-9 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-[10px] font-semibold uppercase text-slate-400">Waktu Tutup (Selesai)</label>
-                    <input type="datetime-local" id="bulk_end_time" class="w-full rounded-lg border border-line p-2 text-xs bg-white mt-0.5">
-                    <span class="text-[10px] text-slate-400">Kosongkan jika ujian dibuka tanpa batas penutupan otomatis.</span>
+                    <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Waktu Tutup (Selesai)</label>
+                    <div class="relative">
+                        <input type="text" id="bulk_end_time" placeholder="Pilih tanggal & waktu..." class="datepicker-input w-full rounded-xl border border-line p-2.5 text-xs font-semibold bg-white pl-9 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeBulkStartModal()" class="px-4 py-2 border border-line rounded-xl text-xs font-semibold">Batal</button>
-                <button type="submit" id="bulkSubmitBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2 rounded-xl transition">
+                <button type="submit" id="bulkSubmitBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition">
                     Aktifkan Bersama
                 </button>
             </div>
@@ -101,7 +106,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-500">Kategori</label>
-                    <select id="category" class="w-full rounded-lg border border-line p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" required>
+                    <select id="category" class="custom-select w-full rounded-xl border border-line p-2.5 text-xs font-semibold bg-white mt-1 focus:ring-2 focus:ring-brand-blue outline-none" required>
                         <option value="Bahasa">Bahasa</option>
                         <option value="IT">IT</option>
                         <option value="Karakter">Karakter</option>
@@ -109,16 +114,16 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-500">Subkategori</label>
-                    <input type="text" id="subcategory" placeholder="Contoh: GCLWAMA / Inggris" class="w-full rounded-lg border border-line p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" required>
+                    <input type="text" id="subcategory" placeholder="Contoh: GCLWAMA / Inggris" class="w-full rounded-xl border border-line p-2.5 text-xs font-semibold mt-1 focus:ring-2 focus:ring-brand-blue outline-none" required>
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase text-slate-500">Judul Ujian</label>
-                <input type="text" id="title" placeholder="Contoh: Ujian Pemetaan Bakat IT" class="w-full rounded-lg border border-line p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" required>
+                <input type="text" id="title" placeholder="Contoh: Ujian Pemetaan Bakat IT" class="w-full rounded-xl border border-line p-2.5 text-xs font-semibold mt-1 focus:ring-2 focus:ring-brand-blue outline-none" required>
             </div>
 
-            {{-- Pengaturan Periode PSB & Waktu Buka Tutup --}}
+            <!-- Pengaturan Periode PSB & DatePicker -->
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                     <label class="block text-xs font-bold uppercase text-indigo-900">Judul Periode / Gelombang</label>
@@ -127,29 +132,34 @@
                         <span>Aktifkan Ujian</span>
                     </label>
                 </div>
-                <input type="text" id="period_title" placeholder="Contoh: PSB Gelombang 1 - 2026/2027" class="w-full rounded-lg border border-line p-2 text-sm bg-white focus:ring-2 focus:ring-brand-blue/40">
+                <input type="text" id="period_title" placeholder="Contoh: PSB Gelombang 1 - 2026/2027" class="w-full rounded-xl border border-line p-2.5 text-xs font-semibold bg-white focus:ring-2 focus:ring-brand-blue outline-none">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-500">Waktu Mulai Buka</label>
-                        <input type="datetime-local" id="start_time" class="w-full rounded-lg border border-line p-1.5 text-xs bg-white mt-1">
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Waktu Mulai Buka</label>
+                        <div class="relative">
+                            <input type="text" id="start_time" placeholder="Pilih waktu buka..." class="datepicker-input w-full rounded-xl border border-line p-2 text-xs font-semibold bg-white pl-8 focus:ring-2 focus:ring-brand-blue outline-none cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-500">Waktu Ditutup</label>
-                        <input type="datetime-local" id="end_time" class="w-full rounded-lg border border-line p-1.5 text-xs bg-white mt-1">
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Waktu Ditutup</label>
+                        <div class="relative">
+                            <input type="text" id="end_time" placeholder="Pilih waktu tutup..." class="datepicker-input w-full rounded-xl border border-line p-2 text-xs font-semibold bg-white pl-8 focus:ring-2 focus:ring-brand-blue outline-none cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
                     </div>
                 </div>
-                <p class="text-[10px] text-slate-400">Kosongkan rentang waktu jika ingin membuka ujian secara permanen.</p>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase text-slate-500">Deskripsi (Opsional)</label>
-                <textarea id="description" class="w-full rounded-lg border border-line p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" rows="2"></textarea>
+                <textarea id="description" class="w-full rounded-xl border border-line p-2.5 text-xs font-semibold mt-1 focus:ring-2 focus:ring-brand-blue outline-none" rows="2"></textarea>
             </div>
 
             <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" onclick="closeExamModal()" class="px-4 py-2 border border-line rounded-lg text-sm font-semibold">Batal</button>
-                <button type="submit" id="examSubmitBtn" class="btn-primary text-sm px-4 py-2">Simpan</button>
+                <button type="button" onclick="closeExamModal()" class="px-4 py-2 border border-line rounded-xl text-xs font-semibold">Batal</button>
+                <button type="submit" id="examSubmitBtn" class="btn-primary text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs">Simpan</button>
             </div>
         </form>
     </div>
@@ -158,6 +168,25 @@
 <script>
     const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
     let examsCache = [];
+
+    // Inisialisasi Flatpickr
+    const fpConfig = {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        time_24hr: true,
+        altInput: true,
+        altFormat: "d M Y - H:i",
+        allowInput: false
+    };
+
+    let fpBulkStart, fpBulkEnd, fpExamStart, fpExamEnd;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fpBulkStart = flatpickr("#bulk_start_time", fpConfig);
+        fpBulkEnd = flatpickr("#bulk_end_time", fpConfig);
+        fpExamStart = flatpickr("#start_time", fpConfig);
+        fpExamEnd = flatpickr("#end_time", fpConfig);
+    });
 
     async function fetchExams() {
         try {
@@ -180,14 +209,14 @@
                         <span class="font-bold text-brand-blue">${escapeHtml(exam.category)}</span>
                         <p class="text-[11px] font-semibold text-slate-500">${escapeHtml(exam.period_title || 'PSB')}</p>
                     </td>
-                    <td class="p-4">${escapeHtml(exam.subcategory)}</td>
-                    <td class="p-4 font-medium text-slate-900">${escapeHtml(exam.title)}</td>
+                    <td class="p-4 font-medium text-slate-700">${escapeHtml(exam.subcategory)}</td>
+                    <td class="p-4 font-bold text-slate-900">${escapeHtml(exam.title)}</td>
                     <td class="p-4 text-center">
                         <span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full ${exam.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                             ${exam.is_active ? 'Aktif' : 'Non-aktif'}
                         </span>
-                        <p class="text-[10px] text-slate-400 mt-1">
-                            ${exam.start_time ? exam.start_time.substring(0,10) : 'Kapanpun'} s/d ${exam.end_time ? exam.end_time.substring(0,10) : 'Kapanpun'}
+                        <p class="text-[10px] text-slate-400 mt-1 font-mono">
+                            ${exam.start_time ? exam.start_time.substring(0,16) : 'Kapanpun'} s/d ${exam.end_time ? exam.end_time.substring(0,16) : 'Kapanpun'}
                         </p>
                     </td>
                     <td class="p-4 text-center">
@@ -210,12 +239,9 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // Modal Mulai Gelombang Serentak
     function openBulkStartModal() {
         const datalist = document.getElementById('period_suggestions');
         datalist.innerHTML = '';
-
-        // Kumpulkan saran nama gelombang yang sudah pernah dibuat
         const distinctPeriods = Array.from(new Set(examsCache.map(e => e.period_title).filter(Boolean)));
         distinctPeriods.forEach(p => {
             const opt = document.createElement('option');
@@ -223,14 +249,10 @@
             datalist.appendChild(opt);
         });
 
-        // Set input teks default
         document.getElementById('bulk_period_title').value = distinctPeriods[0] || 'PSB 2026/2027';
 
-        // Default start time = sekarang
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('bulk_start_time').value = now.toISOString().slice(0, 16);
-        document.getElementById('bulk_end_time').value = '';
+        if (fpBulkStart) fpBulkStart.setDate(new Date());
+        if (fpBulkEnd) fpBulkEnd.clear();
 
         document.getElementById('bulkStartModal').classList.remove('hidden');
     }
@@ -263,7 +285,7 @@
             closeBulkStartModal();
             fetchExams();
             if (window.notifySuccess) {
-                window.notifySuccess(`Seluruh ujian pada gelombang '${periodTitle}' berhasil dimulai serentak!`);
+                window.notifySuccess(`Seluruh ujian gelombang '${periodTitle}' berhasil dimulai serentak!`);
             }
         } else {
             const err = await res.json().catch(() => ({}));
@@ -271,7 +293,6 @@
         }
     });
 
-    // Modal Edit / Tambah Paket Ujian
     function openExamModal(id = null) {
         const form = document.getElementById('examForm');
         form.reset();
@@ -281,20 +302,22 @@
             const exam = examsCache.find(e => e.id === id);
             if (!exam) return;
             document.getElementById('examModalTitle').innerText = 'Edit Paket & Jadwal Ujian';
-            document.getElementById('examSubmitBtn').innerText = 'Simpan Perubahan';
             document.getElementById('category').value = exam.category;
             document.getElementById('subcategory').value = exam.subcategory;
             document.getElementById('title').value = exam.title;
             document.getElementById('period_title').value = exam.period_title || 'PSB 2026/2027';
             document.getElementById('is_active').checked = exam.is_active;
-            document.getElementById('start_time').value = exam.start_time ? exam.start_time.substring(0, 16) : '';
-            document.getElementById('end_time').value = exam.end_time ? exam.end_time.substring(0, 16) : '';
+            
+            if (fpExamStart) fpExamStart.setDate(exam.start_time ? exam.start_time.substring(0, 16) : null);
+            if (fpExamEnd) fpExamEnd.setDate(exam.end_time ? exam.end_time.substring(0, 16) : null);
+
             document.getElementById('description').value = exam.description || '';
         } else {
             document.getElementById('examModalTitle').innerText = 'Tambah Paket Ujian';
-            document.getElementById('examSubmitBtn').innerText = 'Simpan';
             document.getElementById('period_title').value = 'PSB 2026/2027';
             document.getElementById('is_active').checked = true;
+            if (fpExamStart) fpExamStart.clear();
+            if (fpExamEnd) fpExamEnd.clear();
         }
 
         document.getElementById('examModal').classList.remove('hidden');

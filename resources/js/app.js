@@ -507,7 +507,6 @@ Alpine.data('adminDashboardPage', () => ({
             const res = await api.getAdminStudents();
             this.students = res?.data ?? [];
             
-            // Ambil daftar periode global dari backend
             if (res?.periods && Array.isArray(res.periods) && res.periods.length > 0) {
                 this.availablePeriods = res.periods;
             } else {
@@ -559,7 +558,6 @@ Alpine.data('adminDashboardPage', () => ({
             const emailMatch = this.studentEmail(s).toLowerCase().includes(q);
             const matchesQuery = !q || (nameMatch || emailMatch);
 
-            // Filter gelombang/periode
             const studentP = this.studentPeriods(s);
             const matchesPeriod = !this.filterPeriod || studentP.includes(this.filterPeriod) || (s.exam_stats || []).some(e => e.period_title === this.filterPeriod);
 
@@ -631,7 +629,6 @@ Alpine.data('adminDashboardPage', () => ({
     revealBars(student) {
         let stats = student?.exam_stats || [];
 
-        // 🌟 Filter ujian di modal popup sesuai gelombang yang sedang dipilih
         if (this.filterPeriod) {
             stats = stats.filter(item => {
                 const itemPeriod = item.period_title || item.exam?.period_title;
@@ -747,58 +744,3 @@ Alpine.data('adminKoreksiPage', () => ({
 }));
 
 Alpine.start();
-
-
-Alpine.data('adminKoreksiPage', () => ({
-    loading: true,
-    error: '',
-    student: null,
-    answers: [],
-    scores: {},
-    previewModalImg: null, // Modal zoom gambar
-
-    async init() {
-        const user = getUser();
-        if (!user || !['admin', 'teacher'].includes(user.role)) {
-            this.error = 'Akses ditolak.';
-            this.loading = false;
-            return;
-        }
-
-        const parts = window.location.pathname.split('/').filter(Boolean);
-        const userId = parts[parts.length - 1];
-
-        try {
-            const json = await api.getAdminStudentAnswers(userId);
-            const data = json?.data ?? json ?? {};
-            this.student = data.student ?? null;
-            this.answers = data.answers ?? [];
-            this.answers.forEach((a) => {
-                if (a.current_score != null) this.scores[a.answer_id] = a.current_score;
-            });
-        } catch (e) {
-            this.error = e.message;
-        } finally {
-            this.loading = false;
-        }
-    },
-
-    async saveScore(answerId) {
-        const score = this.scores[answerId];
-        if (score === undefined || score === '' || isNaN(score)) {
-            alert('Masukkan angka nilai valid antara 0–100');
-            return;
-        }
-
-        try {
-            await api.gradeAnswer({ answer_id: answerId, score: parseFloat(score) });
-            const answer = this.answers.find((a) => a.answer_id === answerId);
-            if (answer) answer.current_score = parseFloat(score);
-            if (window.notifySuccess) {
-                window.notifySuccess('Nilai karya santri berhasil disimpan!');
-            }
-        } catch (e) {
-            alert(e.message || 'Gagal menyimpan nilai');
-        }
-    },
-}));
