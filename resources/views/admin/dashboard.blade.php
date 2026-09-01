@@ -59,7 +59,7 @@
                                     <span class="text-slate-400 font-normal">Gelombang:</span>
                                     <span class="text-indigo-600" x-text="filterPeriod || 'Semua Periode'"></span>
                                 </span>
-                                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             
                             <div x-show="periodDropdownOpen" @click.away="periodDropdownOpen = false" x-cloak 
@@ -87,7 +87,7 @@
                             <button type="button" @click="sortDropdownOpen = !sortDropdownOpen" 
                                     class="w-full sm:w-auto flex items-center justify-between gap-2.5 px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors text-slate-700 shadow-xs">
                                 <span x-text="sortBy === 'default' ? 'Urutkan: Default' : (sortBy === 'highest_score' ? 'Skor Tertinggi' : 'Abjad (A-Z)')"></span>
-                                <svg class="w-3.5 h-3.5 text-ink/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <svg class="w-3.5 h-3.5 text-ink/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             
                             <div x-show="sortDropdownOpen" @click.away="sortDropdownOpen = false" x-cloak 
@@ -186,7 +186,12 @@
             <div class="sticky top-0 bg-white border-b border-line px-6 py-4 flex items-center justify-between z-10 rounded-t-3xl">
                 <div>
                     <h2 class="font-display font-bold text-xl text-slate-900" x-text="activeStudent ? studentName(activeStudent) : ''"></h2>
-                    <p class="text-xs text-ink/50">Detail Potensi dan Hasil Ujian</p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <p class="text-xs text-ink/50" x-text="studentEmail(activeStudent)"></p>
+                        <span class="text-xs text-slate-300">•</span>
+                        <span class="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full"
+                              x-text="filterPeriod ? `Filter: ${filterPeriod}` : 'Menampilkan Semua Periode'"></span>
+                    </div>
                 </div>
                 <button @click="modalAnim = false; setTimeout(() => activeStudent = null, 300)" class="p-2 rounded-full hover:bg-slate-100 text-ink/40 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -245,33 +250,51 @@
                         </div>
                     </section>
 
-                    {{-- Exam Scores List with Period Badge --}}
+                    {{-- Exam Scores List with Period & Exam Name --}}
                     <section class="border border-line rounded-2xl p-5 bg-white shadow-sm space-y-3">
-                        <h3 class="font-display font-bold text-sm mb-2">Skor per Ujian</h3>
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="font-display font-bold text-sm">Skor Hasil Ujian</h3>
+                            <span class="text-[10px] text-slate-400 font-medium" x-text="filterPeriod ? `Gelombang: ${filterPeriod}` : 'Semua Ujian'"></span>
+                        </div>
+
                         <template x-if="activeStudent">
-                            <div class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                            <div class="space-y-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
                                 <template x-for="group in revealBars(activeStudent)" :key="group.label">
-                                    <template x-for="item in group.items" :key="item.exam_id">
-                                        <div class="flex items-center justify-between p-3 rounded-lg border border-line hover:bg-slate-50 transition-colors">
-                                            <div class="min-w-0 pr-4">
-                                                <div class="flex items-center gap-2 mb-0.5">
-                                                    <span class="text-xs font-semibold text-brand-blue uppercase tracking-wider" x-text="group.label"></span>
-                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600" x-text="item.period_title || 'PSB'"></span>
+                                    <div class="space-y-2">
+                                        <template x-for="item in group.items" :key="item.exam_id">
+                                            <div class="p-3.5 rounded-xl border border-line bg-slate-50/40 hover:bg-slate-50 transition-colors space-y-2">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <div class="flex items-center gap-1.5 mb-1">
+                                                            <span class="text-[10px] font-extrabold text-brand-blue uppercase px-2 py-0.5 rounded bg-blue-50 border border-blue-200" x-text="group.label"></span>
+                                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="item.period_title || 'PSB'"></span>
+                                                        </div>
+                                                        <!-- 🌟 Nama Paket Ujian Terpampang Jelas 🌟 -->
+                                                        <h4 class="text-sm font-bold text-slate-900 leading-snug" x-text="item.title"></h4>
+                                                    </div>
+                                                    
+                                                    <div class="text-right shrink-0">
+                                                        <span class="font-mono font-black text-lg text-brand-green" x-text="item.value + '%'"></span>
+                                                    </div>
                                                 </div>
-                                                <p class="text-sm font-medium text-slate-800 truncate" x-text="item.title"></p>
+
+                                                <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+                                                    <span class="text-[11px] font-medium" :class="item.completed ? 'text-emerald-700' : 'text-slate-400'" x-text="item.completed ? 'Ujian Selesai ✓' : 'Belum Selesai'"></span>
+                                                    <button type="button"
+                                                            x-show="item.completed"
+                                                            @click.stop="allowRetake(activeStudent, item)"
+                                                            :disabled="item.retake_allowed || retakeBusy === (activeStudent.id + '-' + item.exam_id)"
+                                                            class="text-[10px] font-bold px-3 py-1 rounded-lg border border-slate-300 hover:bg-white disabled:opacity-50 transition-colors"
+                                                            x-text="item.retake_allowed ? 'Izin Aktif' : 'Izinkan Ulang'"></button>
+                                                </div>
                                             </div>
-                                            <div class="flex items-center gap-4 shrink-0">
-                                                <span class="font-mono font-bold text-base text-brand-green" x-text="item.value + '%'"></span>
-                                                <button type="button"
-                                                        x-show="item.completed"
-                                                        @click.stop="allowRetake(activeStudent, item)"
-                                                        :disabled="item.retake_allowed || retakeBusy === (activeStudent.id + '-' + item.exam_id)"
-                                                        class="text-[10px] font-bold px-3 py-1.5 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-50 transition-colors"
-                                                        x-text="item.retake_allowed ? 'Izin Aktif' : 'Izinkan Ulang'"></button>
-                                            </div>
-                                        </div>
-                                    </template>
+                                        </template>
+                                    </div>
                                 </template>
+
+                                <div x-show="revealBars(activeStudent).length === 0" class="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                    Santri ini belum memiliki riwayat ujian pada gelombang yang dipilih.
+                                </div>
                             </div>
                         </template>
                     </section>

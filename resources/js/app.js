@@ -629,15 +629,25 @@ Alpine.data('adminDashboardPage', () => ({
     },
 
     revealBars(student) {
-        const stats = student?.exam_stats || [];
+        let stats = student?.exam_stats || [];
+
+        // 🌟 Filter ujian di modal popup sesuai gelombang yang sedang dipilih
+        if (this.filterPeriod) {
+            stats = stats.filter(item => {
+                const itemPeriod = item.period_title || item.exam?.period_title;
+                return itemPeriod === this.filterPeriod;
+            });
+        }
+
         const groups = {};
         stats.forEach(item => {
             const cat = item.category || 'Umum';
             if (!groups[cat]) groups[cat] = { label: cat, items: [] };
             groups[cat].items.push({
                 exam_id: item.exam_id,
-                title: item.title || '-',
-                period_title: item.period_title || 'PSB',
+                title: item.title || item.exam_title || '-',
+                subcategory: item.subcategory || '',
+                period_title: item.period_title || item.exam?.period_title || 'PSB',
                 value: Number(item.mc_accuracy_pct ?? item.score ?? 0),
                 completed: !!item.completed,
                 retake_allowed: !!item.retake_allowed,
