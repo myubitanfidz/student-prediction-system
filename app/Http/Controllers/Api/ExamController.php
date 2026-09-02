@@ -78,6 +78,7 @@ class ExamController extends Controller
                 [
                     'started_at'     => now(),
                     'session_nonce'  => Str::random(40),
+                    'completed_at'   => null,
                     'retake_allowed' => false
                 ]
             );
