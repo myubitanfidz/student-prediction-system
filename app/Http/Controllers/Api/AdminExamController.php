@@ -9,6 +9,7 @@ use App\Models\Question;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class AdminExamController extends Controller
 {
@@ -149,7 +150,7 @@ class AdminExamController extends Controller
             'home_slot'    => 'nullable|in:it_gclwama,bahasa_inggris,bahasa_arab',
             'title'        => 'required|string|max:255',
             'period_title' => 'nullable|string|max:255',
-            'description'  => 'nullable|string',
+            'description'  => 'nullable|string',    
             'is_active'    => 'nullable|boolean',
             'start_time'   => 'nullable|date',
             'end_time'     => 'nullable|date|after_or_equal:start_time',
@@ -159,38 +160,53 @@ class AdminExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $homeSlot = $request->home_slot ?: null;
+        $targetSlot = $request->home_slot ?: null;
+        $previousSlot = $exam->home_slot; // Slot yang sedang dipegang paket ini saat ini
 
-        [$category, $subcategory] = match ($homeSlot) {
+        [$category, $subcategory] = match ($targetSlot) {
             'it_gclwama'     => ['IT', 'GCLWAMA'],
             'bahasa_inggris' => ['Bahasa', 'Inggris'],
             'bahasa_arab'    => ['Bahasa', 'Arab'],
             default          => [$request->input('category', $exam->category), $request->input('subcategory', $exam->subcategory)],
         };
 
-        if ($homeSlot) {
-            Exam::where('home_slot', $homeSlot)
-                ->where('id', '!=', $exam->id)
-                ->update(['home_slot' => null, 'is_featured' => false]);
-        }
+        // 🌟 Bungkus dengan Transaksi Database agar tidak tertabrak
+        DB::transaction(function () use ($exam, $targetSlot, $previousSlot, $category, $subcategory, $request) {
+            if ($targetSlot) {
+                // Cari paket lain yang sedang menempati slot target tersebut
+                $incumbent = Exam::where('home_slot', $targetSlot)
+                    ->where('id', '!=', $exam->id)
+                    ->first();
 
-        $exam->update([
-            'category'     => $category,
-            'subcategory'  => $subcategory,
-            'home_slot'    => $homeSlot,
-            'is_featured'  => (bool) $homeSlot,
-            'title'        => $request->title,
-            'period_title' => $request->period_title ?? 'PSB 2026/2027',
-            'description'  => $request->description,
-            'is_active'    => $request->boolean('is_active', true),
-            'start_time'   => $request->start_time,
-            'end_time'     => $request->end_time,
-        ]);
+                if ($incumbent) {
+                    // OPTIONAL SWAP: Jika paket ini sebelumnya punya slot, berikan slot lama kita ke paket yang kita geser
+                    // Atau lepas incumbent menjadi draf jika kita sebelumnya bukan pemegang slot
+                    $incumbent->update([
+                        'home_slot'   => $previousSlot ?: null,
+                        'is_featured' => (bool) $previousSlot,
+                    ]);
+                }
+            }
+
+            // Simpan paket yang sedang diedit ke slot target baru
+            $exam->update([
+                'category'     => $category,
+                'subcategory'  => $subcategory,
+                'home_slot'    => $targetSlot,
+                'is_featured'  => (bool) $targetSlot,
+                'title'        => $request->title,
+                'period_title' => $request->period_title ?? 'PSB 2026/2027',
+                'description'  => $request->description,
+                'is_active'    => $request->boolean('is_active', true),
+                'start_time'   => $request->start_time,
+                'end_time'     => $request->end_time,
+            ]);
+        });
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Paket ujian berhasil diperbarui!',
-            'data'    => $exam,
+            'message' => 'Paket berhasil dialokasikan ke slot tanpa tabrakan!',
+            'data'    => $exam->fresh(),
         ]);
     }
 
