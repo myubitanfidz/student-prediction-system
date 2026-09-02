@@ -167,13 +167,17 @@
                 {{-- 3. Input Upload Gambar --}}
                 <div x-show="currentQuestion?.type === 'image_upload'" class="pt-2 space-y-4">
                     <label class="block w-full border-2 border-dashed border-slate-400 hover:border-slate-800 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition bg-slate-50/50 hover:bg-slate-50">
-                        <input type="file" accept="image/*" class="hidden" @change="handleImageUpload(currentQuestion.id, $event)">
+                        {{-- 🌟 Mencegah trigger false-positive violation saat membuka file picker --}}
+                        <input type="file" accept="image/*" class="hidden" 
+                               @click="prepareFilePicker()"
+                               @cancel="resetFilePicker()"
+                               @change="handleImageUpload(currentQuestion.id, $event)">
                         <div class="space-y-2">
                             <svg class="w-10 h-10 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <p class="font-bold text-sm sm:text-base text-slate-800">Klik atau seret foto/gambar karya kamu ke sini</p>
-                            <p class="text-xs text-slate-500">Mendukung JPG, PNG, WEBP (Maks. 10MB)</p>
+                            <p class="text-xs text-slate-500">Mendukung JPG, PNG, WEBP, PDF (Maks. 5MB)</p>
                         </div>
                     </label>
 
@@ -248,6 +252,7 @@ document.addEventListener('alpine:init', () => {
         violations: 0,
         maxViolations: 3,
         showWarningModal: false,
+        isPickingFile: false, // 🌟 Flag agar file picker tidak dihitung pelanggaran
 
         questionTimeRemaining: 60,
         currentQuestionTimeLimit: 60,
@@ -271,7 +276,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         async init() {
-            // Pasang proteksi shortcut keyboard
             this.setupKeyGuards();
 
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
@@ -321,12 +325,16 @@ document.addEventListener('alpine:init', () => {
         setupAntiCheatListeners() {
             document.addEventListener('visibilitychange', () => {
                 if (this.step === 'exam' && document.hidden) {
+                    // Abaikan jika user sedang berada di dialog picker file
+                    if (this.isPickingFile) return;
                     this.handleViolation();
                 }
             });
 
             window.addEventListener('blur', () => {
                 if (this.step === 'exam') {
+                    // Abaikan jika event blur dipicu oleh dialog picker OS
+                    if (this.isPickingFile) return;
                     this.handleViolation();
                 }
             });
@@ -343,6 +351,17 @@ document.addEventListener('alpine:init', () => {
                     return false;
                 }
             });
+        },
+
+        prepareFilePicker() {
+            this.isPickingFile = true;
+        },
+
+        resetFilePicker() {
+            // Beri jeda 500ms setelah dialog picker ditutup sebelum pengawasan aktif kembali
+            setTimeout(() => {
+                this.isPickingFile = false;
+            }, 500);
         },
 
         handleViolation() {
@@ -381,6 +400,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleImageUpload(questionId, event) {
+            this.resetFilePicker();
+
             const file = event.target.files[0];
             if (!file) return;
 
