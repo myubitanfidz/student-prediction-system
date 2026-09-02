@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/exams', [AdminExamController::class, 'storeExam']);
         Route::put('/exams/{id}', [AdminExamController::class, 'updateExam']);
         Route::delete('/exams/{id}', [AdminExamController::class, 'destroyExam']);
+        Route::post('/exams/{id}/toggle-featured', [\App\Http\Controllers\Api\AdminExamController::class, 'toggleFeatured']);
 
         Route::get('/exams/{examId}/questions', [AdminExamController::class, 'getQuestionsByExam']);
         Route::post('/questions', [AdminExamController::class, 'storeQuestion']);

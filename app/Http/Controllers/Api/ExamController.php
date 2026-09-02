@@ -22,24 +22,31 @@ class ExamController extends Controller
         $userId = $request->user()->id;
         $completions = ExamCompletion::where('user_id', $userId)->get()->keyBy('exam_id');
 
-        $exams = Exam::all()->map(function (Exam $exam) use ($completions) {
-            $completion = $completions->get($exam->id);
+        // 🌟 Prioritaskan paket ujian yang is_featured (terhubung)
+        $exams = Exam::orderBy('is_featured', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function (Exam $exam) use ($completions) {
+                $completion = $completions->get($exam->id);
 
-            return [
-                'id'               => $exam->hash_id, 
-                'raw_id'           => $exam->id,
-                'category'         => $exam->category,
-                'subcategory'      => $exam->subcategory,
-                'title'            => $exam->title,
-                'period_title'     => $exam->period_title,
-                'description'      => $exam->description,
-                'is_active'        => (bool) $exam->is_active,
-                'start_time'       => $exam->start_time,
-                'end_time'         => $exam->end_time,
-                'completed'        => (bool) $completion?->completed_at,
-                'retake_allowed'   => (bool) ($completion?->retake_allowed),
-            ];
-        })->groupBy('category');
+                return [
+                    'id'               => $exam->hash_id, 
+                    'raw_id'           => $exam->id,
+                    'category'         => $exam->category,
+                    'subcategory'      => $exam->subcategory,
+                    'home_slot'        => $exam->home_slot, // 🌟 'it_gclwama', 'bahasa_inggris', 'bahasa_arab'
+                    'title'            => $exam->title,
+                    'period_title'     => $exam->period_title,
+                    'description'      => $exam->description,
+                    'is_active'        => (bool) $exam->is_active,
+                    'is_featured'      => (bool) $exam->is_featured,
+                    'start_time'       => $exam->start_time,
+                    'end_time'         => $exam->end_time,
+                    'completed'        => (bool) $completion?->completed_at,
+                    'retake_allowed'   => (bool) ($completion?->retake_allowed),
+                ];
+            })
+            ->groupBy('category');
 
         return response()->json(['status' => 'success', 'data' => $exams]);
     }
@@ -83,7 +90,6 @@ class ExamController extends Controller
                 ]
             );
 
-            // Reset Sesi jika Admin memberi izin Retake
             if ($completion->retake_allowed && $completion->completed_at) {
                 $completion->update([
                     'started_at'     => now(),
@@ -177,7 +183,6 @@ class ExamController extends Controller
             'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
             'answers.*.answer_text' => 'nullable|string',
-            // 🌟 Validasi ketat MIME type dan ukuran berkas maksimum 5MB
             'answers.*.file'        => [
                 'nullable',
                 'file',
@@ -207,7 +212,7 @@ class ExamController extends Controller
 
         // 🛡️ LAYER 2: Server-Side Time Validation
         $totalTimeLimit = Question::where('exam_id', $examId)->sum('time_limit_seconds');
-        $maxAllowedTime = $totalTimeLimit + 600; // Total Waktu + 10 Menit Toleransi
+        $maxAllowedTime = $totalTimeLimit + 600;
         
         if ($completion->started_at && now()->diffInSeconds($completion->started_at) > $maxAllowedTime) {
             return response()->json(['status' => 'error', 'message' => 'Batas waktu pengerjaan telah habis.'], 403);
@@ -255,7 +260,6 @@ class ExamController extends Controller
                     $answerTextToSave = $actualText ?: $submittedToken;
                 }
 
-                // 🌟 Sanitasi Nama Berkas & Penyimpanan Aman
                 if ($request->hasFile("answers.{$index}.file")) {
                     $uploadedFile = $request->file("answers.{$index}.file");
 
@@ -273,7 +277,6 @@ class ExamController extends Controller
                 );
             }
 
-            // 🛡️ Hancurkan Token Nonce & Simpan Catatan Pelanggaran
             $completion->update([
                 'completed_at'    => now(),
                 'violation_count' => (int) $request->input('violation_count', 0),

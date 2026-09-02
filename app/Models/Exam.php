@@ -14,17 +14,20 @@ class Exam extends Model
     protected $fillable = [
         'category',
         'subcategory',
+        'home_slot', 
         'title',
         'period_title',
         'description',
         'duration_minutes',
         'is_active',
+        'is_featured',
         'start_time',
         'end_time',
     ];
 
     protected $casts = [
         'is_active'   => 'boolean',
+        'is_featured' => 'boolean', // 🌟 Cast boolean
         'start_time'  => 'datetime',
         'end_time'    => 'datetime',
     ];
