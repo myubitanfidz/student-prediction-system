@@ -19,14 +19,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // 🌟 Santri Endpoints (Strict hanya untuk Santri)
     Route::middleware('role:student')->group(function () {
         Route::get('/exams', [ExamController::class, 'index']);
-        Route::post('/exams/submit', [ExamController::class, 'submit']);
+        
+        // Proteksi Throttling Submit
+        Route::post('/exams/submit', [ExamController::class, 'submit'])
+            ->middleware('throttle:exam-submit');
+
         Route::post('/portfolios', [PortfolioController::class, 'store']);
         Route::get('/dashboard', [DashboardController::class, 'show']);
     });
 
     // 🌟 Endpoint Buka Ujian (Santri untuk Mengerjakan, Admin/Guru untuk Preview)
     Route::middleware('role:student,admin,teacher')->group(function () {
-        Route::get('/exams/{id}', [ExamController::class, 'show']);
+        // Proteksi Throttling Fetch
+        Route::get('/exams/{id}', [ExamController::class, 'show'])
+            ->middleware('throttle:exam-fetch');
     });
 
     // Admin & Teacher — student overview and grading

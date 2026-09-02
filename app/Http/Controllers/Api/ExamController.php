@@ -176,7 +176,14 @@ class ExamController extends Controller
             'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
             'answers.*.answer_text' => 'nullable|string',
-            'answers.*.file'        => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            // 🌟 Validasi ketat MIME type dan ukuran berkas maksimum 5MB
+            'answers.*.file'        => [
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,webp,pdf',
+                'mimetypes:image/jpeg,image/png,image/webp,application/pdf',
+                'max:5120',
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -247,10 +254,16 @@ class ExamController extends Controller
                     $answerTextToSave = $actualText ?: $submittedToken;
                 }
 
+                // 🌟 Sanitasi Nama Berkas & Penyimpanan Aman
                 if ($request->hasFile("answers.{$index}.file")) {
                     $uploadedFile = $request->file("answers.{$index}.file");
-                    $filePath = $uploadedFile->store('exam_answers', 'public');
-                    $answerTextToSave = '[Uploaded File]';
+
+                    if ($uploadedFile->isValid()) {
+                        $extension = strtolower($uploadedFile->getClientOriginalExtension());
+                        $safeFileName = Str::random(40) . '.' . $extension;
+                        $filePath = $uploadedFile->storeAs('exam_answers', $safeFileName, 'public');
+                        $answerTextToSave = '[Uploaded File]';
+                    }
                 }
 
                 StudentAnswer::updateOrCreate(
