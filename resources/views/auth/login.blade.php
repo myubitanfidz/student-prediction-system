@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title x-data x-text="mode === 'login' ? 'Log In — Talent Mapping' : 'Sign Up — Talent Mapping'">Log In — Talent Mapping</title>
+    <title id="pageTitle">Log In — Talent Mapping</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&display=swap" rel="stylesheet">
@@ -137,23 +137,26 @@
                     if (this.mode === target || this.isBusy) return;
                     this.isBusy = true;
                     this.error = null;
-
-                    // 1. FASE 1: Card meluncur turun sampai keluar layar bawah (0.5 detik)
+                
+                    // Ubah judul tab browser secara native tanpa memicu error scope Alpine
+                    document.title = target === 'login' ? 'Log In — Talent Mapping' : 'Sign Up — Talent Mapping';
+                
+                    // 1. FASE 1: Card meluncur turun sampai keluar layar bawah
                     this.cardState = 'hidden';
-
+                
                     setTimeout(() => {
-                        // 2. FASE 2: Ganti posisi container & mulai animasi pergeseran gambar/lingkaran (0.5 detik)
+                        // 2. FASE 2: Ganti posisi container & mulai animasi pergeseran gambar/lingkaran
                         this.mode = target;
                         this.containerPosition = target;
                         this.displayMode = target;
                         window.history.pushState({}, '', '/' + target);
-
+                
                         setTimeout(() => {
-                            // 3. FASE 3: Pergeseran selesai, card meluncur naik dari bawah ke atas (0.5 detik)
+                            // 3. FASE 3: Pergeseran selesai, card meluncur naik dari bawah ke atas
                             this.cardState = 'visible';
                             this.isBusy = false;
-                        }, 400); // Tunggu sampai animasi geser 0.4s tuntas
-                    }, 400); // Tunggu sampai card turun 0.4s tuntas
+                        }, 500);
+                    }, 500);
                 },
 
                 async submitLogin() {
@@ -167,8 +170,53 @@
                         });
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.message || 'Login gagal');
-                        localStorage.setItem('ts_token', data.token);
-                        window.location.href = data.user?.role === 'admin' ? '/admin/exams' : '/beranda';
+
+                        // 🌟 SIMPAN SESI LENGKAP AGAR TIDAK DI-EVICT DASHBOARD
+                        const token = data.token || data.access_token;
+                        const user = data.user;
+
+                        localStorage.setItem('ts_token', token);
+                        localStorage.setItem('token', token);
+                        if (user) {
+                            localStorage.setItem('ts_user', JSON.stringify(user));
+                        }
+
+                        // Redirect sesuai role
+                        if (user?.role === 'admin' || user?.role === 'teacher') {
+                            window.location.href = '/admin/dashboard';
+                        } else {
+                            window.location.href = '/beranda';
+                        }
+                    } catch (e) {
+                        this.error = e.message;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async submitRegister() {
+                    this.loading = true;
+                    this.error = null;
+                    try {
+                        const res = await fetch('/api/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(this.registerData)
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Registrasi gagal');
+
+                        // 🌟 SIMPAN SESI LENGKAP
+                        const token = data.token || data.access_token;
+                        const user = data.user;
+
+                        localStorage.setItem('ts_token', token);
+                        localStorage.setItem('token', token);
+                        if (user) {
+                            localStorage.setItem('ts_user', JSON.stringify(user));
+                        }
+
+                        window.location.href = '/beranda';
                     } catch (e) {
                         this.error = e.message;
                     } finally {
