@@ -1,211 +1,221 @@
 @extends('layouts.app')
-@section('title', 'Talent Mapping — Beranda')
+@section('title', 'Talent Mapping — Kira-kira bakat ku apa, ya?')
 
 @section('content')
-<div x-data="berandaPage" class="font-sans text-slate-800 bg-[#FFFDF0] min-h-screen overflow-x-hidden">
 
-    {{-- 1. HERO SECTION --}}
-    <section id="home" class="relative pt-12 pb-16 px-4 flex flex-col items-center justify-center text-center">
-        {{-- Stacked Card Paper Effect --}}
-        <div class="relative max-w-2xl w-full mx-auto">
-            <div class="absolute inset-0 bg-white/60 rounded-3xl transform -rotate-2 scale-102 shadow-sm border border-slate-200/50"></div>
-            <div class="absolute inset-0 bg-white/80 rounded-3xl transform rotate-1 scale-101 shadow-sm border border-slate-200/60"></div>
+{{-- ============ ANIMATION STYLES & CAROUSEL STYLES ============ --}}
+{{-- ============ ANIMATION STYLES ============ --}}
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    /* Hover effect for cards */
+    .card-hover:hover {
+        transform: translateY(-5px) scale(1.02);
+        transition: transform 0.3s ease;
+    }
 
-            {{-- Main Hero Card --}}
-            <div class="relative bg-white rounded-3xl p-8 sm:p-12 shadow-md border border-slate-200/80 space-y-6">
-                <h1 class="font-display font-extrabold text-3xl sm:text-5xl text-[#0984E3] tracking-tight drop-shadow-sm">
-                    Kira-kira bakat ku apa, Ya?
-                </h1>
-                
-                <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                    Setiap langkah besar dimulai dari mengenal diri sendiri! Mulai tes sekarang dan temukan potensi yang bisa membawamu meraih impian di masa depan.
-                </p>
+    /* Hide scrollbar for the testimonial slider */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 
-                <div>
-                    <a href="#bidang" class="inline-block bg-[#FDCB6E] hover:bg-[#F39C12] text-slate-900 font-bold px-8 py-3 rounded-full text-sm sm:text-base shadow-sm hover:shadow transition transform active:scale-95">
-                        Cari tau sekarang!
-                    </a>
-                </div>
+    /* Animation for the hero button overlay */
+    @keyframes pulseBtn {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+        50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+    }
+    .animate-btn-pulse {
+        animation: pulseBtn 1.5s ease-in-out infinite;
+    }
+
+    /* Combined flight animation for the planes */
+    @keyframes floatY {
+        0%, 100% { transform: translateY(0) rotate(6deg); }
+        50% { transform: translateY(-12px) rotate(8deg); }
+    }
+    .animate-float-plane {
+        animation: floatY 3s ease-in-out infinite;
+    }
+</style>
+
+{{-- ============ NAVBAR (DELETED ENTIRELY) ============ --}}
+{{-- <header> ... </header> --}}
+
+{{-- ============ HERO ============ --}}
+<section class="relative w-full overflow-hidden animate-fade-up">
+    <div class="relative w-full aspect-[1440/899]">
+        <img src="{{ asset('images/landing/hero-plaid-bg.svg') }}" alt="" class="absolute inset-0 w-full h-full object-cover">
+        <img src="{{ asset('images/landing/hero-envelope.svg') }}" alt="" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+        
+        <div class="absolute left-1/2 top-[16%] w-[62%] -translate-x-1/2">
+            <div class="relative w-full">
+                <img src="{{ asset('images/landing/hero-content.svg') }}" 
+                     alt="Kira-kira bakat ku apa, ya?" 
+                     class="w-full h-auto pointer-events-none">
+
+                {{-- The Overlay Button with Pulse Animation --}}
+                <a href="{{ url('/kuis') }}" 
+   class="absolute left-1/2 bottom-[5%] w-[40%] h-[20%] -translate-x-1/2 -rotate-178 "
+   aria-label="Cari tahu sekarang!">
+</a>
             </div>
         </div>
-    </section>
 
-    {{-- 2. MARQUEE BANNER --}}
-    <div class="w-full bg-[#FF7675] py-2.5 overflow-hidden whitespace-nowrap border-y border-[#D63031]/20 select-none">
-        <div class="inline-block animate-marquee text-white text-xs sm:text-sm font-bold tracking-wider uppercase">
-            <span>Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp; Find some "Talent" &nbsp;✦&nbsp;</span>
+        {{-- Combined Plane Container --}}
+        <div class="absolute top-[9%] right-[13%] w-[8%] min-w-[90px] max-w-[150px] rotate-6 animate-float-plane">
+            <img src="{{ asset('images/landing/plane-trail-dashed.svg') }}" alt="" class="absolute -left-16 -bottom-6 w-28 opacity-80">
+            <img src="{{ asset('images/landing/plane-yellow.svg') }}" alt="" class="relative w-full drop-shadow-md">
+            <img src="{{ asset('images/landing/plane-navy.svg') }}" alt="" class="absolute left-[18%] top-[28%] w-[66%]">
         </div>
     </div>
+</section>
+{{-- ============ MARQUEE ============ --}}
+<div class="bg-[#f26d3d] py-4 overflow-hidden">
+    {{-- Note: Ideally, repeat this img several times horizontally to ensure it spans the full width, or use CSS animation --}}
+    <div class="marquee-track">
+        <img src="{{ asset('images/landing/marquee-tile.svg') }}" alt="" aria-hidden="true" class="h-auto w-[1440px] shrink-0">
+    </div>
+</div>
 
-    {{-- 3. SECTION: PILIH BIDANG --}}
-    <section id="bidang" class="max-w-4xl mx-auto px-4 py-16 text-center space-y-10">
-        <div class="space-y-3">
-            <h2 class="font-display font-black text-2xl sm:text-3xl text-[#2D3436] max-w-xl mx-auto leading-snug">
-                Setiap orang punya cara hebatnya masing-masing. Pilih bidang yang membuatmu penasaran dan ingin terus belajar.
-            </h2>
+{{-- ============ QUOTE ============ --}}
+<section class="bg-[#fef7d9] py-16 md:py-20 px-4 animate-fade-up delay-1">
+    <div class="max-w-4xl mx-auto">
+        <img src="{{ asset('images/landing/quote-text.svg') }}" alt="Setiap orang punya cara hebatnya masing-masing..." class="w-full h-auto">
+    </div>
+</section>
+
+{{-- ============ LIHAT BIDANG FAVORIT KAMU ============ --}}
+<section class="relative animate-fade-up delay-2">
+    <img src="{{ asset('images/landing/bidang-scallop-bg.svg') }}" alt="" class="absolute inset-0 w-full h-full object-cover -z-10">
+    <div class="max-w-6xl mx-auto text-center px-4 py-20 md:py-24">
+        <img src="{{ asset('images/landing/title-lihat-bidang.svg') }}" alt="Lihat bidang favorit kamu!" class="mx-auto h-auto w-full max-w-xl mb-4">
+        <p class="text-white/90 mb-14 max-w-xl mx-auto">Klik salah satu kartu untuk melihat penjelasan lengkap, tahapan belajar, dan rekomendasi aplikasi.</p>
+
+        <div class="flex flex-col md:flex-row justify-center items-center gap-16 md:gap-20">
+            <a href="{{ url('/bidang/bahasa') }}" class="w-full max-w-xs shrink-0 card-hover">
+                <img src="{{ asset('images/landing/card-bahasa.svg') }}" alt="Bahasa — Arabic, English" class="w-full h-auto">
+            </a>
+            <a href="{{ url('/bidang/it') }}" class="relative w-full max-w-xs shrink-0 card-hover">
+                <img src="{{ asset('images/landing/card-it-back.svg') }}" alt="" class="absolute -right-6 top-4 w-full h-auto -z-10 opacity-95">
+                <img src="{{ asset('images/landing/card-it-front.svg') }}" alt="IT — DKV, Videografi, Comic, Programming" class="relative w-full h-auto">
+            </a>
         </div>
+    </div>
+</section>
 
-        {{-- Highlight Sub-card Container --}}
-        <div class="bg-[#FFF8E7] border-2 border-dashed border-[#FDCB6E] rounded-3xl p-6 sm:p-10 space-y-8">
-            <div class="space-y-1">
-                <h3 class="font-display font-extrabold text-2xl text-[#E17055]">Lihat bidang favorit kamu!</h3>
-                <p class="text-xs text-slate-500">Klik salah satu kartu untuk melihat penjelasan lengkap, tahapan belajar, dan rekomendasi aplikasi!</p>
-            </div>
+{{-- ============ TESTIMONIALS (SLIDING CAROUSEL) ============ --}}
+<section class="relative bg-[#f26d3d] py-20 px-4 overflow-hidden animate-fade-up delay-3">
+    <div class="absolute top-6 right-10 hidden sm:flex items-center">
+        <img src="{{ asset('images/landing/blob-white.svg') }}" alt="" class="w-14 h-14 -mr-4">
+        <img src="{{ asset('images/landing/blob-white.svg') }}" alt="" class="w-14 h-14 -mr-4">
+        <img src="{{ asset('images/landing/blob-white.svg') }}" alt="" class="w-14 h-14">
+    </div>
 
-            {{-- Kartu Pilihan: Bahasa & IT --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
-                {{-- KARTU BAHASA --}}
-                <a href="{{ route('beranda.bahasa') }}" class="group relative block text-left">
-                    <div class="absolute inset-0 bg-white/70 rounded-2xl border border-slate-200 transform -rotate-3 group-hover:-rotate-4 transition-transform"></div>
-                    <div class="relative bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-sm group-hover:shadow-md transition space-y-4">
-                        <h4 class="font-display font-black text-2xl text-[#00CEC9]">Bahasa</h4>
-                        
-                        <div class="w-full h-32 bg-[#F5F6FA] rounded-xl border border-slate-100 flex items-center justify-center p-3 relative overflow-hidden">
-                            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#00CEC9_1px,transparent_1px)] [background-size:10px_10px]"></div>
-                            <span class="text-xs font-semibold text-slate-400">Preview Modul Bahasa</span>
-                        </div>
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-white font-medium mb-10 ml-2">Ini kata mereka tentang Talent Mapping....</h2>
 
-                        <div class="flex justify-between items-center text-xs font-semibold text-slate-600 pt-1">
-                            <span class="bg-slate-100 px-2.5 py-1 rounded-md">Arabic</span>
-                            <span class="bg-slate-100 px-2.5 py-1 rounded-md">English</span>
-                        </div>
-                    </div>
-                </a>
-
-                {{-- KARTU IT --}}
-                <a href="{{ route('beranda.it') }}" class="group relative block text-left">
-                    <div class="absolute inset-0 bg-white/70 rounded-2xl border border-slate-200 transform rotate-3 group-hover:rotate-4 transition-transform"></div>
-                    <div class="relative bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-sm group-hover:shadow-md transition space-y-4">
-                        <h4 class="font-display font-black text-2xl text-[#0984E3]">IT</h4>
-                        
-                        <div class="w-full h-32 bg-[#F5F6FA] rounded-xl border border-slate-100 flex items-center justify-center p-3 relative overflow-hidden">
-                            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#0984E3_1px,transparent_1px)] [background-size:10px_10px]"></div>
-                            <span class="text-xs font-semibold text-slate-400">Preview Modul IT</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 text-[11px] font-semibold text-slate-600 pt-1 text-center">
-                            <span class="bg-slate-100 px-2 py-1 rounded-md">DKV</span>
-                            <span class="bg-slate-100 px-2 py-1 rounded-md">Comic</span>
-                            <span class="bg-slate-100 px-2 py-1 rounded-md">Videografi</span>
-                            <span class="bg-slate-100 px-2 py-1 rounded-md">Programming</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    {{-- 4. SECTION: TESTIMONI STICKY NOTES --}}
-    <section class="w-full bg-[#E17055] py-14 px-4 text-white relative overflow-hidden">
-        <div class="max-w-5xl mx-auto space-y-8">
-            <h3 class="font-display font-bold text-xl sm:text-2xl text-left">Ini kata mereka tentang Talent Mapping...</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                <div class="relative bg-white text-slate-800 p-6 rounded-2xl shadow-lg transform -rotate-2 space-y-4">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#0984E3] border-2 border-white shadow"></div>
-                    <p class="text-xs text-slate-600 leading-relaxed italic">"Lewat tes ini saya jadi yakin memilih peminatan coding tanpa ragu!"</p>
-                    <div class="pt-2 border-t border-slate-100">
-                        <p class="font-bold text-xs text-slate-900">Santri 1</p>
-                        <p class="text-[10px] text-[#0984E3] font-semibold">Bidang Programming</p>
-                    </div>
+        {{-- Sliding Container: Add overflow-x-auto and no-scrollbar for drag/swipe --}}
+        <div class="overflow-x-auto no-scrollbar snap-x snap-mandatory">
+            <div class="flex flex-row gap-10 px-4 py-4 w-max mx-auto">
+                
+                {{-- Person 1 --}}
+                <div class="w-64 h-64 shrink-0 snap-center flex items-center justify-center card-hover">
+                    <img src="{{ asset('images/landing/testimonial-programming.svg') }}" alt="Person 1 — Bidang Programming" class="w-full h-full object-contain">
                 </div>
 
-                <div class="relative bg-white text-slate-800 p-6 rounded-2xl shadow-lg transform rotate-1 space-y-4">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#00CEC9] border-2 border-white shadow"></div>
-                    <p class="text-xs text-slate-600 leading-relaxed italic">"Pemetaan bakatnya tepat banget sesuai portofolio desain poster yang pernah saya buat."</p>
-                    <div class="pt-2 border-t border-slate-100">
-                        <p class="font-bold text-xs text-slate-900">Santri 2</p>
-                        <p class="text-[10px] text-[#00CEC9] font-semibold">Bidang DKV</p>
-                    </div>
+                {{-- Person 2 --}}
+                <div class="w-64 h-64 shrink-0 snap-center flex items-center justify-center card-hover">
+                    <img src="{{ asset('images/landing/testimonial-dkv.svg') }}" alt="Person 2 — Bidang DKV" class="w-full h-full object-contain">
                 </div>
 
-                <div class="relative bg-white text-slate-800 p-6 rounded-2xl shadow-lg transform -rotate-1 space-y-4">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#6C5CE7] border-2 border-white shadow"></div>
-                    <p class="text-xs text-slate-600 leading-relaxed italic">"Soal-soal tesnya interaktif dan bikin makin semangat belajar bahasa asing."</p>
-                    <div class="pt-2 border-t border-slate-100">
-                        <p class="font-bold text-xs text-slate-900">Santri 3</p>
-                        <p class="text-[10px] text-[#6C5CE7] font-semibold">Bidang Arabic</p>
-                    </div>
+                {{-- Person 3 (Smaller size, reusing same images) --}}
+                <div class="w-48 h-64 shrink-0 snap-center flex items-center justify-center card-hover">
+                    <img src="{{ asset('images/landing/testimonial-arabic.svg') }}" alt="Person 3 — Bidang Arabic" class="w-full h-full object-contain">
                 </div>
+                
+                {{-- Person 4 (Reusing Person 1 to show sliding functionality) --}}
+                <div class="w-64 h-64 shrink-0 snap-center flex items-center justify-center card-hover">
+                    <img src="{{ asset('images/landing/testimonial-programming.svg') }}" alt="Person 4 — Bidang Programming" class="w-full h-full object-contain">
+                </div>
+
             </div>
         </div>
-    </section>
+        <p class="text-white/70 text-center mt-4 text-sm md:hidden">Geser ke samping untuk melihat lebih banyak</p>
+    </div>
+</section>
 
-    {{-- 5. SECTION: WHY TALENT MAPPING --}}
-    <section id="about" class="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-        <div class="space-y-4">
-            <h3 class="font-display font-black text-3xl text-[#6C5CE7]">Why Talent Mapping?</h3>
-            <p class="text-sm text-slate-600 leading-relaxed text-justify">
-                Melalui Talent Mapping, kamu bisa mengenal potensi diri lebih dalam, menemukan bidang yang paling sesuai dengan kekuatanmu, serta memahami langkah yang tepat untuk mengembangkan kemampuan tersebut. Dengan mengetahui kelebihan sejak dini, kamu dapat belajar dengan lebih percaya diri, fokus pada hal yang kamu sukai, dan mempersiapkan masa depan yang lebih terarah.
+{{-- ============ WHY TALENT MAPPING (HUGE SWIRL) ============ --}}
+<section class="relative bg-[#fdfaf0] py-20 px-8 lg:px-24 overflow-hidden">
+    <img src="{{ asset('images/landing/accent-square-large.svg') }}" alt="" class="absolute top-0 right-0 w-56 h-auto -z-0 pointer-events-none">
+    <img src="{{ asset('images/landing/accent-square-small.svg') }}" alt="" class="absolute bottom-0 left-0 w-32 h-auto -z-0 pointer-events-none">
+
+    {{-- THE MASSIVE SCRIBBLE: absolute positioning to cover the whole left side --}}
+    <img src="{{ asset('images/landing/swirl-green.svg') }}" alt="" class="absolute -top-20 -left-20 w-[700px] max-w-none -z-10 opacity-90 pointer-events-none">
+
+    <div class="relative flex flex-col md:flex-row items-center justify-between gap-12">
+        <div class="md:w-1/2 z-10"> {{-- Added z-10 so text is above the swirl --}}
+            <h2 class="text-3xl font-bold text-[#4c4586] mb-6">Why Talent Mapping?</h2>
+            <p class="text-gray-700 leading-relaxed">
+                Melalui Talent Mapping, kamu bisa <strong>mengenal potensi diri lebih dalam, menemukan bidang
+                yang paling sesuai dengan kekuatanmu, serta memahami langkah yang tepat untuk mengembangkan
+                kemampuan tersebut.</strong> Dengan mengetahui kelebihan sejak dini, kamu dapat belajar dengan
+                lebih percaya diri, fokus pada hal yang kamu sukai, dan mempersiapkan masa depan yang lebih terarah.
             </p>
         </div>
 
-        <div class="w-full h-64 bg-[#DFE6E9] rounded-3xl border border-slate-300 flex items-center justify-center p-6 relative overflow-hidden">
-            <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#6C5CE7_1px,transparent_1px)] [background-size:12px_12px]"></div>
-            <span class="text-sm font-semibold text-slate-500">Ilustrasi / Media Pendukung</span>
+        {{-- Placeholder for right side --}}
+        <div class="md:w-1/2 flex justify-center z-10">
+            <div class="w-64 h-64 bg-[length:8px_8px] bg-[image:repeating-conic-gradient(#e5e5e5_0_25%,white_0_50%)] rounded-lg"></div>
         </div>
-    </section>
+    </div>
+</section>
 
-    {{-- 6. SECTION: WHAT YOU'LL GET --}}
-    <section class="w-full bg-[#0984E3] py-16 px-4 text-white text-center relative">
-        <div class="max-w-4xl mx-auto space-y-10">
-            <h3 class="inline-block bg-[#FDCB6E] text-slate-900 font-display font-extrabold text-2xl sm:text-3xl px-8 py-2.5 rounded-full shadow">
-                What You'll Get ?
-            </h3>
+{{-- ============ WHAT YOU'LL GET (fully baked asset) ============ --}}
+<section>
+    <img src="{{ asset('images/landing/what-youll-get.svg') }}" alt="What You'll Get?" class="w-full h-auto block">
+</section>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                <div class="bg-white text-slate-800 p-4 rounded-2xl font-bold text-xs shadow-sm">
-                    Laporan Prediksi Potensi
-                </div>
-                <div class="bg-white text-slate-800 p-4 rounded-2xl font-bold text-xs shadow-sm">
-                    Rekomendasi Peminatan Belajar
-                </div>
-                <div class="bg-white text-slate-800 p-4 rounded-2xl font-bold text-xs shadow-sm">
-                    Evaluasi Portofolio Mandiri
-                </div>
-                <div class="bg-white text-slate-800 p-4 rounded-2xl font-bold text-xs shadow-sm">
-                    Peringkat Kecakapan (A1-C2 / Pro)
-                </div>
-                <div class="bg-white text-slate-800 p-4 rounded-2xl font-bold text-xs shadow-sm">
-                    Akses Bank Soal Lengkap
-                </div>
-                <div class="bg-white text-slate-800 p-4 rounded-2xl font-bold text-xs shadow-sm">
-                    Sertifikat Penempatan Kelas
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- 7. FOOTER --}}
-    <footer class="w-full bg-[#2D3436] text-white pt-14 pb-8 px-6 lg:px-16 space-y-10">
-        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <div class="space-y-3 max-w-sm">
-                <h4 class="font-display font-extrabold text-xl text-[#FDCB6E]">Sekolah Impian</h4>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    Pendidikan terpadu modern yang mengarahkan santri dengan bakat dan keahlian masa depan.
+{{-- ============ FOOTER ============ --}}
+<footer class="bg-[#1c1b4b] text-white py-16 relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-6">
+        <h1 class="text-6xl md:text-8xl font-black text-[#f26d3d] mb-12 drop-shadow-md">Talent Mapping</h1>
+        <div class="grid md:grid-cols-2 gap-12">
+            <div>
+                <h2 class="text-2xl font-bold text-[#fdb813] mb-4">Sekolah Impian</h2>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    Pondok pendidikan modern yang memadukan kurikulum nasional dengan kurikulum Islam. Terletak di kawasan yang sejuk, asri, dan strategis.
                 </p>
+                <a href="#" class="inline-block bg-[#3a86ff] text-white font-semibold py-2 px-6 rounded-full hover:bg-blue-600 transition">
+                    Baca selengkapnya
+                </a>
             </div>
-
-            <div class="w-full h-40 bg-slate-800/80 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <span class="text-xs text-slate-500">Logo / Banner Penutup</span>
+            <div>
+                <h2 class="text-2xl font-bold text-[#fdb813] mb-4">Kategori Video</h2>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-300 hover:text-white transition">Semua</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white transition">Bahasa</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white transition">Bidang Al-Qur'an</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white transition">Bidang Teknologi</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white transition">Bidang Sosial</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white transition">Bidang Kreativitas</a></li>
+                </ul>
             </div>
         </div>
+    </div>
+</footer>
 
-        <div class="border-t border-slate-700/60 pt-6 text-center text-xs text-slate-500">
-            &copy; 2026 Talent Mapping — Talenta Santri. All rights reserved.
-        </div>
-    </footer>
-
-</div>
-
-<style>
-@keyframes marquee {
-    0% { transform: translateX(0%); }
-    100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-    display: inline-block;
-    animation: marquee 20s linear infinite;
-}
-</style>
 @endsection
