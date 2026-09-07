@@ -182,40 +182,54 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const json = await res.json();
-                const rawData = json?.data ?? json ?? {};
+                const rawData = json?.data ?? {};
 
-                let allExams = [];
+                let itList = [];
                 if (Array.isArray(rawData)) {
-                    allExams = rawData;
+                    itList = rawData.filter(e => (e.category || '').toLowerCase() === 'it');
                 } else {
                     Object.keys(rawData).forEach(cat => {
-                        if (Array.isArray(rawData[cat])) {
-                            allExams.push(...rawData[cat]);
+                        if (cat.toLowerCase() === 'it' && Array.isArray(rawData[cat])) {
+                            itList.push(...rawData[cat]);
                         }
                     });
                 }
 
-                let targetExams = allExams.filter(e => 
-                    (e.category || '').trim().toLowerCase() === 'it'
-                );
-
-                if (subcategory) {
-                    const filteredBySub = targetExams.filter(e => 
-                        (e.subcategory || e.title || '').toLowerCase().includes(subcategory.toLowerCase())
-                    );
-                    if (filteredBySub.length > 0) {
-                        targetExams = filteredBySub;
-                    }
+                if (itList.length === 0) {
+                    alert('Belum ada paket ujian IT yang terdaftar di sistem.');
+                    return;
                 }
 
-                if (targetExams.length > 0) {
-                    window.location.href = `/ujian/${targetExams[0].id}`;
+                const isExamActive = (e) => Boolean(e.is_active === true || e.is_active === 1 || e.is_active === '1');
+
+                // Prioritas 1: Slot khusus 'it_gclwama'
+                let selectedExam = itList.find(e => e.home_slot === 'it_gclwama' && isExamActive(e));
+
+                // Prioritas 2: Featured aktif
+                if (!selectedExam) {
+                    selectedExam = itList.find(e => e.is_featured && isExamActive(e));
+                }
+
+                // Prioritas 3: Filter subkategori jika ada
+                if (!selectedExam && subcategory) {
+                    selectedExam = itList.find(e => 
+                        (e.subcategory || e.title || '').toLowerCase().includes(subcategory.toLowerCase()) && isExamActive(e)
+                    );
+                }
+
+                // Prioritas 4: Fallback paket IT aktif apa saja
+                if (!selectedExam) {
+                    selectedExam = itList.find(isExamActive) || itList[0];
+                }
+
+                if (selectedExam && selectedExam.id) {
+                    window.location.href = `/ujian/${selectedExam.id}`;
                 } else {
-                    alert(`Paket ujian IT ${subcategory ? '(' + subcategory.toUpperCase() + ')' : ''} belum dibuka atau belum memiliki butir soal.`);
+                    alert('Paket ujian IT belum diaktifkan oleh admin.');
                 }
             } catch (err) {
-                console.error(err);
-                alert('Gagal memuat paket ujian. Silakan periksa jaringan server.');
+                console.error('Fetch exams error:', err);
+                alert('Gagal menghubungi server untuk memuat ujian.');
             }
         }
     }));

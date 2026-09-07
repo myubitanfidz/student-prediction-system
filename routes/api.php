@@ -18,8 +18,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 🌟 Santri Endpoints (Strict hanya untuk Santri)
     Route::middleware('role:student')->group(function () {
-        Route::get('/exams', [ExamController::class, 'index']);
-        
         // Proteksi Throttling Submit
         Route::post('/exams/submit', [ExamController::class, 'submit'])
             ->middleware('throttle:exam-submit');
@@ -28,8 +26,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'show']);
     });
 
-    // 🌟 Endpoint Buka Ujian (Santri untuk Mengerjakan, Admin/Guru untuk Preview)
+    // 🌟 Endpoint Buka Ujian & Daftar Ujian (Santri, Admin, untuk Mengerjakan/Preview)
     Route::middleware('role:student,admin,teacher')->group(function () {
+        Route::get('/exams', [ExamController::class, 'index']); // Dipindah ke sini agar Admin bisa mengakses halaman Bahasa & IT
+        
         // Proteksi Throttling Fetch
         Route::get('/exams/{id}', [ExamController::class, 'show'])
             ->middleware('throttle:exam-fetch');

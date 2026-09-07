@@ -174,43 +174,63 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const json = await res.json();
-                const rawData = json?.data ?? json ?? {};
+                const rawData = json?.data ?? {};
 
-                // Normalisasi daftar ujian
-                let allExams = [];
+                // 1. Ambil semua paket kategori Bahasa secara fleksibel
+                let bahasaList = [];
                 if (Array.isArray(rawData)) {
-                    allExams = rawData;
+                    bahasaList = rawData.filter(e => (e.category || '').toLowerCase() === 'bahasa');
                 } else {
                     Object.keys(rawData).forEach(cat => {
-                        if (Array.isArray(rawData[cat])) {
-                            allExams.push(...rawData[cat]);
+                        if (cat.toLowerCase() === 'bahasa' && Array.isArray(rawData[cat])) {
+                            bahasaList.push(...rawData[cat]);
                         }
                     });
                 }
 
-                // Filter kategori Bahasa
-                let targetExams = allExams.filter(e => 
-                    (e.category || '').trim().toLowerCase() === 'bahasa'
-                );
-
-                // Filter subkategori jika dikirim (arab / inggris)
-                if (subcategory) {
-                    const filteredBySub = targetExams.filter(e => 
-                        (e.subcategory || e.title || '').toLowerCase().includes(subcategory.toLowerCase())
-                    );
-                    if (filteredBySub.length > 0) {
-                        targetExams = filteredBySub;
-                    }
+                if (bahasaList.length === 0) {
+                    alert('Belum ada paket ujian Bahasa yang terdaftar di sistem.');
+                    return;
                 }
 
-                if (targetExams.length > 0) {
-                    window.location.href = `/ujian/${targetExams[0].id}`;
+                let selectedExam = null;
+                const subLower = (subcategory || '').toLowerCase();
+                const targetSlot = subLower.includes('arab') ? 'bahasa_arab' : 'bahasa_inggris';
+
+                // Helper untuk cek aktif (toleran terhadap true, 1, atau "1")
+                const isExamActive = (e) => Boolean(e.is_active === true || e.is_active === 1 || e.is_active === '1');
+
+                if (subcategory) {
+                    // Prioritas 1: Cocokkan slot admin (bahasa_arab / bahasa_inggris)
+                    selectedExam = bahasaList.find(e => e.home_slot === targetSlot && isExamActive(e));
+
+                    // Prioritas 2: Cocokkan subkategori teks yang aktif
+                    if (!selectedExam) {
+                        selectedExam = bahasaList.find(e => 
+                            (e.subcategory || e.title || '').toLowerCase().includes(subLower) && isExamActive(e)
+                        );
+                    }
+
+                    // Prioritas 3: Ambil paket subkategori tersebut meskipun belum diatur home_slot
+                    if (!selectedExam) {
+                        selectedExam = bahasaList.find(e => 
+                            (e.subcategory || e.title || '').toLowerCase().includes(subLower)
+                        );
+                    }
                 } else {
-                    alert(`Paket ujian Bahasa ${subcategory ? '(' + subcategory.toUpperCase() + ')' : ''} belum dibuka atau belum memiliki soal.`);
+                    selectedExam = bahasaList.find(e => e.is_featured && isExamActive(e)) 
+                                || bahasaList.find(isExamActive) 
+                                || bahasaList[0];
+                }
+
+                if (selectedExam && selectedExam.id) {
+                    window.location.href = `/ujian/${selectedExam.id}`;
+                } else {
+                    alert(`Paket ujian Bahasa ${subcategory ? '(' + subcategory.toUpperCase() + ')' : ''} belum diaktifkan oleh admin.`);
                 }
             } catch (err) {
-                console.error(err);
-                alert('Gagal memuat paket ujian. Silakan periksa jaringan server.');
+                console.error('Fetch exams error:', err);
+                alert('Gagal menghubungi server untuk memuat ujian.');
             }
         }
     }));

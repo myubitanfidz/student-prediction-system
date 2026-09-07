@@ -64,14 +64,19 @@ class ExamController extends Controller
         // 1. Validasi Jadwal
         if ($user && $user->role === 'student') {
             if (! (bool) $exam->is_active) {
-                return response()->json(['status' => 'error', 'message' => 'Ujian sedang dinonaktifkan.'], 403);
+                return response()->json(['status' => 'error', 'message' => 'Ujian sedang dinonaktifkan oleh admin.'], 403);
             }
             
             $now = now()->timezone('Asia/Jakarta');
             
-            if ($exam->start_time && $now->lessThan(\Carbon\Carbon::parse($exam->start_time)->timezone('Asia/Jakarta'))) {
-                return response()->json(['status' => 'error', 'message' => "Ujian belum dibuka."], 403);
+            // Beri toleransi 2 menit ke belakang agar perbedaan detik antara client-server tidak memblokir santri
+            if ($exam->start_time) {
+                $startTime = \Carbon\Carbon::parse($exam->start_time)->timezone('Asia/Jakarta')->subMinutes(2);
+                if ($now->lessThan($startTime)) {
+                    return response()->json(['status' => 'error', 'message' => "Ujian belum dibuka. Jadwal mulai: {$exam->start_time}"], 403);
+                }
             }
+
             if ($exam->end_time && $now->greaterThan(\Carbon\Carbon::parse($exam->end_time)->timezone('Asia/Jakarta'))) {
                 return response()->json(['status' => 'error', 'message' => "Ujian telah ditutup."], 403);
             }
