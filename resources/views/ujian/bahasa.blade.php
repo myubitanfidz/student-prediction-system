@@ -16,7 +16,8 @@
             </p>
 
             <div class="pt-3">
-                <button type="button" @click="mulaiQuiz()"
+                {{-- Membuka modal kecil pilihan subkategori --}}
+                <button type="button" @click="quizChoiceModalOpen = true"
                         class="inline-block bg-[#E5E7EB] hover:bg-[#D1D5DB] text-slate-900 font-extrabold text-sm sm:text-base px-8 py-3 rounded-full transition shadow-sm active:scale-95">
                     Ayo mulai quiznya sekarang!
                 </button>
@@ -60,24 +61,18 @@
         <div @click.outside="modalOpen = false"
              class="bg-[#F8F9FA] rounded-3xl max-w-2xl w-full p-6 sm:p-10 space-y-6 shadow-2xl relative border border-slate-200">
             
-            {{-- Close Button --}}
             <button type="button" @click="modalOpen = false" class="absolute top-6 right-6 text-slate-700 hover:text-slate-950 font-display font-bold text-xl">
                 ✕
             </button>
 
-            {{-- Headline --}}
             <h3 class="font-display font-black text-2xl sm:text-3xl text-[#0984E3] leading-tight" x-html="selectedData.headline"></h3>
-
-            {{-- Deskripsi --}}
             <p class="text-xs sm:text-sm text-slate-700 leading-relaxed" x-html="selectedData.description"></p>
 
-            {{-- Manfaat Box --}}
             <div class="border border-slate-800 rounded-2xl p-5 space-y-2 bg-transparent">
                 <h4 class="font-display font-extrabold text-sm sm:text-base text-[#E17055]">Manfaat</h4>
                 <p class="text-xs sm:text-sm text-slate-700 leading-relaxed" x-text="selectedData.benefits"></p>
             </div>
 
-            {{-- Aplikasi Pendukung --}}
             <div class="space-y-3 pt-2">
                 <h4 class="font-display font-extrabold text-sm sm:text-base text-[#E17055]">Aplikasi Pendukung</h4>
                 <div class="flex flex-wrap gap-2.5">
@@ -86,14 +81,53 @@
                     </template>
                 </div>
             </div>
+
+            <div class="pt-4 border-t border-slate-200 flex justify-end">
+                <button type="button" @click="mulaiQuiz(selectedKey)"
+                        class="bg-[#0984E3] hover:bg-[#0773c5] text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl transition shadow active:scale-95">
+                    Mulai Ujian Materi Ini →
+                </button>
+            </div>
         </div>
     </div>
+
+    {{-- MODAL PILIHAN QUIZ (POP-UP KECIL ARAB / INGGRIS) --}}
+    <div x-show="quizChoiceModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div @click.outside="quizChoiceModalOpen = false"
+             class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-8 space-y-6 shadow-2xl relative border border-slate-200 text-center">
+            
+            <button type="button" @click="quizChoiceModalOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-lg">
+                ✕
+            </button>
+
+            <div class="space-y-2">
+                <h3 class="font-display font-bold text-xl text-slate-900">Pilih Bahasa Ujian</h3>
+                <p class="text-xs text-slate-500">Pilih bidang bahasa yang ingin kamu kerjakan sekarang:</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 pt-2">
+                <button type="button" @click="mulaiQuiz('arab')"
+                        class="w-full bg-[#00CEC9] hover:bg-[#00b5b0] text-white font-extrabold py-3.5 px-5 rounded-2xl transition shadow-sm active:scale-95 flex items-center justify-center gap-2">
+                    <span>📖</span>
+                    <span>Bahasa Arab</span>
+                </button>
+                <button type="button" @click="mulaiQuiz('inggris')"
+                        class="w-full bg-[#0984E3] hover:bg-[#0773c5] text-white font-extrabold py-3.5 px-5 rounded-2xl transition shadow-sm active:scale-95 flex items-center justify-center gap-2">
+                    <span>🌍</span>
+                    <span>Bahasa Inggris</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('bahasaPage', () => ({
         modalOpen: false,
+        quizChoiceModalOpen: false,
+        selectedKey: '',
         selectedData: {
             headline: '',
             description: '',
@@ -115,23 +149,68 @@ document.addEventListener('alpine:init', () => {
             }
         },
         openModal(type) {
+            this.selectedKey = type;
             this.selectedData = this.materi[type];
             this.modalOpen = true;
         },
-        async mulaiQuiz() {
+        async mulaiQuiz(subcategory = null) {
+            const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
             try {
                 const res = await fetch('/api/exams', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('ts_token')}`, 'Accept': 'application/json' }
+                    headers: { 
+                        'Authorization': `Bearer ${token}`, 
+                        'Accept': 'application/json' 
+                    }
                 });
-                const json = await res.json();
-                const bahasaExams = json?.data?.Bahasa || [];
-                if (bahasaExams.length > 0) {
-                    window.location.href = `/ujian/${bahasaExams[0].id}`;
-                } else {
-                    alert('Paket ujian Bahasa belum tersedia.');
+
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return;
                 }
-            } catch {
-                window.location.href = '/beranda';
+
+                const json = await res.json();
+                const rawData = json?.data ?? json ?? {};
+
+                // Normalisasi daftar ujian
+                let allExams = [];
+                if (Array.isArray(rawData)) {
+                    allExams = rawData;
+                } else {
+                    Object.keys(rawData).forEach(cat => {
+                        if (Array.isArray(rawData[cat])) {
+                            allExams.push(...rawData[cat]);
+                        }
+                    });
+                }
+
+                // Filter kategori Bahasa
+                let targetExams = allExams.filter(e => 
+                    (e.category || '').trim().toLowerCase() === 'bahasa'
+                );
+
+                // Filter subkategori jika dikirim (arab / inggris)
+                if (subcategory) {
+                    const filteredBySub = targetExams.filter(e => 
+                        (e.subcategory || e.title || '').toLowerCase().includes(subcategory.toLowerCase())
+                    );
+                    if (filteredBySub.length > 0) {
+                        targetExams = filteredBySub;
+                    }
+                }
+
+                if (targetExams.length > 0) {
+                    window.location.href = `/ujian/${targetExams[0].id}`;
+                } else {
+                    alert(`Paket ujian Bahasa ${subcategory ? '(' + subcategory.toUpperCase() + ')' : ''} belum dibuka atau belum memiliki soal.`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal memuat paket ujian. Silakan periksa jaringan server.');
             }
         }
     }));

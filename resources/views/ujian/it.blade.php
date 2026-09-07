@@ -88,24 +88,18 @@
         <div @click.outside="modalOpen = false"
              class="bg-[#F8F9FA] rounded-3xl max-w-2xl w-full p-6 sm:p-10 space-y-6 shadow-2xl relative border border-slate-200">
             
-            {{-- Close Button --}}
             <button type="button" @click="modalOpen = false" class="absolute top-6 right-6 text-slate-700 hover:text-slate-950 font-display font-bold text-xl">
                 ✕
             </button>
 
-            {{-- Headline --}}
             <h3 class="font-display font-black text-2xl sm:text-3xl text-[#0984E3] leading-tight" x-html="selectedData.headline"></h3>
-
-            {{-- Deskripsi --}}
             <p class="text-xs sm:text-sm text-slate-700 leading-relaxed" x-html="selectedData.description"></p>
 
-            {{-- Manfaat Box --}}
             <div class="border border-slate-800 rounded-2xl p-5 space-y-2 bg-transparent">
                 <h4 class="font-display font-extrabold text-sm sm:text-base text-[#E17055]">Manfaat</h4>
                 <p class="text-xs sm:text-sm text-slate-700 leading-relaxed" x-text="selectedData.benefits"></p>
             </div>
 
-            {{-- Aplikasi Pendukung --}}
             <div class="space-y-3 pt-2">
                 <h4 class="font-display font-extrabold text-sm sm:text-base text-[#E17055]">Aplikasi Pendukung</h4>
                 <div class="flex flex-wrap gap-2.5">
@@ -113,6 +107,13 @@
                         <span class="bg-[#D9D9D9] text-slate-800 text-xs sm:text-sm font-medium px-5 py-2 rounded-full" x-text="app"></span>
                     </template>
                 </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 flex justify-end">
+                <button type="button" @click="mulaiQuiz(selectedKey)"
+                        class="bg-[#0984E3] hover:bg-[#0773c5] text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl transition shadow active:scale-95">
+                    Mulai Ujian Materi Ini →
+                </button>
             </div>
         </div>
     </div>
@@ -122,6 +123,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('itPage', () => ({
         modalOpen: false,
+        selectedKey: '',
         selectedData: {
             headline: '',
             description: '',
@@ -138,7 +140,7 @@ document.addEventListener('alpine:init', () => {
             dkv: {
                 headline: 'Selamat datang di dunia, di mana <span class="bg-[#FDCB6E] text-slate-900 px-1">visual mampu bercerita.</span>',
                 description: 'DKV atau Desain Komunikasi Visual adalah bidang yang menggunakan <span class="text-[#E17055] font-semibold">elemen visual untuk menyampaikan ide, informasi, atau pesan.</span> Kamu akan belajar bagaimana mengolah warna, bentuk, gambar, tipografi, dan layout menjadi sebuah karya yang menarik sekaligus memiliki tujuan.',
-                benefits: 'Belajar desain membantu mengembangkan kreativitas, kemampuan visual, ketelitian, dan kemampuan menyampaikan pesan melalui gambar. Kamu juga bisa belajar membuat sesuatu yang tidak hanya menarik, tetapi juga memiliki tujuan.',
+                benefits: 'Belajar desain membantu mengembangkan kreativitas, kemampuan visual, ketelitian, dan kemampuan menyampaikan pesan melalui gambar.',
                 apps: ['Canva', 'Adobe Illustrator', 'Figma', 'Affinity']
             },
             komik: {
@@ -155,23 +157,65 @@ document.addEventListener('alpine:init', () => {
             }
         },
         openModal(type) {
+            this.selectedKey = type;
             this.selectedData = this.materi[type];
             this.modalOpen = true;
         },
-        async mulaiQuiz() {
+        async mulaiQuiz(subcategory = null) {
+            const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
             try {
                 const res = await fetch('/api/exams', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('ts_token')}`, 'Accept': 'application/json' }
+                    headers: { 
+                        'Authorization': `Bearer ${token}`, 
+                        'Accept': 'application/json' 
+                    }
                 });
-                const json = await res.json();
-                const itExams = json?.data?.IT || [];
-                if (itExams.length > 0) {
-                    window.location.href = `/ujian/${itExams[0].id}`;
-                } else {
-                    alert('Paket ujian IT belum tersedia.');
+
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return;
                 }
-            } catch {
-                window.location.href = '/beranda';
+
+                const json = await res.json();
+                const rawData = json?.data ?? json ?? {};
+
+                let allExams = [];
+                if (Array.isArray(rawData)) {
+                    allExams = rawData;
+                } else {
+                    Object.keys(rawData).forEach(cat => {
+                        if (Array.isArray(rawData[cat])) {
+                            allExams.push(...rawData[cat]);
+                        }
+                    });
+                }
+
+                let targetExams = allExams.filter(e => 
+                    (e.category || '').trim().toLowerCase() === 'it'
+                );
+
+                if (subcategory) {
+                    const filteredBySub = targetExams.filter(e => 
+                        (e.subcategory || e.title || '').toLowerCase().includes(subcategory.toLowerCase())
+                    );
+                    if (filteredBySub.length > 0) {
+                        targetExams = filteredBySub;
+                    }
+                }
+
+                if (targetExams.length > 0) {
+                    window.location.href = `/ujian/${targetExams[0].id}`;
+                } else {
+                    alert(`Paket ujian IT ${subcategory ? '(' + subcategory.toUpperCase() + ')' : ''} belum dibuka atau belum memiliki butir soal.`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Gagal memuat paket ujian. Silakan periksa jaringan server.');
             }
         }
     }));
