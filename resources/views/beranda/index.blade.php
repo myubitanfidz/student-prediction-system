@@ -70,7 +70,7 @@
                  class="w-full h-auto pointer-events-none">
 
             {{-- The Clickable Yellow Button Overlay --}}
-            <a href="{{ url('/kuis') }}" 
+            <a href="#bidang" 
                class="absolute left-1/2 bottom-[10%] w-[40%] h-[12%] -translate-x-1/2 -rotate-180" 
                aria-label="Cari tahu sekarang!">
             </a>
@@ -111,17 +111,20 @@
 </section>
 
 {{-- ============ LIHAT BIDANG FAVORIT KAMU ============ --}}
-<section class="relative animate-fade-up delay-2">
+<section id="bidang" class="relative animate-fade-up delay-2">
     <img src="{{ asset('images/landing/bidang-scallop-bg.svg') }}" alt="" class="absolute inset-0 w-full h-full object-cover -z-10">
     <div class="max-w-6xl mx-auto text-center px-4 py-20 md:py-24">
         <img src="{{ asset('images/landing/title-lihat-bidang.svg') }}" alt="Lihat bidang favorit kamu!" class="mx-auto h-auto w-full max-w-xl mb-4">
         <p class="text-white/90 mb-14 max-w-xl mx-auto">Klik salah satu kartu untuk melihat penjelasan lengkap, tahapan belajar, dan rekomendasi aplikasi.</p>
 
         <div class="flex flex-col md:flex-row justify-center items-center gap-16 md:gap-20">
-            <a href="{{ url('/ujian/bahasa.blade.php') }}" class="w-full max-w-xs shrink-0 card-hover">
+            {{-- KARTU BAHASA (Menuju /beranda/bahasa) --}}
+            <a href="{{ route('beranda.bahasa') }}" class="w-full max-w-xs shrink-0 card-hover">
                 <img src="{{ asset('images/landing/card-bahasa.svg') }}" alt="Bahasa — Arabic, English" class="w-full h-auto">
             </a>
-            <a href="{{ url('/ujian/it.blade.php') }}" class="relative w-full max-w-xs shrink-0 card-hover">
+
+            {{-- KARTU IT (Menuju /beranda/it) --}}
+            <a href="{{ route('beranda.it') }}" class="relative w-full max-w-xs shrink-0 card-hover">
                 <img src="{{ asset('images/landing/card-it-back.svg') }}" alt="" class="absolute -right-6 top-4 w-full h-auto -z-10 opacity-95">
                 <img src="{{ asset('images/landing/card-it-front.svg') }}" alt="IT — DKV, Videografi, Comic, Programming" class="relative w-full h-auto">
             </a>
