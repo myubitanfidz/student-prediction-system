@@ -61,25 +61,37 @@
         <img src="{{ asset('images/landing/hero-plaid-bg.svg') }}" alt="" class="absolute inset-0 w-full h-full object-cover">
         <img src="{{ asset('images/landing/hero-envelope.svg') }}" alt="" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
         
-        <div class="absolute left-1/2 top-[16%] w-[62%] -translate-x-1/2">
-            <div class="relative w-full">
-                <img src="{{ asset('images/landing/hero-content.svg') }}" 
-                     alt="Kira-kira bakat ku apa, ya?" 
-                     class="w-full h-auto pointer-events-none">
+        {{-- Content Wrapper (Moved lower to cover the white gap) --}}
+        <div class="absolute left-1/2 top-[26%] w-[62%] -translate-x-1/2">
+            
+            {{-- The Full Hero Text (Restored!) --}}
+            <img src="{{ asset('images/landing/hero-content.svg') }}" 
+                 alt="Kira-kira bakat ku apa, ya? Setiap langkah besar dimulai dari mengenal diri sendiri."
+                 class="w-full h-auto pointer-events-none">
 
-                {{-- The Overlay Button with Pulse Animation --}}
-                <a href="{{ url('/kuis') }}" 
-   class="absolute left-1/2 bottom-[5%] w-[40%] h-[20%] -translate-x-1/2 -rotate-178 "
-   aria-label="Cari tahu sekarang!">
-</a>
-            </div>
+            {{-- The Clickable Yellow Button Overlay --}}
+            <a href="{{ url('/kuis') }}" 
+               class="absolute left-1/2 bottom-[10%] w-[40%] h-[12%] -translate-x-1/2 -rotate-180" 
+               aria-label="Cari tahu sekarang!">
+            </a>
+
         </div>
 
-        {{-- Combined Plane Container --}}
-        <div class="absolute top-[9%] right-[13%] w-[8%] min-w-[90px] max-w-[150px] rotate-6 animate-float-plane">
-            <img src="{{ asset('images/landing/plane-trail-dashed.svg') }}" alt="" class="absolute -left-16 -bottom-6 w-28 opacity-80">
-            <img src="{{ asset('images/landing/plane-yellow.svg') }}" alt="" class="relative w-full drop-shadow-md">
-            <img src="{{ asset('images/landing/plane-navy.svg') }}" alt="" class="absolute left-[18%] top-[28%] w-[66%]">
+       
+             {{-- Combined Plane Container --}}
+             <div class="absolute top-[9%] right-[13%] w-[8%] min-w-[90px] max-w-[150px] rotate-6 animate-float-plane">
+            
+            {{-- The dashed line: Tucked directly into the back of the plane (Tail) --}}
+            <img src="{{ asset('images/landing/plane-trail-dashed.svg') }}" alt="" 
+                 class="absolute -right-20 top-[65%] w-28 opacity-80 -z-20">
+
+            {{-- Navy plane (Middle layer) --}}
+            <img src="{{ asset('images/landing/plane-navy.svg') }}" alt="" 
+                 class="absolute left-[20%] top-[20%] w-[70%] -z-10">
+
+            {{-- Yellow plane (Front layer) --}}
+            <img src="{{ asset('images/landing/plane-yellow.svg') }}" alt="" 
+                 class="relative w-full drop-shadow-md z-10">
         </div>
     </div>
 </section>
@@ -106,10 +118,10 @@
         <p class="text-white/90 mb-14 max-w-xl mx-auto">Klik salah satu kartu untuk melihat penjelasan lengkap, tahapan belajar, dan rekomendasi aplikasi.</p>
 
         <div class="flex flex-col md:flex-row justify-center items-center gap-16 md:gap-20">
-            <a href="{{ url('/bidang/bahasa') }}" class="w-full max-w-xs shrink-0 card-hover">
+            <a href="{{ url('/ujian/bahasa.blade.php') }}" class="w-full max-w-xs shrink-0 card-hover">
                 <img src="{{ asset('images/landing/card-bahasa.svg') }}" alt="Bahasa — Arabic, English" class="w-full h-auto">
             </a>
-            <a href="{{ url('/bidang/it') }}" class="relative w-full max-w-xs shrink-0 card-hover">
+            <a href="{{ url('/ujian/it.blade.php') }}" class="relative w-full max-w-xs shrink-0 card-hover">
                 <img src="{{ asset('images/landing/card-it-back.svg') }}" alt="" class="absolute -right-6 top-4 w-full h-auto -z-10 opacity-95">
                 <img src="{{ asset('images/landing/card-it-front.svg') }}" alt="IT — DKV, Videografi, Comic, Programming" class="relative w-full h-auto">
             </a>
