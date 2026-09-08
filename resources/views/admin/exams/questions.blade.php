@@ -22,7 +22,7 @@
 <div id="questionModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-4 my-8 shadow-xl">
         <h3 id="questionModalTitle" class="text-lg font-bold text-slate-900">Tambah Soal Baru</h3>
-        <form id="questionForm" class="space-y-3">
+        <form id="questionForm" class="space-y-4">
             <input type="hidden" id="questionId" value="">
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -58,17 +58,53 @@
                 <textarea id="question_text" class="w-full border rounded-lg p-2 text-sm mt-1 focus:ring-2 focus:ring-brand-blue/40" rows="3" required></textarea>
             </div>
 
-            <!-- Bagian Opsi PG -->
-            <div id="mcSection" class="space-y-2">
-                <label class="block text-xs font-semibold uppercase text-slate-500">Pilihan Jawaban (A, B, C, D)</label>
-                <input type="text" id="opt_0" placeholder="Pilihan A" class="w-full border rounded-lg p-2 text-sm">
-                <input type="text" id="opt_1" placeholder="Pilihan B" class="w-full border rounded-lg p-2 text-sm">
-                <input type="text" id="opt_2" placeholder="Pilihan C" class="w-full border rounded-lg p-2 text-sm">
-                <input type="text" id="opt_3" placeholder="Pilihan D" class="w-full border rounded-lg p-2 text-sm">
-
+            <!-- Bagian Opsi PG dengan Radio Kunci Jawaban -->
+            <div id="mcSection" class="space-y-3 pt-1">
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mt-2">Kunci Jawaban Benar</label>
-                    <input type="text" id="correct_answer" placeholder="Harus sama persis dengan salah satu opsi di atas" class="w-full border rounded-lg p-2 text-sm mt-1">
+                    <label class="block text-xs font-bold uppercase text-slate-700">Pilihan Jawaban (A, B, C, D)</label>
+                    <p class="text-[11px] text-slate-500">Klik lingkaran radio di samping huruf untuk menandai opsi tersebut sebagai <strong>kunci jawaban yang benar</strong> (akan berubah hijau).</p>
+                </div>
+
+                <div class="space-y-2.5">
+                    <!-- Opsi A -->
+                    <div id="wrapper_opt_0" class="flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200">
+                        <label class="flex items-center gap-2 cursor-pointer shrink-0 pl-1">
+                            <input type="radio" name="correct_choice_radio" value="0" onchange="selectCorrectAnswer(0)" class="text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" checked>
+                            <span class="font-bold text-xs text-slate-700 w-4">A.</span>
+                        </label>
+                        <input type="text" id="opt_0" placeholder="Ketik pilihan jawaban A..." class="w-full bg-transparent border-0 p-1.5 text-xs sm:text-sm font-medium focus:ring-0 outline-none text-slate-900">
+                        <span id="badge_opt_0" class="hidden text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 mr-1">Kunci ✓</span>
+                    </div>
+
+                    <!-- Opsi B -->
+                    <div id="wrapper_opt_1" class="flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200">
+                        <label class="flex items-center gap-2 cursor-pointer shrink-0 pl-1">
+                            <input type="radio" name="correct_choice_radio" value="1" onchange="selectCorrectAnswer(1)" class="text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+                            <span class="font-bold text-xs text-slate-700 w-4">B.</span>
+                        </label>
+                        <input type="text" id="opt_1" placeholder="Ketik pilihan jawaban B..." class="w-full bg-transparent border-0 p-1.5 text-xs sm:text-sm font-medium focus:ring-0 outline-none text-slate-900">
+                        <span id="badge_opt_1" class="hidden text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 mr-1">Kunci ✓</span>
+                    </div>
+
+                    <!-- Opsi C -->
+                    <div id="wrapper_opt_2" class="flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200">
+                        <label class="flex items-center gap-2 cursor-pointer shrink-0 pl-1">
+                            <input type="radio" name="correct_choice_radio" value="2" onchange="selectCorrectAnswer(2)" class="text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+                            <span class="font-bold text-xs text-slate-700 w-4">C.</span>
+                        </label>
+                        <input type="text" id="opt_2" placeholder="Ketik pilihan jawaban C..." class="w-full bg-transparent border-0 p-1.5 text-xs sm:text-sm font-medium focus:ring-0 outline-none text-slate-900">
+                        <span id="badge_opt_2" class="hidden text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 mr-1">Kunci ✓</span>
+                    </div>
+
+                    <!-- Opsi D -->
+                    <div id="wrapper_opt_3" class="flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200">
+                        <label class="flex items-center gap-2 cursor-pointer shrink-0 pl-1">
+                            <input type="radio" name="correct_choice_radio" value="3" onchange="selectCorrectAnswer(3)" class="text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+                            <span class="font-bold text-xs text-slate-700 w-4">D.</span>
+                        </label>
+                        <input type="text" id="opt_3" placeholder="Ketik pilihan jawaban D..." class="w-full bg-transparent border-0 p-1.5 text-xs sm:text-sm font-medium focus:ring-0 outline-none text-slate-900">
+                        <span id="badge_opt_3" class="hidden text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 mr-1">Kunci ✓</span>
+                    </div>
                 </div>
             </div>
 
@@ -88,6 +124,23 @@
     function escapeHtml(str) {
         if (!str) return '';
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Fungsi visual: warnai hijau kartu opsi yang terpilih sebagai kunci jawaban
+    function selectCorrectAnswer(selectedIndex) {
+        for (let i = 0; i < 4; i++) {
+            const wrapper = document.getElementById(`wrapper_opt_${i}`);
+            const badge = document.getElementById(`badge_opt_${i}`);
+            if (!wrapper || !badge) continue;
+
+            if (i === Number(selectedIndex)) {
+                wrapper.className = "flex items-center gap-2.5 p-2 rounded-xl border-2 border-emerald-500 bg-emerald-50/80 shadow-xs transition-all duration-200";
+                badge.classList.remove('hidden');
+            } else {
+                wrapper.className = "flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200";
+                badge.classList.add('hidden');
+            }
+        }
     }
 
     async function loadQuestions() {
@@ -128,7 +181,7 @@
                     ${q.type === 'multiple_choice' && q.options ? `
                         <div class="grid grid-cols-2 gap-2 text-sm text-slate-600 pt-2">
                             ${q.options.map(opt => `
-                                <div class="p-2 rounded border ${opt === q.correct_answer ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-slate-100 bg-slate-50'}">
+                                <div class="p-2 rounded-xl border ${opt === q.correct_answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold' : 'border-slate-100 bg-slate-50'}">
                                     ${escapeHtml(opt)} ${opt === q.correct_answer ? '✓ (Kunci)' : ''}
                                 </div>
                             `).join('')}
@@ -156,18 +209,31 @@
             document.getElementById('gclwama_tag').value = q.gclwama_tag || '';
             document.getElementById('question_text').value = q.question_text;
             toggleQuestionType(q.type);
+
+            let matchedRadioIndex = 0;
             if (q.type === 'multiple_choice' && q.options) {
                 q.options.forEach((opt, i) => {
                     const el = document.getElementById(`opt_${i}`);
                     if (el) el.value = opt;
+                    if (q.correct_answer && String(opt).trim() === String(q.correct_answer).trim()) {
+                        matchedRadioIndex = i;
+                    }
                 });
-                document.getElementById('correct_answer').value = q.correct_answer || '';
             }
+
+            const activeRadio = document.querySelector(`input[name="correct_choice_radio"][value="${matchedRadioIndex}"]`);
+            if (activeRadio) activeRadio.checked = true;
+            selectCorrectAnswer(matchedRadioIndex);
+
         } else {
             document.getElementById('questionModalTitle').innerText = 'Tambah Soal Baru';
             document.getElementById('questionSubmitBtn').innerText = 'Simpan Soal';
             document.getElementById('time_limit_seconds').value = 60;
             toggleQuestionType('multiple_choice');
+
+            const firstRadio = document.querySelector('input[name="correct_choice_radio"][value="0"]');
+            if (firstRadio) firstRadio.checked = true;
+            selectCorrectAnswer(0);
         }
 
         document.getElementById('questionModal').classList.remove('hidden');
@@ -189,13 +255,33 @@
         let correct = null;
 
         if (type === 'multiple_choice') {
-            options = [
-                document.getElementById('opt_0').value,
-                document.getElementById('opt_1').value,
-                document.getElementById('opt_2').value,
-                document.getElementById('opt_3').value,
-            ].filter(Boolean);
-            correct = document.getElementById('correct_answer').value;
+            const rawOptions = [
+                document.getElementById('opt_0').value.trim(),
+                document.getElementById('opt_1').value.trim(),
+                document.getElementById('opt_2').value.trim(),
+                document.getElementById('opt_3').value.trim(),
+            ];
+
+            options = rawOptions.filter(Boolean);
+
+            if (options.length < 2) {
+                alert('Pilihan ganda minimal harus memiliki 2 opsi jawaban!');
+                submitBtn.disabled = false;
+                submitBtn.innerText = id ? 'Simpan Perubahan' : 'Simpan Soal';
+                return;
+            }
+
+            // Ambil index radio kunci jawaban yang sedang aktif (0 - 3)
+            const selectedRadio = document.querySelector('input[name="correct_choice_radio"]:checked');
+            const selectedIdx = selectedRadio ? parseInt(selectedRadio.value) : 0;
+            correct = rawOptions[selectedIdx];
+
+            if (!correct) {
+                alert('Pilihan yang Anda tandai sebagai kunci jawaban masih kosong!');
+                submitBtn.disabled = false;
+                submitBtn.innerText = id ? 'Simpan Perubahan' : 'Simpan Soal';
+                return;
+            }
         }
 
         const body = {
