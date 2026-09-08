@@ -108,6 +108,16 @@
                 </div>
             </div>
 
+            <!-- 🌟 Bagian Referensi Jawaban Esai untuk Koreksi AI 🌟 -->
+            <div id="essaySection" class="hidden space-y-2 pt-1">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold uppercase text-slate-700">Referensi Jawaban Esai (Opsional untuk AI)</label>
+                    <span class="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">AI Grader</span>
+                </div>
+                <textarea id="essay_reference" placeholder="Tuliskan poin-poin acuan, konsep penting, atau contoh jawaban benar di sini. AI akan membandingkan jawaban santri dengan referensi ini untuk memberi skor otomatis..." class="w-full border border-slate-200 rounded-xl p-3 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed" rows="3"></textarea>
+                <p class="text-[11px] text-slate-500 italic">Boleh dikosongkan jika soal esai ini akan dikoreksi manual oleh guru.</p>
+            </div>
+
             <div class="flex justify-end space-x-2 pt-3">
                 <button type="button" onclick="closeQuestionModal()" class="px-4 py-2 border rounded-lg text-sm font-semibold">Batal</button>
                 <button type="submit" id="questionSubmitBtn" class="btn-primary text-sm px-4 py-2">Simpan Soal</button>
@@ -126,7 +136,6 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // Fungsi visual: warnai hijau kartu opsi yang terpilih sebagai kunci jawaban
     function selectCorrectAnswer(selectedIndex) {
         for (let i = 0; i < 4; i++) {
             const wrapper = document.getElementById(`wrapper_opt_${i}`);
@@ -178,6 +187,7 @@
                         </div>
                     </div>
                     <p class="font-medium text-slate-900">${idx + 1}. ${escapeHtml(q.question_text)}</p>
+                    
                     ${q.type === 'multiple_choice' && q.options ? `
                         <div class="grid grid-cols-2 gap-2 text-sm text-slate-600 pt-2">
                             ${q.options.map(opt => `
@@ -185,6 +195,13 @@
                                     ${escapeHtml(opt)} ${opt === q.correct_answer ? '✓ (Kunci)' : ''}
                                 </div>
                             `).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${q.type === 'essay' && q.correct_answer ? `
+                        <div class="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200 text-xs space-y-1">
+                            <span class="font-bold text-indigo-950 uppercase tracking-wide text-[10px]">Referensi Koreksi AI:</span>
+                            <p class="text-indigo-900 font-medium">${escapeHtml(q.correct_answer)}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -198,6 +215,7 @@
         const form = document.getElementById('questionForm');
         form.reset();
         document.getElementById('questionId').value = id || '';
+        document.getElementById('essay_reference').value = '';
 
         if (id) {
             const q = questionsCache.find(item => item.id === id);
@@ -210,8 +228,8 @@
             document.getElementById('question_text').value = q.question_text;
             toggleQuestionType(q.type);
 
-            let matchedRadioIndex = 0;
             if (q.type === 'multiple_choice' && q.options) {
+                let matchedRadioIndex = 0;
                 q.options.forEach((opt, i) => {
                     const el = document.getElementById(`opt_${i}`);
                     if (el) el.value = opt;
@@ -219,11 +237,12 @@
                         matchedRadioIndex = i;
                     }
                 });
+                const activeRadio = document.querySelector(`input[name="correct_choice_radio"][value="${matchedRadioIndex}"]`);
+                if (activeRadio) activeRadio.checked = true;
+                selectCorrectAnswer(matchedRadioIndex);
+            } else if (q.type === 'essay') {
+                document.getElementById('essay_reference').value = q.correct_answer || '';
             }
-
-            const activeRadio = document.querySelector(`input[name="correct_choice_radio"][value="${matchedRadioIndex}"]`);
-            if (activeRadio) activeRadio.checked = true;
-            selectCorrectAnswer(matchedRadioIndex);
 
         } else {
             document.getElementById('questionModalTitle').innerText = 'Tambah Soal Baru';
@@ -271,7 +290,6 @@
                 return;
             }
 
-            // Ambil index radio kunci jawaban yang sedang aktif (0 - 3)
             const selectedRadio = document.querySelector('input[name="correct_choice_radio"]:checked');
             const selectedIdx = selectedRadio ? parseInt(selectedRadio.value) : 0;
             correct = rawOptions[selectedIdx];
@@ -282,6 +300,10 @@
                 submitBtn.innerText = id ? 'Simpan Perubahan' : 'Simpan Soal';
                 return;
             }
+        } else if (type === 'essay') {
+            // Referensi esai untuk AI (boleh kosong jika null)
+            const refText = document.getElementById('essay_reference').value.trim();
+            correct = refText !== '' ? refText : null;
         }
 
         const body = {
@@ -340,6 +362,7 @@
 
     function toggleQuestionType(val) {
         document.getElementById('mcSection').classList.toggle('hidden', val !== 'multiple_choice');
+        document.getElementById('essaySection').classList.toggle('hidden', val !== 'essay');
     }
 
     loadQuestions();
