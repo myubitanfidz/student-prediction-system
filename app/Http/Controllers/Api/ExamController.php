@@ -8,6 +8,7 @@ use App\Models\Exam;
 use App\Models\ExamCompletion;
 use App\Models\Question;
 use App\Models\StudentAnswer;
+use App\Services\AiGradingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -246,6 +247,7 @@ class ExamController extends Controller
                 $filePath = null;
                 $answerTextToSave = $ans['answer_text'] ?? '';
 
+                // 1. Scoring Otomatis Pilihan Ganda (HMAC Tokenized)
                 if ($question?->type === 'multiple_choice') {
                     $submittedToken = trim((string) $answerTextToSave);
                     $correctToken = substr(hash_hmac('sha256', $question->id . '#' . $question->correct_answer, $appKey), 0, 16);
@@ -265,6 +267,15 @@ class ExamController extends Controller
                     $answerTextToSave = $actualText ?: $submittedToken;
                 }
 
+                // 2. Scoring Otomatis Esai dengan Python AI Microservice
+                if ($question?->type === 'essay' && !empty($question->correct_answer)) {
+                    $score = AiGradingService::grade(
+                        $question->correct_answer,
+                        $answerTextToSave
+                    );
+                }
+
+                // 3. Penanganan Upload File Gambar
                 if ($request->hasFile("answers.{$index}.file")) {
                     $uploadedFile = $request->file("answers.{$index}.file");
 
