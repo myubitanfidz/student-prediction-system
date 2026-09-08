@@ -97,61 +97,45 @@ class AdminController extends Controller
 
     public function getStudentAnswers(Request $request, $userId): JsonResponse
     {
-        $realUserId = is_numeric($userId) ? (int)$userId : SecureId::decode($userId, 'user');
-        
-        $student = User::with(['portfolio', 'answers.question.exam'])->find($realUserId);
+        $examIdFilter = $request->query('exam_id');
+        $resolvedExamId = $examIdFilter ? (\App\Helpers\SecureId::decode($examIdFilter, 'exam') ?: $examIdFilter) : null;
 
-        if (! $student || $student->role !== 'student') {
-            return response()->json(['message' => 'Santri tidak ditemukan atau tautan tidak valid.'], 404);
+        $student = \App\Models\User::select('id', 'name', 'email')->findOrFail($userId);
+
+        $query = \App\Models\StudentAnswer::where('user_id', $userId)
+            ->with(['question.exam']);
+
+        if ($resolvedExamId) {
+            $query->whereHas('question', function ($q) use ($resolvedExamId) {
+                $q->where('exam_id', $resolvedExamId);
+            });
         }
 
-        $rawExamId = $request->query('exam_id');
-        $realExamId = $rawExamId ? (is_numeric($rawExamId) ? (int)$rawExamId : SecureId::decode($rawExamId, 'exam')) : null;
+        $answers = $query->get()->map(function ($ans) {
+            $question = $ans->question;
+            $exam = $question?->exam;
 
-        $answersQuery = $student->answers->filter(function ($ans) use ($realExamId) {
-            if (!$ans->question) return false;
-            if ($realExamId) {
-                return (int) $ans->question->exam_id === (int) $realExamId;
-            }
-            return true;
+            return [
+                'answer_id'       => $ans->id,
+                'question_id'     => $question?->hash_id ?? $question?->id,
+                'question_text'   => $question?->question_text,
+                'question_type'   => $question?->type,
+                'correct_answer'  => $question?->correct_answer, // 🌟 Referensi acuan guru untuk AI
+                'gclwama_tag'     => $question?->gclwama_tag,
+                'exam_title'      => $exam?->title,
+                'student_answer'  => $ans->answer_text,
+                'file_url'        => $ans->file_path ? asset('storage/' . $ans->file_path) : null,
+                'current_score'   => $ans->score,
+                'is_auto_graded'  => ($question?->type === 'essay' && !empty($question->correct_answer) && $ans->score !== null),
+            ];
         });
 
-        $selectedExam = null;
-        if ($realExamId) {
-            $examModel = Exam::find($realExamId);
-            if ($examModel) {
-                $selectedExam = [
-                    'id'           => $examModel->hash_id,
-                    'title'        => $examModel->title,
-                    'category'     => $examModel->category,
-                    'subcategory'  => $examModel->subcategory,
-                    'period_title' => $examModel->period_title ?? 'PSB',
-                ];
-            }
-        }
-
         return response()->json([
-            'status' => 'success',
-            'data'   => [
-                'student'       => [
-                    'id'    => $student->hash_id,
-                    'name'  => $student->name,
-                    'email' => $student->email,
-                ],
-                'selected_exam' => $selectedExam,
-                'portfolio'     => $student->portfolio,
-                'answers'       => $answersQuery->map(fn ($ans) => [
-                    'answer_id'      => $ans->id,
-                    'exam_id'        => SecureId::encode($ans->question?->exam_id, 'exam'),
-                    'exam_title'     => $ans->question?->exam?->title ?? '-',
-                    'gclwama_tag'    => $ans->question?->gclwama_tag,
-                    'question_type'  => $ans->question?->type,
-                    'question_text'  => $ans->question?->question_text,
-                    'student_answer' => $ans->answer_text,
-                    'file_url'       => $ans->file_path ? asset('storage/' . $ans->file_path) : null,
-                    'current_score'  => $ans->score,
-                ])->values(),
-            ],
+            'status'  => 'success',
+            'data'    => [
+                'student' => $student,
+                'answers' => $answers,
+            ]
         ]);
     }
 
