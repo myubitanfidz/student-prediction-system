@@ -2,27 +2,32 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Redirect awal
 Route::get('/', fn () => redirect()->route('beranda'));
-
-// 🌟 Tambahkan baris ini untuk menangani redirect default Laravel 🌟
 Route::redirect('/home', '/beranda');
 
-// Autentikasi
+// --- AUTENTIKASI ---
 Route::get('/login', fn () => view('auth.login'))->name('login');
 Route::get('/register', fn () => view('auth.register'))->name('register');
 
-// Halaman Santri
-Route::get('/beranda', fn () => view('beranda.index'))->name('beranda');
-Route::get('/beranda/bahasa', fn () => view('ujian.bahasa'))->name('beranda.bahasa');
-Route::get('/beranda/it', fn () => view('ujian.it'))->name('beranda.it');
+// --- HALAMAN SANTRI ---
+// Beranda Utama
+Route::get('/beranda', fn () => view('student.home'))->name('beranda');
 
-// Parameter Token Terenkripsi
-Route::get('/ujian/{id}', fn (string $id) => view('ujian.kerjakan', ['examId' => $id]))->name('ujian.kerjakan');
-Route::get('/portofolio', fn () => view('portofolio.index'))->name('portofolio.index');
-Route::get('/profile', fn () => view('dashboard.index'))->name('profile');
+// Halaman Modul Pilihan (Disatukan ke explore.blade.php dengan parameter kategori)
+Route::get('/beranda/bahasa', fn () => view('student.ujian.explore', ['category' => 'bahasa']))->name('beranda.bahasa');
+Route::get('/beranda/it', fn () => view('student.ujian.explore', ['category' => 'it']))->name('beranda.it');
+
+// Pengerjaan Ujian & Hasil Skor Ujian
+Route::get('/ujian/{id}', fn (string $id) => view('student.ujian.kerjakan', ['examId' => $id]))->name('ujian.kerjakan');
+Route::get('/hasil/{id}', fn (string $id) => view('student.ujian.hasil', ['examId' => $id]))->name('ujian.hasil');
+
+// Portofolio & Profil Riwayat Ujian
+Route::get('/portofolio', fn () => view('student.portofolio'))->name('portofolio.index');
+Route::get('/profile', fn () => view('student.Profile'))->name('profile');
 Route::redirect('/dashboard', '/profile')->name('dashboard');
 
-// Halaman Admin & Guru
+// --- HALAMAN ADMIN & GURU ---
 Route::prefix('admin')->group(function () {
     Route::get('/dashboard', fn () => view('admin.dashboard'))->name('admin.dashboard');
     Route::get('/koreksi/{userId}', fn (string $userId) => view('admin.koreksi', ['userId' => $userId]))->name('admin.koreksi');
