@@ -167,7 +167,6 @@
                 {{-- 3. Input Upload Gambar --}}
                 <div x-show="currentQuestion?.type === 'image_upload'" class="pt-2 space-y-4">
                     <label class="block w-full border-2 border-dashed border-slate-400 hover:border-slate-800 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition bg-slate-50/50 hover:bg-slate-50">
-                        {{-- 🌟 Mencegah trigger false-positive violation saat membuka file picker --}}
                         <input type="file" accept="image/*" class="hidden" 
                                @click="prepareFilePicker()"
                                @cancel="resetFilePicker()"
@@ -248,11 +247,10 @@ document.addEventListener('alpine:init', () => {
         imageFiles: {},
         imagePreviews: {},
         
-        // 🌟 Anti-Cheat States
         violations: 0,
         maxViolations: 3,
         showWarningModal: false,
-        isPickingFile: false, // 🌟 Flag agar file picker tidak dihitung pelanggaran
+        isPickingFile: false,
 
         questionTimeRemaining: 60,
         currentQuestionTimeLimit: 60,
@@ -305,8 +303,9 @@ document.addEventListener('alpine:init', () => {
                 this.sessionNonce = this.exam?.session_nonce || '';
                 this.questions = json?.data?.questions || [];
 
+                // 🌟 Arahkan langsung ke halaman total skor jika ujian telah diselesaikan
                 if (json?.data?.completed && !json?.data?.retake_allowed) {
-                    window.location.href = '/dashboard';
+                    window.location.href = `/hasil/${this.examId}`;
                     return;
                 }
 
@@ -325,7 +324,6 @@ document.addEventListener('alpine:init', () => {
         setupAntiCheatListeners() {
             document.addEventListener('visibilitychange', () => {
                 if (this.step === 'exam' && document.hidden) {
-                    // Abaikan jika user sedang berada di dialog picker file
                     if (this.isPickingFile) return;
                     this.handleViolation();
                 }
@@ -333,7 +331,6 @@ document.addEventListener('alpine:init', () => {
 
             window.addEventListener('blur', () => {
                 if (this.step === 'exam') {
-                    // Abaikan jika event blur dipicu oleh dialog picker OS
                     if (this.isPickingFile) return;
                     this.handleViolation();
                 }
@@ -358,7 +355,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         resetFilePicker() {
-            // Beri jeda 500ms setelah dialog picker ditutup sebelum pengawasan aktif kembali
             setTimeout(() => {
                 this.isPickingFile = false;
             }, 500);
@@ -483,13 +479,14 @@ document.addEventListener('alpine:init', () => {
                     window.notifySuccess('Ujian selesai & jawaban terkirim!');
                 }
 
+                // 🌟 Redirect langsung ke detail hasil nilai ujian ini
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = `/hasil/${this.examId}`;
                 }, 2000);
             } catch (err) {
                 console.error(err);
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = `/hasil/${this.examId}`;
                 }, 1500);
             }
         }

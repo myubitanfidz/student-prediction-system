@@ -109,7 +109,7 @@ document.addEventListener('alpine:init', () => {
                     body: formData
                 });
                 alert('Portofolio berhasil diunggah!');
-                window.location.href = '/dashboard';
+                window.location.href = '/profile';
             } catch (err) {
                 console.error(err);
                 alert('Gagal mengunggah portofolio');
