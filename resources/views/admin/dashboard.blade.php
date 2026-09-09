@@ -85,8 +85,8 @@
                                 <th class="px-5 py-4 font-semibold text-center w-16">No</th>
                                 <th class="px-5 py-4 font-semibold">Nama Santri</th>
                                 <th class="px-5 py-4 font-semibold">Periode Ujian Diikuti</th>
-                                <th class="px-5 py-4 font-semibold text-center w-32">Test Kelar</th>
-                                <th class="px-5 py-4 font-semibold text-center w-32">Porto</th>
+                                <th class="px-5 py-4 font-semibold text-center w-32">Test Selesai</th>
+                                <th class="px-5 py-4 font-semibold text-center w-32">Portofolio</th>
                                 <th class="px-5 py-4 font-semibold text-center w-32">Aksi</th>
                             </tr>
                         </thead>
