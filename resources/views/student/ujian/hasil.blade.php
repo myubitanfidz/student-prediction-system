@@ -26,7 +26,7 @@
                 <h2 class="font-display font-black text-2xl text-slate-900" x-text="examTitle"></h2>
             </div>
 
-            {{-- Lingkaran / Kotak Total Score --}}
+            {{-- Lingkaran Total Score --}}
             <div class="py-2">
                 <div class="inline-flex flex-col items-center justify-center w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-white border-4 border-emerald-500/20 shadow-xs mx-auto">
                     <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Total Score</span>
@@ -37,9 +37,9 @@
                 </div>
             </div>
 
-            {{-- Ringkasan Keterangan --}}
+            {{-- Keterangan Skor --}}
             <div class="bg-white p-4 rounded-2xl border border-slate-200/80 text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
-                Skor ini mencakup akumulasi penilaian otomatis pilihan ganda dan hasil analisis semantik esai.
+                Skor ini mencakup akumulasi penilaian pilihan ganda serta analisis koreksi jawaban esai.
             </div>
 
         </div>
@@ -89,7 +89,7 @@ document.addEventListener('alpine:init', () => {
                 const json = await res.json();
                 const allStats = json?.data?.exam_stats || [];
 
-                // Cari data ujian spesifik berdasarkan ID
+                // Cari data ujian spesifik berdasarkan examId
                 const current = allStats.find(s => String(s.exam_id) === String(this.examId)) || allStats[0];
 
                 if (current) {
