@@ -6,7 +6,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-line">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Kelola Paket &amp; Jadwal Ujian</h1>
-            <p class="text-sm text-ink/50">Atur paket soal yang terhubung ke 3 kartu beranda santri dan jadwal pelaksanaan ujian.</p>
+            <p class="text-sm text-ink/50">Atur paket soal yang terhubung ke kartu beranda santri dan jadwal pelaksanaan ujian.</p>
         </div>
         
         <!-- Action Buttons -->
@@ -107,71 +107,46 @@
         <h3 id="examModalTitle" class="text-xl font-bold text-slate-900">Tambah Paket Ujian</h3>
         <form id="examForm" class="space-y-4">
             <input type="hidden" id="examId" value="">
-            <input type="hidden" id="category" value="IT">
-            <input type="hidden" id="subcategory" value="GCLWAMA">
+
+            {{-- 🌟 PILIHAN KATEGORI & SUBKATEGORI DEFAULT STANDAR 🌟 --}}
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase text-slate-700">Kategori &amp; Subkategori Default</label>
+                <select id="preset_selector" onchange="onPresetChange(this.value)" class="w-full rounded-xl border border-line p-2.5 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-brand-blue outline-none">
+                    <option value="it_gclwama">IT — GCLWAMA (Default Ujian Bakat IT)</option>
+                    <option value="bahasa_inggris">Bahasa — Inggris (Default Ujian Bahasa Inggris)</option>
+                    <option value="bahasa_arab">Bahasa — Arab (Default Ujian Bahasa Arab)</option>
+                    <option value="custom">Kustom / Lainnya (Atur Manual)</option>
+                </select>
+            </div>
+
+            {{-- Kolom Input Kategori & Subkategori (Readonly jika menggunakan Default) --}}
+            <div class="grid grid-cols-2 gap-3" id="categorySubcategoryInputs">
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Kategori</label>
+                    <input type="text" id="category" value="IT" class="w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none" readonly required>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Subkategori</label>
+                    <input type="text" id="subcategory" value="GCLWAMA" class="w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none" readonly required>
+                </div>
+            </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Judul Paket Ujian</label>
                 <input type="text" id="title" placeholder="Contoh: Ujian Pemetaan Bakat IT Gelombang 1" class="w-full rounded-xl border border-line p-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-blue outline-none" required>
             </div>
 
-            <!-- 🌟 Expandable Slot Selector untuk 3 Kartu Beranda Santri 🌟 -->
+            <!-- Pengaturan Penautan Beranda -->
             <div class="space-y-2 pt-1">
-                <label class="block text-xs font-bold uppercase text-slate-700">Pengaturan Penautan ke Kartu Beranda Santri</label>
+                <label class="block text-xs font-bold uppercase text-slate-700">Penautan ke Kartu Beranda Santri</label>
                 
                 <div class="space-y-2">
-                    <!-- Opsi 1: Jadikan Tautan Aktif (Bisa Melebar ke Bawah) -->
-                    <div class="border border-slate-200 rounded-xl bg-white overflow-hidden transition-all duration-300" id="card_featured_yes">
-                        <label class="flex items-start gap-3 p-3 cursor-pointer hover:bg-slate-50/70 transition">
-                            <input type="radio" name="is_featured_radio" id="featured_yes" value="1" onchange="toggleFeaturedAccordion(true)" class="mt-0.5 text-amber-600 focus:ring-amber-500">
+                    <div class="border border-slate-200 rounded-xl bg-white p-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="is_featured_chk" onchange="toggleFeaturedSlotDisplay(this.checked)" class="mt-0.5 text-brand-blue rounded focus:ring-brand-blue" checked>
                             <div class="flex-1">
                                 <span class="block text-xs font-bold text-slate-900">Jadikan Tautan Aktif di Beranda</span>
-                                <span class="block text-[11px] text-slate-500 leading-snug">Sambungkan paket ini langsung ke salah satu dari 3 kartu ujian yang ada di beranda santri.</span>
-                            </div>
-                        </label>
-
-                        <!-- Pilihan 3 Slot Ujian Beranda -->
-                        <div id="targetSlotSection" class="hidden px-3.5 pb-3.5 pt-2 border-t border-slate-100 bg-amber-50/40 space-y-2.5">
-                            <label class="block text-[11px] font-extrabold text-amber-900 uppercase">Pilih Kartu Ujian Beranda yang Dituju:</label>
-                            
-                            <div class="space-y-2">
-                                <!-- Slot 1: IT - GCLWAMA -->
-                                <label class="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:border-amber-400 transition">
-                                    <input type="radio" name="home_slot_choice" value="it_gclwama" onchange="applyHomeSlot('it_gclwama', 'IT', 'GCLWAMA')" class="text-amber-600 focus:ring-amber-500" checked>
-                                    <div>
-                                        <span class="block text-xs font-bold text-slate-900">Kartu IT: GCLWAMA</span>
-                                        <span class="block text-[10px] text-slate-500">Kategori IT • Subkategori GCLWAMA</span>
-                                    </div>
-                                </label>
-
-                                <!-- Slot 2: Bahasa - Inggris -->
-                                <label class="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:border-amber-400 transition">
-                                    <input type="radio" name="home_slot_choice" value="bahasa_inggris" onchange="applyHomeSlot('bahasa_inggris', 'Bahasa', 'Inggris')" class="text-amber-600 focus:ring-amber-500">
-                                    <div>
-                                        <span class="block text-xs font-bold text-slate-900">Kartu Bahasa: Bahasa Inggris</span>
-                                        <span class="block text-[10px] text-slate-500">Kategori Bahasa • Subkategori Inggris</span>
-                                    </div>
-                                </label>
-
-                                <!-- Slot 3: Bahasa - Arab -->
-                                <label class="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:border-amber-400 transition">
-                                    <input type="radio" name="home_slot_choice" value="bahasa_arab" onchange="applyHomeSlot('bahasa_arab', 'Bahasa', 'Arab')" class="text-amber-600 focus:ring-amber-500">
-                                    <div>
-                                        <span class="block text-xs font-bold text-slate-900">Kartu Bahasa: Bahasa Arab</span>
-                                        <span class="block text-[10px] text-slate-500">Kategori Bahasa • Subkategori Arab</span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Opsi 2: Simpan Sebagai Cadangan / Draf -->
-                    <div class="border border-slate-200 rounded-xl bg-white" id="card_featured_no">
-                        <label class="flex items-start gap-3 p-3 cursor-pointer hover:bg-slate-50/70 transition">
-                            <input type="radio" name="is_featured_radio" id="featured_no" value="0" onchange="toggleFeaturedAccordion(false)" class="mt-0.5 text-slate-600 focus:ring-slate-500" checked>
-                            <div>
-                                <span class="block text-xs font-bold text-slate-900">Simpan Sebagai Cadangan / Ujian Terpisah</span>
-                                <span class="block text-[11px] text-slate-500 leading-snug">Paket ini tidak muncul di kartu utama beranda santri dan hanya bisa dibuka via tautan khusus (Salin Link).</span>
+                                <span class="block text-[11px] text-slate-500 leading-snug">Paket ini akan otomatis menggantikan paket lama pada kartu beranda sesuai kategori default yang dipilih.</span>
                             </div>
                         </label>
                     </div>
@@ -220,7 +195,7 @@
     }
 
     let examsCache = [];
-    let selectedHomeSlot = 'it_gclwama';
+    let currentHomeSlot = 'it_gclwama';
 
     const fpConfig = {
         enableTime: true,
@@ -247,27 +222,50 @@
         'bahasa_arab': '<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">★ Bahasa: Arab</span>',
     };
 
-    function toggleFeaturedAccordion(isFeatured) {
-        const slotSection = document.getElementById('targetSlotSection');
-        const cardYes = document.getElementById('card_featured_yes');
+    function onPresetChange(val) {
+        const catInput = document.getElementById('category');
+        const subInput = document.getElementById('subcategory');
 
-        if (isFeatured) {
-            slotSection.classList.remove('hidden');
-            cardYes.classList.add('border-amber-400', 'ring-1', 'ring-amber-300');
-            const activeChoice = document.querySelector('input[name="home_slot_choice"]:checked');
-            if (activeChoice) {
-                activeChoice.dispatchEvent(new Event('change'));
-            }
+        if (val === 'it_gclwama') {
+            catInput.value = 'IT';
+            subInput.value = 'GCLWAMA';
+            catInput.readOnly = true;
+            subInput.readOnly = true;
+            catInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none';
+            subInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none';
+            currentHomeSlot = 'it_gclwama';
+        } else if (val === 'bahasa_inggris') {
+            catInput.value = 'Bahasa';
+            subInput.value = 'Inggris';
+            catInput.readOnly = true;
+            subInput.readOnly = true;
+            catInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none';
+            subInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none';
+            currentHomeSlot = 'bahasa_inggris';
+        } else if (val === 'bahasa_arab') {
+            catInput.value = 'Bahasa';
+            subInput.value = 'Arab';
+            catInput.readOnly = true;
+            subInput.readOnly = true;
+            catInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none';
+            subInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-slate-100 text-slate-700 outline-none';
+            currentHomeSlot = 'bahasa_arab';
         } else {
-            slotSection.classList.add('hidden');
-            cardYes.classList.remove('border-amber-400', 'ring-1', 'ring-amber-300');
+            // Kustom
+            catInput.readOnly = false;
+            subInput.readOnly = false;
+            catInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-white text-slate-900 focus:ring-2 focus:ring-brand-blue outline-none';
+            subInput.className = 'w-full rounded-xl border border-line p-2 text-xs font-bold bg-white text-slate-900 focus:ring-2 focus:ring-brand-blue outline-none';
+            currentHomeSlot = null;
         }
     }
 
-    function applyHomeSlot(slotKey, category, subcategory) {
-        selectedHomeSlot = slotKey;
-        document.getElementById('category').value = category;
-        document.getElementById('subcategory').value = subcategory;
+    function toggleFeaturedSlotDisplay(isChecked) {
+        if (!isChecked) {
+            currentHomeSlot = null;
+        } else {
+            onPresetChange(document.getElementById('preset_selector').value);
+        }
     }
 
     async function fetchExams() {
@@ -474,25 +472,22 @@
             document.getElementById('category').value = exam.category || 'IT';
             document.getElementById('subcategory').value = exam.subcategory || 'GCLWAMA';
 
-            let slotKey = exam.home_slot;
-            if (!slotKey && exam.is_featured) {
-                if (exam.category === 'IT') slotKey = 'it_gclwama';
-                else if (exam.subcategory === 'Inggris') slotKey = 'bahasa_inggris';
-                else if (exam.subcategory === 'Arab') slotKey = 'bahasa_arab';
-            }
-
-            if (slotKey) {
-                document.getElementById('featured_yes').checked = true;
-                toggleFeaturedAccordion(true);
-                const matchedRadio = document.querySelector(`input[name="home_slot_choice"][value="${slotKey}"]`);
-                if (matchedRadio) matchedRadio.checked = true;
-                selectedHomeSlot = slotKey;
+            // Menentukan Preset dropdown yang sesuai
+            const presetSel = document.getElementById('preset_selector');
+            if (exam.category === 'IT' && exam.subcategory === 'GCLWAMA') {
+                presetSel.value = 'it_gclwama';
+            } else if (exam.category === 'Bahasa' && exam.subcategory === 'Inggris') {
+                presetSel.value = 'bahasa_inggris';
+            } else if (exam.category === 'Bahasa' && exam.subcategory === 'Arab') {
+                presetSel.value = 'bahasa_arab';
             } else {
-                document.getElementById('featured_no').checked = true;
-                toggleFeaturedAccordion(false);
-                selectedHomeSlot = null;
+                presetSel.value = 'custom';
             }
-            
+            onPresetChange(presetSel.value);
+
+            document.getElementById('is_featured_chk').checked = Boolean(exam.is_featured);
+            if (!exam.is_featured) currentHomeSlot = null;
+
             if (fpExamStart) fpExamStart.setDate(exam.start_time ? exam.start_time.substring(0, 16) : null);
             if (fpExamEnd) fpExamEnd.setDate(exam.end_time ? exam.end_time.substring(0, 16) : null);
 
@@ -501,12 +496,11 @@
             document.getElementById('examModalTitle').innerText = 'Tambah Paket Ujian';
             document.getElementById('period_title').value = 'PSB 2026/2027';
             document.getElementById('is_active').checked = true;
-            document.getElementById('featured_yes').checked = true;
-            toggleFeaturedAccordion(true);
-            
-            const firstRadio = document.querySelector('input[name="home_slot_choice"][value="it_gclwama"]');
-            if (firstRadio) firstRadio.checked = true;
-            applyHomeSlot('it_gclwama', 'IT', 'GCLWAMA');
+            document.getElementById('is_featured_chk').checked = true;
+
+            const presetSel = document.getElementById('preset_selector');
+            presetSel.value = 'it_gclwama';
+            onPresetChange('it_gclwama');
 
             if (fpExamStart) fpExamStart.clear();
             if (fpExamEnd) fpExamEnd.clear();
@@ -523,12 +517,12 @@
         e.preventDefault();
         const token = getAuthToken();
         const id = document.getElementById('examId').value;
-        const isFeatured = document.querySelector('input[name="is_featured_radio"]:checked')?.value === '1';
+        const isFeatured = document.getElementById('is_featured_chk').checked;
 
         const body = {
             category: document.getElementById('category').value,
             subcategory: document.getElementById('subcategory').value,
-            home_slot: isFeatured ? selectedHomeSlot : null,
+            home_slot: isFeatured ? currentHomeSlot : null,
             title: document.getElementById('title').value,
             period_title: document.getElementById('period_title').value,
             is_active: document.getElementById('is_active').checked,
