@@ -14,9 +14,18 @@ Route::get('/register', fn () => view('auth.register'))->name('register');
 // Beranda Utama
 Route::get('/beranda', fn () => view('student.home'))->name('beranda');
 
-// Halaman Modul Pilihan (Disatukan ke explore.blade.php dengan parameter kategori)
-Route::get('/beranda/bahasa', fn () => view('student.ujian.explore', ['category' => 'bahasa']))->name('beranda.bahasa');
-Route::get('/beranda/it', fn () => view('student.ujian.explore', ['category' => 'it']))->name('beranda.it');
+Route::get('/explore/{bidang?}', function ($bidang = 'bahasa') {
+    $validBidang = in_array(strtolower($bidang), ['it', 'bahasa']) ? strtolower($bidang) : 'bahasa';
+
+    // Mendukung penempatan di resources/views/student/explore.blade.php atau resources/views/explore.blade.php
+    $viewName = view()->exists('student.explore') ? 'student.explore' : 'explore';
+
+    return view($viewName, ['bidang' => $validBidang]);
+})->name('explore');
+
+// Alias untuk link lama agar tetap kompatibel
+Route::get('/beranda/bahasa', fn() => redirect()->route('explore', ['bidang' => 'bahasa']))->name('beranda.bahasa');
+Route::get('/beranda/it', fn() => redirect()->route('explore', ['bidang' => 'it']))->name('beranda.it');
 
 // Pengerjaan Ujian & Hasil Skor Ujian
 Route::get('/ujian/{id}', fn (string $id) => view('student.ujian.kerjakan', ['examId' => $id]))->name('ujian.kerjakan');
