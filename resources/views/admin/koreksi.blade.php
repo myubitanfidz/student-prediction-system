@@ -39,8 +39,8 @@
                                     <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600" x-text="answer.exam_title"></p>
                                     <h3 class="font-display font-bold text-base text-slate-900" x-text="answer.question_text"></h3>
                                     
-                                    {{-- Badge Tipe Soal --}}
-                                    <div class="flex items-center gap-2 pt-1">
+                                    {{-- Badge Tipe Soal & Status AI --}}
+                                    <div class="flex items-center gap-2 pt-1 flex-wrap">
                                         <span class="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                                               :class="{
                                                   'bg-blue-100 text-blue-800': answer.question_type === 'multiple_choice',
@@ -49,6 +49,12 @@
                                               }"
                                               x-text="answer.question_type === 'multiple_choice' ? 'Pilihan Ganda' : (answer.question_type === 'image_upload' ? 'Upload Karya Gambar' : 'Esai')"></span>
                                         
+                                        <template x-if="answer.is_auto_graded">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white tracking-wide">
+                                                <span>⚡ AI Graded</span>
+                                            </span>
+                                        </template>
+
                                         <template x-if="answer.gclwama_tag">
                                             <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700"
                                                   x-text="`Bagian ${answer.gclwama_tag}`"></span>
@@ -60,8 +66,8 @@
                                 <div class="text-right shrink-0">
                                     <template x-if="answer.current_score != null">
                                         <div>
-                                            <p class="font-mono text-xl font-black text-emerald-600" x-text="answer.current_score + '%'"></p>
-                                            <p class="text-[10px] uppercase font-bold text-slate-400">Telah Dinilai</p>
+                                            <p class="font-mono text-2xl font-black text-emerald-600" x-text="answer.current_score + '%'"></p>
+                                            <p class="text-[10px] uppercase font-bold text-slate-400" x-text="answer.is_auto_graded ? 'Skor Otomatis AI' : 'Telah Dinilai'"></p>
                                         </div>
                                     </template>
                                     <template x-if="answer.current_score == null">
@@ -100,26 +106,52 @@
                                 </div>
                             </template>
 
-                            {{-- Jawaban Teks / Esai --}}
-                            <template x-if="answer.question_type !== 'image_upload'">
-                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Jawaban Santri:</p>
-                                    <p class="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap" x-text="answer.student_answer || '— (Kosong)'"></p>
+                            {{-- Tampilan Khusus Esai: Jawaban Santri & Referensi Kunci AI --}}
+                            <template x-if="answer.question_type === 'essay'">
+                                <div class="space-y-3">
+                                    {{-- Jawaban Santri --}}
+                                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Jawaban Santri:</p>
+                                        <p class="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap" x-text="answer.student_answer || '— (Kosong)'"></p>
+                                    </div>
+
+                                    {{-- Referensi Jawaban Guru (Acuan Penilaian AI) --}}
+                                    <template x-if="answer.correct_answer">
+                                        <div class="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 space-y-1">
+                                            <div class="flex items-center gap-1.5 text-indigo-900">
+                                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                                </svg>
+                                                <span class="text-[11px] font-bold uppercase tracking-wider">Kunci / Poin Referensi Acuan AI:</span>
+                                            </div>
+                                            <p class="text-xs text-indigo-950 leading-relaxed font-medium" x-text="answer.correct_answer"></p>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
 
-                            {{-- Form Input Nilai (Essay & Image Upload) --}}
+                            {{-- Jawaban Pilihan Ganda --}}
+                            <template x-if="answer.question_type === 'multiple_choice'">
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Pilihan Santri:</p>
+                                    <p class="text-sm text-slate-800 font-bold" x-text="answer.student_answer || '— (Kosong)'"></p>
+                                </div>
+                            </template>
+
+                            {{-- Form Input Nilai / Override Skor AI --}}
                             <template x-if="['essay', 'image_upload'].includes(answer.question_type)">
-                                <div class="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-100">
-                                    <div class="flex items-center gap-2">
-                                        <label class="text-xs font-bold uppercase text-slate-600">Beri Nilai (0–100):</label>
+                                <div class="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <label class="text-xs font-bold uppercase text-slate-600">
+                                            <span x-text="answer.is_auto_graded ? 'Ubah / Sesuaikan Nilai:' : 'Beri Nilai (0–100):'"></span>
+                                        </label>
                                         <input type="number" min="0" max="100" x-model="scores[answer.answer_id]"
                                                placeholder="0-100"
-                                               class="w-28 rounded-xl border border-line p-2 text-sm font-mono font-bold text-center focus:outline-none focus:ring-2 focus:ring-brand-blue/40 bg-white">
+                                               class="w-24 rounded-xl border border-line p-2 text-sm font-mono font-bold text-center focus:outline-none focus:ring-2 focus:ring-brand-blue/40 bg-white">
                                     </div>
                                     <button type="button" @click="saveScore(answer.answer_id)"
-                                            class="btn-primary text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs active:scale-95 transition">
-                                        Simpan Nilai
+                                            class="btn-primary text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs active:scale-95 transition flex items-center gap-1.5">
+                                        <span x-text="answer.is_auto_graded ? 'Perbarui Nilai' : 'Simpan Nilai'"></span>
                                     </button>
                                 </div>
                             </template>
@@ -146,4 +178,99 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('adminKoreksiPage', () => ({
+        userId: window.location.pathname.split('/').pop(),
+        loading: true,
+        error: null,
+        student: null,
+        selectedExam: null,
+        answers: [],
+        scores: {},
+        previewModalImg: null,
+
+        async init() {
+            const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const examId = urlParams.get('exam_id') || '';
+
+            try {
+                const res = await fetch(`/api/admin/students/${this.userId}/answers?exam_id=${examId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!res.ok) throw new Error('Gagal memuat jawaban santri.');
+
+                const json = await res.json();
+                this.student = json?.data?.student || null;
+                this.answers = json?.data?.answers || [];
+
+                // Isi awal nilai ke model input agar skor AI langsung terlihat
+                this.answers.forEach(a => {
+                    if (a.current_score !== null) {
+                        this.scores[a.answer_id] = a.current_score;
+                    }
+                });
+
+                if (this.answers.length > 0) {
+                    this.selectedExam = {
+                        title: this.answers[0].exam_title,
+                        period_title: 'Ujian Santri'
+                    };
+                }
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async saveScore(answerId) {
+            const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
+            const scoreVal = this.scores[answerId];
+
+            if (scoreVal === undefined || scoreVal === '' || isNaN(scoreVal)) {
+                alert('Silakan masukkan nilai antara 0 sampai 100.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/grade', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        answer_id: answerId,
+                        score: parseInt(scoreVal)
+                    })
+                });
+
+                if (!res.ok) throw new Error('Gagal menyimpan nilai.');
+
+                const target = this.answers.find(a => a.answer_id === answerId);
+                if (target) {
+                    target.current_score = parseInt(scoreVal);
+                    target.is_auto_graded = false; // Berubah menjadi penyesuaian manual guru
+                }
+
+                if (window.notifySuccess) {
+                    window.notifySuccess('Nilai berhasil diperbarui!');
+                } else {
+                    alert('Nilai berhasil disimpan!');
+                }
+            } catch (e) {
+                alert(e.message || 'Terjadi kesalahan saat menyimpan nilai.');
+            }
+        }
+    }));
+});
+</script>
 @endsection
