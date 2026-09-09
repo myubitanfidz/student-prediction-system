@@ -13,12 +13,17 @@
     
     <div x-data="authSwitcher()" class="w-full h-full relative overflow-hidden flex">
 
-        <!-- ==================== LAYER 1 (z-0): GAMBAR SLIDER BERGERAK (0.35 Detik) ==================== -->
-        <div class="hidden md:block w-1/2 h-full absolute top-0 left-0 bg-slate-100 overflow-hidden z-0 transition-transform duration-350 ease-in-out"
+        <!-- ==================== LAYER 1 (z-0): GAMBAR & GRADIENT ORANYE (0.35 Detik) ==================== -->
+        <div class="hidden md:block w-full h-full absolute top-0 left-0 overflow-hidden z-0 transition-transform duration-350 ease-in-out"
              :class="mode === 'login' ? 'translate-x-0' : 'translate-x-full'">
-            <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1200&auto=format&fit=crop" 
+            
+            <!-- Background Image -->
+            <img src="{{ asset('images/landing/background.jpg') }}" 
                  alt="Students Playing" 
                  class="w-full h-full object-cover object-center filter saturate-110 contrast-105 pointer-events-none">
+            
+            <!-- Orange/Yellow Gradient Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-br from-[#FFBC01]/80 to-[#FE6E41]/80 pointer-events-none"></div>
         </div>
 
         <!-- ==================== LAYER 2 (z-10): LINGKARAN UNGU BERGERAK (0.35 Detik) ==================== -->
@@ -34,16 +39,18 @@
             <div class="w-full md:w-1/2 h-full flex items-center justify-center pointer-events-auto">
                 
                 <!-- CARD FORM (Durasi 0.5 detik meluncur ke bawah & naik ke atas) -->
-                <div class="w-full max-w-[540px] max-h-[92vh] bg-white rounded-[24px] p-6 sm:p-10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08)] border border-slate-100/90 flex flex-col justify-center my-auto transition-all duration-150 ease-in-out transform"
+                <div class="w-full max-w-[500px] max-h-[92vh] bg-white rounded-[24px] p-6 sm:p-10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.2)] border border-white/20 flex flex-col justify-center my-auto transition-all duration-150 ease-in-out transform"
                      :class="cardState === 'visible' ? 'translate-y-0 opacity-100' : 'translate-y-[130vh] opacity-0 pointer-events-none'">
                     
                     <!-- ================= VIEW LOGIN ================= -->
                     <template x-if="displayMode === 'login'">
                         <div>
+                            <!-- Logo Talent Mapping -->
+                            <img src="{{ asset('images/register/logo.svg') }}" alt="Talent Mapping" class="h-12 mx-auto mb-6">
+
                             <div class="text-center space-y-2 mb-6 sm:mb-8">
-                                <h1 class="text-3xl sm:text-[40px] font-bold text-[#FBBF24] leading-tight">Log In</h1>
                                 <p class="text-sm sm:text-base font-normal text-slate-800">
-                                    New To Talent Mapping? 
+                                    Don't have an account? 
                                     <button type="button" @click="switchMode('register')" :disabled="isBusy" class="text-[#5B50E5] font-semibold hover:underline underline-offset-4 transition-colors disabled:opacity-50">
                                         Sign Up for free
                                     </button>
@@ -54,17 +61,18 @@
 
                             <form @submit.prevent="submitLogin" class="space-y-4 sm:space-y-5">
                                 <div>
-                                    <input type="email" x-model="loginData.email" required placeholder="Email Address"
-                                           class="w-full h-12 sm:h-14 rounded-[16px] border border-slate-300 px-5 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-transparent transition-all shadow-xs">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Email<span class="text-rose-500">*</span></label>
+                                    <input type="email" x-model="loginData.email" required placeholder="Masukan Email kamu."
+                                           class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
                                 </div>
                                 <div>
-                                    <input type="password" x-model="loginData.password" required placeholder="Password"
-                                           class="w-full h-12 sm:h-14 rounded-[16px] border border-slate-300 px-5 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-transparent transition-all shadow-xs">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Password<span class="text-rose-500">*</span></label>
+                                    <input type="password" x-model="loginData.password" required placeholder="Masukan Password kamu."
+                                           class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
                                 </div>
                                 <div class="pt-2 sm:pt-4">
                                     <button type="submit" :disabled="loading" 
-                                            class="w-full h-14 sm:h-16 rounded-full font-bold text-white text-base sm:text-lg tracking-wide transition-all shadow-lg shadow-orange-500/25 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                                            style="border: 1px solid #FE6E41; background: linear-gradient(96.05deg, #FFBC01 -13.58%, #FE6E41 97.28%);">
+                                            class="w-full h-12 sm:h-14 rounded-full font-bold text-white text-base sm:text-lg tracking-wide transition-all shadow-lg shadow-blue-500/25 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 bg-[#6C70EB] hover:bg-[#5B50E5]">
                                         <span x-show="!loading">Let's Get Started!</span>
                                         <span x-show="loading">Memproses...</span>
                                     </button>
@@ -76,8 +84,10 @@
                     <!-- ================= VIEW REGISTER ================= -->
                     <template x-if="displayMode === 'register'">
                         <div>
+                            <!-- Logo Talent Mapping -->
+                            <img src="{{ asset('images/register/logo.svg') }}" alt="Talent Mapping" class="h-12 mx-auto mb-6">
+
                             <div class="text-center space-y-2 mb-5 sm:mb-6">
-                                <h1 class="text-3xl sm:text-[40px] font-bold text-[#FBBF24] leading-tight">Sign Up</h1>
                                 <p class="text-sm sm:text-base font-normal text-slate-800">
                                     Already have an account? 
                                     <button type="button" @click="switchMode('login')" :disabled="isBusy" class="text-[#5B50E5] font-semibold hover:underline underline-offset-4 transition-colors disabled:opacity-50">
@@ -90,21 +100,38 @@
 
                             <form @submit.prevent="submitRegister" class="space-y-3.5 sm:space-y-4">
                                 <div>
-                                    <input type="text" x-model="registerData.name" required placeholder="Full Name"
-                                           class="w-full h-11 sm:h-13 rounded-[16px] border border-slate-300 px-5 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-transparent transition-all shadow-xs">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap<span class="text-rose-500">*</span></label>
+                                    <input type="text" x-model="registerData.name" required placeholder="Masukan Nama lengkap kamu."
+                                           class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
                                 </div>
                                 <div>
-                                    <input type="email" x-model="registerData.email" required placeholder="Email Address"
-                                           class="w-full h-11 sm:h-13 rounded-[16px] border border-slate-300 px-5 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-transparent transition-all shadow-xs">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Email<span class="text-rose-500">*</span></label>
+                                    <input type="email" x-model="registerData.email" required placeholder="Masukan Email kamu."
+                                           class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
                                 </div>
                                 <div>
-                                    <input type="password" x-model="registerData.password" required minlength="8" placeholder="Password (min. 8 characters)"
-                                           class="w-full h-11 sm:h-13 rounded-[16px] border border-slate-300 px-5 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-transparent transition-all shadow-xs">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Buat password<span class="text-rose-500">*</span></label>
+                                    <input type="password" x-model="registerData.password" required minlength="8" placeholder="Buat password kamu."
+                                           class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
                                 </div>
+
+                                <!-- New fields shown in your screenshot -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Usia<span class="text-rose-500">*</span></label>
+                                        <input type="number" x-model="registerData.age" placeholder="Tulis umur kamu."
+                                               class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Asal Sekolah<span class="text-rose-500">*</span></label>
+                                        <input type="text" x-model="registerData.school" placeholder="Nama Sekolah kamu."
+                                               class="w-full h-11 sm:h-12 rounded-[12px] border border-slate-300 px-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 placeholder:italic font-medium focus:outline-none focus:ring-2 focus:ring-[#5B50E5] focus:border-transparent transition-all shadow-xs">
+                                    </div>
+                                </div>
+
                                 <div class="pt-2 sm:pt-3">
                                     <button type="submit" :disabled="loading" 
-                                            class="w-full h-14 sm:h-16 rounded-full font-bold text-white text-base sm:text-lg tracking-wide transition-all shadow-lg shadow-orange-500/25 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                                            style="border: 1px solid #FE6E41; background: linear-gradient(96.05deg, #FFBC01 -13.58%, #FE6E41 97.28%);">
+                                            class="w-full h-12 sm:h-14 rounded-full font-bold text-white text-base sm:text-lg tracking-wide transition-all shadow-lg shadow-blue-500/25 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 bg-[#6C70EB] hover:bg-[#5B50E5]">
                                         <span x-show="!loading">Let's Get Started!</span>
                                         <span x-show="loading">Memproses...</span>
                                     </button>
@@ -131,14 +158,13 @@
                 loading: false,
                 error: null,
                 loginData: { email: '', password: '' },
-                registerData: { name: '', email: '', password: '' },
+                registerData: { name: '', email: '', password: '', age: '', school: '' },
 
                 switchMode(target) {
                     if (this.mode === target || this.isBusy) return;
                     this.isBusy = true;
                     this.error = null;
                 
-                    // Ubah judul tab browser secara native tanpa memicu error scope Alpine
                     document.title = target === 'login' ? 'Log In — Talent Mapping' : 'Sign Up — Talent Mapping';
                 
                     // 1. FASE 1: Card meluncur turun sampai keluar layar bawah
@@ -171,7 +197,6 @@
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.message || 'Login gagal');
 
-                        // 🌟 SIMPAN SESI LENGKAP AGAR TIDAK DI-EVICT DASHBOARD
                         const token = data.token || data.access_token;
                         const user = data.user;
 
@@ -181,7 +206,6 @@
                             localStorage.setItem('ts_user', JSON.stringify(user));
                         }
 
-                        // Redirect sesuai role
                         if (user?.role === 'admin' || user?.role === 'teacher') {
                             window.location.href = '/admin/dashboard';
                         } else {
@@ -206,7 +230,6 @@
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.message || 'Registrasi gagal');
 
-                        // 🌟 SIMPAN SESI LENGKAP
                         const token = data.token || data.access_token;
                         const user = data.user;
 
