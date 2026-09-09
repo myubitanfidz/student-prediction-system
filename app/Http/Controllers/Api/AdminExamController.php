@@ -33,11 +33,11 @@ class AdminExamController extends Controller
     public function bulkStartPeriod(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'period_title' => 'required|string|max:255',
-            'start_time'   => 'nullable|date',
-            'end_time'     => 'nullable|date|after_or_equal:start_time',
-            'exam_ids'     => 'nullable|array',
-            'exam_ids.*'   => 'string',
+            'period_title'   => 'required|string|max:255',
+            'start_time'     => 'nullable|date',
+            'end_time'       => 'nullable|date|after_or_equal:start_time',
+            'exam_ids'       => 'nullable|array',
+            'exam_ids.*'     => 'string',
         ]);
 
         if ($validator->fails()) {
@@ -50,7 +50,6 @@ class AdminExamController extends Controller
 
         $query = Exam::query();
 
-        // Jika admin memilih paket-paket tertentu via checkbox
         if ($request->filled('exam_ids') && count($request->exam_ids) > 0) {
             $resolvedIds = collect($request->exam_ids)->map(function ($id) {
                 return is_numeric($id) ? (int)$id : SecureId::decode($id, 'exam');
@@ -98,7 +97,6 @@ class AdminExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Tentukan Category & Subcategory otomatis dari home_slot
         [$category, $subcategory] = match ($request->home_slot) {
             'it_gclwama'     => ['IT', 'GCLWAMA'],
             'bahasa_inggris' => ['Bahasa', 'Inggris'],
@@ -108,7 +106,6 @@ class AdminExamController extends Controller
 
         $homeSlot = $request->home_slot ?: null;
 
-        // Jika dipasang ke slot beranda, lepaskan paket lama yang menempati slot ini
         if ($homeSlot) {
             Exam::where('home_slot', $homeSlot)->update([
                 'home_slot'   => null,
@@ -161,7 +158,7 @@ class AdminExamController extends Controller
         }
 
         $targetSlot = $request->home_slot ?: null;
-        $previousSlot = $exam->home_slot; // Slot yang sedang dipegang paket ini saat ini
+        $previousSlot = $exam->home_slot;
 
         [$category, $subcategory] = match ($targetSlot) {
             'it_gclwama'     => ['IT', 'GCLWAMA'],
@@ -170,17 +167,13 @@ class AdminExamController extends Controller
             default          => [$request->input('category', $exam->category), $request->input('subcategory', $exam->subcategory)],
         };
 
-        // 🌟 Bungkus dengan Transaksi Database agar tidak tertabrak
         DB::transaction(function () use ($exam, $targetSlot, $previousSlot, $category, $subcategory, $request) {
             if ($targetSlot) {
-                // Cari paket lain yang sedang menempati slot target tersebut
                 $incumbent = Exam::where('home_slot', $targetSlot)
                     ->where('id', '!=', $exam->id)
                     ->first();
 
                 if ($incumbent) {
-                    // OPTIONAL SWAP: Jika paket ini sebelumnya punya slot, berikan slot lama kita ke paket yang kita geser
-                    // Atau lepas incumbent menjadi draf jika kita sebelumnya bukan pemegang slot
                     $incumbent->update([
                         'home_slot'   => $previousSlot ?: null,
                         'is_featured' => (bool) $previousSlot,
@@ -188,7 +181,6 @@ class AdminExamController extends Controller
                 }
             }
 
-            // Simpan paket yang sedang diedit ke slot target baru
             $exam->update([
                 'category'     => $category,
                 'subcategory'  => $subcategory,
@@ -268,6 +260,11 @@ class AdminExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Simpan correct_answer baik untuk PG maupun referensi AI esai
+        $correctAnswer = in_array($request->type, ['multiple_choice', 'essay']) 
+            ? $request->correct_answer 
+            : null;
+
         $question = Question::create([
             'exam_id'            => $realExamId,
             'type'               => $request->type,
@@ -275,7 +272,7 @@ class AdminExamController extends Controller
             'gclwama_tag'        => $request->gclwama_tag,
             'question_text'      => $request->question_text,
             'options'            => $request->type === 'multiple_choice' ? $request->options : null,
-            'correct_answer'     => $request->type === 'multiple_choice' ? $request->correct_answer : null,
+            'correct_answer'     => $correctAnswer,
         ]);
 
         return response()->json([
@@ -306,13 +303,18 @@ class AdminExamController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Izinkan correct_answer diperbarui untuk PG maupun esai
+        $correctAnswer = in_array($request->type, ['multiple_choice', 'essay']) 
+            ? $request->correct_answer 
+            : null;
+
         $question->update([
             'type'               => $request->type,
             'time_limit_seconds' => $request->time_limit_seconds ?? 60,
             'gclwama_tag'        => $request->gclwama_tag,
             'question_text'      => $request->question_text,
             'options'            => $request->type === 'multiple_choice' ? $request->options : null,
-            'correct_answer'     => $request->type === 'multiple_choice' ? $request->correct_answer : null,
+            'correct_answer'     => $correctAnswer,
         ]);
 
         return response()->json([
@@ -347,7 +349,6 @@ class AdminExamController extends Controller
             return response()->json(['message' => 'Ujian tidak ditemukan'], 404);
         }
 
-        // Jadikan featured eksklusif per subkategori
         Exam::where('category', $targetExam->category)
             ->where('subcategory', $targetExam->subcategory)
             ->update(['is_featured' => false]);

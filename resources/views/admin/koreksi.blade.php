@@ -3,16 +3,16 @@
 
 @section('content')
 <div x-data="adminKoreksiPage" class="max-w-4xl mx-auto mt-6 sm:mt-8 pb-12 px-4 space-y-6">
-    <div x-show="loading" class="text-sm text-ink/40">Memuat jawaban santri...</div>
-    <div x-show="error" x-text="error" class="text-sm text-brand-orange bg-brand-orange-soft rounded-lg px-3 py-2"></div>
+    <div x-show="loading" class="text-sm text-slate-500 font-medium">Memuat jawaban santri...</div>
+    <div x-show="error" x-text="error" class="text-sm text-rose-700 bg-rose-50 rounded-xl px-4 py-3 border border-rose-200"></div>
 
     <template x-if="!loading && student">
         <div class="space-y-6">
             {{-- Header Santri & Info Ujian Terpilih --}}
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-6 rounded-2xl border border-line shadow-xs gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-6 rounded-2xl border border-slate-200 shadow-xs gap-4">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-brand-blue text-white text-base font-display font-bold flex items-center justify-center shadow-xs shrink-0"
-                         x-text="student.name.charAt(0).toUpperCase()"></div>
+                    <div class="w-12 h-12 rounded-full bg-slate-900 text-white text-base font-display font-bold flex items-center justify-center shadow-xs shrink-0"
+                         x-text="student.name ? student.name.charAt(0).toUpperCase() : 'S'"></div>
                     <div>
                         <h1 class="font-display font-bold text-xl text-slate-900" x-text="student.name"></h1>
                         <p class="text-xs text-slate-500" x-text="student.email"></p>
@@ -29,25 +29,26 @@
                 </a>
             </div>
 
-            <template x-if="answers.length">
+            {{-- Daftar Jawaban Santri --}}
+            <template x-if="answers.length > 0">
                 <div class="space-y-4">
-                    <template x-for="answer in answers" :key="answer.answer_id">
-                        <article class="card p-6 space-y-4 bg-white rounded-2xl border border-line shadow-xs">
+                    <template x-for="(answer, idx) in answers" :key="answer.answer_id">
+                        <article class="p-6 space-y-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
                             {{-- Header Pertanyaan --}}
                             <div class="flex items-start justify-between gap-4">
                                 <div class="space-y-1 min-w-0">
-                                    <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600" x-text="answer.exam_title"></p>
-                                    <h3 class="font-display font-bold text-base text-slate-900" x-text="answer.question_text"></h3>
+                                    <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600" x-text="answer.exam_title || 'Ujian Santri'"></p>
+                                    <h3 class="font-display font-bold text-base text-slate-900" x-text="answer.question_text || `Butir Soal #${idx + 1}`"></h3>
                                     
                                     {{-- Badge Tipe Soal & Status AI --}}
                                     <div class="flex items-center gap-2 pt-1 flex-wrap">
                                         <span class="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                                               :class="{
-                                                  'bg-blue-100 text-blue-800': answer.question_type === 'multiple_choice',
-                                                  'bg-purple-100 text-purple-800': answer.question_type === 'essay',
-                                                  'bg-emerald-100 text-emerald-800': answer.question_type === 'image_upload'
+                                                  'bg-blue-100 text-blue-800': String(answer.question_type).toLowerCase() === 'multiple_choice',
+                                                  'bg-emerald-100 text-emerald-800': String(answer.question_type).toLowerCase() === 'image_upload',
+                                                  'bg-purple-100 text-purple-800': String(answer.question_type).toLowerCase() !== 'multiple_choice' && String(answer.question_type).toLowerCase() !== 'image_upload'
                                               }"
-                                              x-text="answer.question_type === 'multiple_choice' ? 'Pilihan Ganda' : (answer.question_type === 'image_upload' ? 'Upload Karya Gambar' : 'Esai')"></span>
+                                              x-text="String(answer.question_type).toLowerCase() === 'multiple_choice' ? 'Pilihan Ganda' : (String(answer.question_type).toLowerCase() === 'image_upload' ? 'Upload Karya Gambar' : 'Esai')"></span>
                                         
                                         <template x-if="answer.is_auto_graded">
                                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white tracking-wide">
@@ -64,13 +65,13 @@
 
                                 {{-- Status Nilai Saat Ini --}}
                                 <div class="text-right shrink-0">
-                                    <template x-if="answer.current_score != null">
+                                    <template x-if="answer.current_score !== null && answer.current_score !== undefined">
                                         <div>
                                             <p class="font-mono text-2xl font-black text-emerald-600" x-text="answer.current_score + '%'"></p>
                                             <p class="text-[10px] uppercase font-bold text-slate-400" x-text="answer.is_auto_graded ? 'Skor Otomatis AI' : 'Telah Dinilai'"></p>
                                         </div>
                                     </template>
-                                    <template x-if="answer.current_score == null">
+                                    <template x-if="answer.current_score === null || answer.current_score === undefined">
                                         <span class="inline-block text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
                                             Belum Dinilai
                                         </span>
@@ -78,81 +79,75 @@
                                 </div>
                             </div>
 
-                            {{-- Penampil Gambar Karya (image_upload) --}}
-                            <template x-if="answer.question_type === 'image_upload'">
+                            {{-- Penampil Gambar Karya --}}
+                            <template x-if="answer.file_url">
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                                     <p class="text-xs font-bold text-slate-700">Hasil Karya Gambar / Foto yang Diunggah:</p>
-                                    <template x-if="answer.file_url">
-                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                            <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-300 bg-white"
-                                                 @click="previewModalImg = answer.file_url">
-                                                <img :src="answer.file_url" 
-                                                     class="h-44 w-auto max-w-full object-contain rounded-xl hover:scale-105 transition duration-300">
-                                                <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                                                    🔍 Klik untuk Memperbesar
-                                                </div>
-                                            </div>
-                                            <div class="space-y-1 text-xs">
-                                                <a :href="answer.file_url" target="_blank" class="text-indigo-600 font-bold hover:underline flex items-center gap-1">
-                                                    <span>Buka di tab baru</span> ↗
-                                                </a>
-                                                <p class="text-slate-400 text-[11px]">Format gambar terverifikasi.</p>
+                                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                        <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-300 bg-white"
+                                             @click="previewModalImg = answer.file_url">
+                                            <img :src="answer.file_url" 
+                                                 class="h-44 w-auto max-w-full object-contain rounded-xl hover:scale-105 transition duration-300">
+                                            <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                                                🔍 Klik untuk Memperbesar
                                             </div>
                                         </div>
-                                    </template>
-                                    <template x-if="!answer.file_url">
-                                        <p class="text-xs text-slate-400 italic">Santri tidak melampirkan berkas foto.</p>
-                                    </template>
-                                </div>
-                            </template>
-
-                            {{-- Tampilan Khusus Esai: Jawaban Santri & Referensi Kunci AI --}}
-                            <template x-if="answer.question_type === 'essay'">
-                                <div class="space-y-3">
-                                    {{-- Jawaban Santri --}}
-                                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Jawaban Santri:</p>
-                                        <p class="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap" x-text="answer.student_answer || '— (Kosong)'"></p>
+                                        <div class="space-y-1 text-xs">
+                                            <a :href="answer.file_url" target="_blank" class="text-indigo-600 font-bold hover:underline flex items-center gap-1">
+                                                <span>Buka di tab baru</span> ↗
+                                            </a>
+                                            <p class="text-slate-400 text-[11px]">Berkas lampiran santri.</p>
+                                        </div>
                                     </div>
-
-                                    {{-- Referensi Jawaban Guru (Acuan Penilaian AI) --}}
-                                    <template x-if="answer.correct_answer">
-                                        <div class="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 space-y-1">
-                                            <div class="flex items-center gap-1.5 text-indigo-900">
-                                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                                </svg>
-                                                <span class="text-[11px] font-bold uppercase tracking-wider">Kunci / Poin Referensi Acuan AI:</span>
-                                            </div>
-                                            <p class="text-xs text-indigo-950 leading-relaxed font-medium" x-text="answer.correct_answer"></p>
-                                        </div>
-                                    </template>
                                 </div>
                             </template>
 
-                            {{-- Jawaban Pilihan Ganda --}}
-                            <template x-if="answer.question_type === 'multiple_choice'">
+                            {{-- Teks Jawaban Santri & Kunci Referensi AI --}}
+                            <div class="space-y-3" x-show="answer.student_answer">
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Pilihan Santri:</p>
-                                    <p class="text-sm text-slate-800 font-bold" x-text="answer.student_answer || '— (Kosong)'"></p>
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Jawaban Santri:</p>
+                                    <p class="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap" x-text="answer.student_answer"></p>
                                 </div>
-                            </template>
 
-                            {{-- Form Input Nilai / Override Skor AI --}}
-                            <template x-if="['essay', 'image_upload'].includes(answer.question_type)">
+                                <template x-if="answer.correct_answer">
+                                    <div class="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 space-y-1">
+                                        <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-900">Kunci / Referensi AI:</p>
+                                        <p class="text-xs text-indigo-950 leading-relaxed font-medium" x-text="answer.correct_answer"></p>
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- Form Input Nilai & Tombol Aksi --}}
+                            <template x-if="String(answer.question_type).toLowerCase() !== 'multiple_choice'">
                                 <div class="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-slate-100">
                                     <div class="flex items-center gap-3">
-                                        <label class="text-xs font-bold uppercase text-slate-600">
+                                        <label :for="'score-input-' + answer.answer_id" class="text-xs font-bold uppercase text-slate-600">
                                             <span x-text="answer.is_auto_graded ? 'Ubah / Sesuaikan Nilai:' : 'Beri Nilai (0–100):'"></span>
                                         </label>
-                                        <input type="number" min="0" max="100" x-model="scores[answer.answer_id]"
+                                        <input type="number" 
+                                               :id="'score-input-' + answer.answer_id" 
+                                               :name="'score_' + answer.answer_id"
+                                               min="0" max="100" 
+                                               x-model="scores[answer.answer_id]"
                                                placeholder="0-100"
-                                               class="w-24 rounded-xl border border-line p-2 text-sm font-mono font-bold text-center focus:outline-none focus:ring-2 focus:ring-brand-blue/40 bg-white">
+                                               class="w-24 rounded-xl border border-slate-300 p-2 text-sm font-mono font-bold text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
                                     </div>
-                                    <button type="button" @click="saveScore(answer.answer_id)"
-                                            class="btn-primary text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs active:scale-95 transition flex items-center gap-1.5">
-                                        <span x-text="answer.is_auto_graded ? 'Perbarui Nilai' : 'Simpan Nilai'"></span>
-                                    </button>
+                                    
+                                    <div class="flex items-center gap-2">
+                                        {{-- Tombol Pemicu Koreksi AI --}}
+                                        <template x-if="answer.question_type === 'essay' && answer.correct_answer">
+                                            <button type="button" @click="regradeAi(answer.answer_id)"
+                                                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs active:scale-95 transition flex items-center gap-1.5">
+                                                <span>⚡ Nilai AI</span>
+                                            </button>
+                                        </template>
+
+                                        {{-- Tombol Simpan Manual --}}
+                                        <button type="button" @click="saveScore(answer.answer_id)"
+                                                class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs active:scale-95 transition flex items-center gap-1.5">
+                                            <span x-text="answer.is_auto_graded ? 'Perbarui Nilai' : 'Simpan Nilai'"></span>
+                                        </button>
+                                    </div>
                                 </div>
                             </template>
                         </article>
@@ -160,7 +155,7 @@
                 </div>
             </template>
 
-            <div x-show="!answers.length" class="card p-8 text-center text-sm text-ink/40">
+            <div x-show="answers.length === 0" class="p-8 text-center text-sm text-slate-400 bg-white rounded-2xl border border-slate-200">
                 Santri ini belum memiliki jawaban yang perlu dikoreksi pada ujian ini.
             </div>
         </div>
@@ -171,10 +166,10 @@
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs"
          @click="previewModalImg = null">
         <div class="relative max-w-4xl max-h-[90vh] bg-white p-2 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
-            <button @click="previewModalImg = null" class="absolute top-4 right-4 bg-slate-900/70 hover:bg-slate-900 text-white rounded-full p-2 text-xs font-bold">
+            <button type="button" @click="previewModalImg = null" class="absolute top-4 right-4 bg-slate-900/70 hover:bg-slate-900 text-white rounded-full p-2 text-xs font-bold">
                 ✕
             </button>
-            <img :src="previewModalImg" class="max-h-[80vh] w-auto mx-auto object-contain rounded-xl">
+            <img :src="previewModalImg" class="max-h-[80vh] w-auto mx-auto object-contain rounded-xl" alt="Preview Karya">
         </div>
     </div>
 </div>
@@ -182,7 +177,6 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('adminKoreksiPage', () => ({
-        userId: window.location.pathname.split('/').pop(),
         loading: true,
         error: null,
         student: null,
@@ -190,11 +184,15 @@ document.addEventListener('alpine:init', () => {
         answers: [],
         scores: {},
         previewModalImg: null,
+        userId: '',
 
         async init() {
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
             const urlParams = new URLSearchParams(window.location.search);
             const examId = urlParams.get('exam_id') || '';
+
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            this.userId = pathParts[pathParts.length - 1];
 
             try {
                 const res = await fetch(`/api/admin/students/${this.userId}/answers?exam_id=${examId}`, {
@@ -204,15 +202,14 @@ document.addEventListener('alpine:init', () => {
                     }
                 });
 
-                if (!res.ok) throw new Error('Gagal memuat jawaban santri.');
-
                 const json = await res.json();
+                if (!res.ok) throw new Error(json.message || 'Gagal memuat jawaban santri.');
+
                 this.student = json?.data?.student || null;
                 this.answers = json?.data?.answers || [];
 
-                // Isi awal nilai ke model input agar skor AI langsung terlihat
                 this.answers.forEach(a => {
-                    if (a.current_score !== null) {
+                    if (a.current_score !== null && a.current_score !== undefined) {
                         this.scores[a.answer_id] = a.current_score;
                     }
                 });
@@ -224,9 +221,37 @@ document.addEventListener('alpine:init', () => {
                     };
                 }
             } catch (e) {
+                console.error("Error koreksi:", e);
                 this.error = e.message;
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async regradeAi(answerId) {
+            const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/admin/regrade-ai', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ answer_id: answerId })
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.message || 'Gagal memproses penilaian AI.');
+
+                const target = this.answers.find(a => a.answer_id === answerId);
+                if (target) {
+                    target.current_score = json.score;
+                    target.is_auto_graded = true;
+                    this.scores[answerId] = json.score;
+                }
+                alert(json.message);
+            } catch (e) {
+                alert(e.message || 'Terjadi kesalahan pada penilaian AI.');
             }
         },
 
@@ -253,19 +278,16 @@ document.addEventListener('alpine:init', () => {
                     })
                 });
 
-                if (!res.ok) throw new Error('Gagal menyimpan nilai.');
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.message || 'Gagal menyimpan nilai.');
 
                 const target = this.answers.find(a => a.answer_id === answerId);
                 if (target) {
                     target.current_score = parseInt(scoreVal);
-                    target.is_auto_graded = false; // Berubah menjadi penyesuaian manual guru
+                    target.is_auto_graded = false;
                 }
 
-                if (window.notifySuccess) {
-                    window.notifySuccess('Nilai berhasil diperbarui!');
-                } else {
-                    alert('Nilai berhasil disimpan!');
-                }
+                alert('Nilai berhasil disimpan!');
             } catch (e) {
                 alert(e.message || 'Terjadi kesalahan saat menyimpan nilai.');
             }

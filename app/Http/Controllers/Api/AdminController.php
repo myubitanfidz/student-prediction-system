@@ -203,4 +203,40 @@ class AdminController extends Controller
             'data'    => $completion,
         ]);
     }
+
+    public function regradeWithAi(Request $request): JsonResponse
+    {
+        $request->validate([
+            'answer_id' => 'required|exists:student_answers,id'
+        ]);
+    
+        $answer = StudentAnswer::with('question')->findOrFail($request->answer_id);
+    
+        if (empty($answer->question?->correct_answer)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Soal ini belum memiliki kunci referensi AI.'
+            ], 422);
+        }
+    
+        $score = \App\Services\AiGradingService::grade(
+            $answer->question->correct_answer,
+            $answer->answer_text ?? ''
+        );
+    
+        if ($score === null) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menghubungi service AI Python. Periksa terminal Uvicorn.'
+            ], 500);
+        }
+    
+        $answer->update(['score' => $score]);
+    
+        return response()->json([
+            'status'  => 'success',
+            'message' => "Berhasil dinilai oleh AI! Skor: {$score}",
+            'score'   => $score
+        ]);
+    }
 }   

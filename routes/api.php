@@ -28,7 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 🌟 Endpoint Buka Ujian & Daftar Ujian (Santri, Admin, untuk Mengerjakan/Preview)
     Route::middleware('role:student,admin,teacher')->group(function () {
-        Route::get('/exams', [ExamController::class, 'index']); // Dipindah ke sini agar Admin bisa mengakses halaman Bahasa & IT
+        Route::get('/exams', [ExamController::class, 'index']);
         
         // Proteksi Throttling Fetch
         Route::get('/exams/{id}', [ExamController::class, 'show'])
@@ -41,6 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/students/{userId}/answers', [AdminController::class, 'getStudentAnswers']);
         Route::post('/grade', [AdminController::class, 'gradeAnswer']);
         Route::post('/retake', [AdminController::class, 'allowRetake']);
+        
+        // 🌟 Dipindahkan ke sini agar URL menjadi /api/admin/regrade-ai
+        Route::post('/regrade-ai', [AdminController::class, 'regradeWithAi']);
     });
 
     // Admin only — exam package management
@@ -50,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/exams', [AdminExamController::class, 'storeExam']);
         Route::put('/exams/{id}', [AdminExamController::class, 'updateExam']);
         Route::delete('/exams/{id}', [AdminExamController::class, 'destroyExam']);
-        Route::post('/exams/{id}/toggle-featured', [\App\Http\Controllers\Api\AdminExamController::class, 'toggleFeatured']);
+        Route::post('/exams/{id}/toggle-featured', [AdminExamController::class, 'toggleFeatured']);
 
         Route::get('/exams/{examId}/questions', [AdminExamController::class, 'getQuestionsByExam']);
         Route::post('/questions', [AdminExamController::class, 'storeQuestion']);
