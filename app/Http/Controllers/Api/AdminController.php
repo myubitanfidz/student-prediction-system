@@ -42,7 +42,7 @@ class AdminController extends Controller
                     $completed = (bool) $completion;
 
                     return [
-                        'exam_id'         => $exam->hash_id, // Hash exam ID
+                        'exam_id'         => $exam->hash_id,
                         'raw_exam_id'     => $exam->id,
                         'category'        => $exam->category,
                         'subcategory'     => $exam->subcategory,
@@ -66,7 +66,7 @@ class AdminController extends Controller
                 $periodsAttended = $examStats->pluck('period_title')->unique()->values()->all();
 
                 return [
-                    'id'            => $student->hash_id, // Hash user ID
+                    'id'            => $student->hash_id,
                     'raw_id'        => $student->id,
                     'name'          => $student->name,
                     'email'         => $student->email,
@@ -97,12 +97,29 @@ class AdminController extends Controller
 
     public function getStudentAnswers(Request $request, $userId): JsonResponse
     {
+        // 1. Dekode ID User dari format Hash SecureId atau integer murni
+        $realUserId = is_numeric($userId) ? (int)$userId : SecureId::decode($userId, 'user');
+
+        $student = User::select('id', 'name', 'email')->find($realUserId);
+
+        if (!$student) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data santri tidak ditemukan.'
+            ], 404);
+        }
+
+        // 2. Dekode exam_id dari format Hash SecureId atau integer murni
         $examIdFilter = $request->query('exam_id');
-        $resolvedExamId = $examIdFilter ? (\App\Helpers\SecureId::decode($examIdFilter, 'exam') ?: $examIdFilter) : null;
+        $resolvedExamId = null;
+        if ($examIdFilter) {
+            $resolvedExamId = is_numeric($examIdFilter)
+                ? (int)$examIdFilter
+                : SecureId::decode($examIdFilter, 'exam');
+        }
 
-        $student = \App\Models\User::select('id', 'name', 'email')->findOrFail($userId);
-
-        $query = \App\Models\StudentAnswer::where('user_id', $userId)
+        // 3. Query butir jawaban santri
+        $query = StudentAnswer::where('user_id', $realUserId)
             ->with(['question.exam']);
 
         if ($resolvedExamId) {
@@ -120,7 +137,7 @@ class AdminController extends Controller
                 'question_id'     => $question?->hash_id ?? $question?->id,
                 'question_text'   => $question?->question_text,
                 'question_type'   => $question?->type,
-                'correct_answer'  => $question?->correct_answer, // 🌟 Referensi acuan guru untuk AI
+                'correct_answer'  => $question?->correct_answer,
                 'gclwama_tag'     => $question?->gclwama_tag,
                 'exam_title'      => $exam?->title,
                 'student_answer'  => $ans->answer_text,
@@ -186,4 +203,4 @@ class AdminController extends Controller
             'data'    => $completion,
         ]);
     }
-}
+}   
