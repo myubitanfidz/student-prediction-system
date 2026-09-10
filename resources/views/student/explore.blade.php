@@ -3,6 +3,9 @@
 @php
     $bidangActive = $bidang ?? request()->query('bidang', 'bahasa');
     $isIt = strtolower($bidangActive) === 'it';
+    // Popup materi sekarang dikontrol lewat query string ?materi=... (GET),
+    // bukan lewat state Alpine lagi. Lihat @switch di bagian modal di bawah.
+    $activeMateri = request()->query('materi');
 @endphp
 
 @section('title', $isIt ? 'Eksplorasi Bidang IT & Kreatif — Talent Mapping' : '2 Bahasa Utama — Talent Mapping')
@@ -65,10 +68,10 @@
                                 Pelajari bahasa Al-Qur'an, tata bahasa qawaid, dan percakapan untuk memperdalam literatur klasik &amp; modern.
                             </p>
                         </div>
-                        <button type="button" @click="openModal('arab')"
-                                class="bg-[#8C8C8C] hover:bg-[#737373] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0">
+                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'arab']) }}"
+                           class="bg-[#8C8C8C] hover:bg-[#737373] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
                             Pelajari sekarang
-                        </button>
+                        </a>
                     </div>
 
                     {{-- Bahasa Inggris --}}
@@ -79,10 +82,10 @@
                                 Kuasai bahasa internasional untuk komunikasi global, pemahaman teknologi, dan literatur sains dunia.
                             </p>
                         </div>
-                        <button type="button" @click="openModal('inggris')"
-                                class="bg-[#8C8C8C] hover:bg-[#737373] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0">
+                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'inggris']) }}"
+                           class="bg-[#8C8C8C] hover:bg-[#737373] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
                             Pelajari sekarang
-                        </button>
+                        </a>
                     </div>
                 </div>
             </template>
@@ -101,10 +104,10 @@
                                 Bangun logika pemecahan masalah, buat sistem perangkat lunak, dan kembangkan aplikasi web modern.
                             </p>
                         </div>
-                        <button type="button" @click="openModal('programming')"
-                                class="bg-[#0984e3] hover:bg-[#0773c5] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0">
+                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'programming']) }}"
+                           class="bg-[#0984e3] hover:bg-[#0773c5] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
                             Pelajari sekarang
-                        </button>
+                        </a>
                     </div>
 
                     {{-- DKV / Desain Grafis --}}
@@ -118,10 +121,10 @@
                                 Kuasai komposisi warna, tata letak visual, ilustrasi digital, dan komunikasi brand secara estetis.
                             </p>
                         </div>
-                        <button type="button" @click="openModal('dkv')"
-                                class="bg-[#00b894] hover:bg-[#00a383] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0">
+                        <a href="{{ request()->fullUrlWithQuery (['materi' => 'dkv']) }}"
+                           class="bg-[#00b894] hover:bg-[#00a383] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
                             Pelajari sekarang
-                        </button>
+                        </a>
                     </div>
 
                     {{-- Videografi & Editing --}}
@@ -135,10 +138,10 @@
                                 Produksi konten video sinematik, teknik pengambilan gambar visual, storytelling, serta audio-visual editing.
                             </p>
                         </div>
-                        <button type="button" @click="openModal('videografi')"
-                                class="bg-[#6c5ce7] hover:bg-[#5a4cdb] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0">
+                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'videografi']) }}"
+                           class="bg-[#6c5ce7] hover:bg-[#5a4cdb] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
                             Pelajari sekarang
-                        </button>
+                        </a>
                     </div>
                 </div>
             </template>
@@ -147,32 +150,14 @@
     </div>
 
     {{-- ============ MODAL PREVIEW MATERI ============ --}}
-    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-        <div @click.outside="modalOpen = false"
-             class="bg-[#F8F9FA] rounded-3xl max-w-2xl w-full p-6 sm:p-10 space-y-6 shadow-2xl relative border border-slate-200">
-            <button type="button" @click="modalOpen = false" class="absolute top-6 right-6 text-slate-700 hover:text-slate-950 font-display font-bold text-xl">✕</button>
-            <h3 class="font-display font-black text-2xl sm:text-3xl text-[#0984E3] leading-tight" x-html="selectedData.headline"></h3>
-            <p class="text-xs sm:text-sm text-slate-700 leading-relaxed" x-html="selectedData.description"></p>
-            <div class="border border-slate-800 rounded-2xl p-5 space-y-2 bg-transparent">
-                <h4 class="font-display font-extrabold text-sm sm:text-base text-[#E17055]">Manfaat</h4>
-                <p class="text-xs sm:text-sm text-slate-700 leading-relaxed" x-text="selectedData.benefits"></p>
-            </div>
-            <div class="space-y-3 pt-2">
-                <h4 class="font-display font-extrabold text-sm sm:text-base text-[#E17055]">Aplikasi Pendukung</h4>
-                <div class="flex flex-wrap gap-2.5">
-                    <template x-for="app in selectedData.apps" :key="app">
-                        <span class="bg-[#D9D9D9] text-slate-800 text-xs sm:text-sm font-medium px-5 py-2 rounded-full" x-text="app"></span>
-                    </template>
-                </div>
-            </div>
-            <div class="pt-4 border-t border-slate-200 flex justify-end">
-                <button type="button" @click="mulaiQuiz(selectedKey)"
-                        class="bg-[#0984E3] hover:bg-[#0773c5] text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl transition shadow active:scale-95">
-                    Mulai Ujian Materi Ini →
-                </button>
-            </div>
+    {{-- Dikontrol lewat query string ?materi=... (GET). Semua 5 materi ada
+         di SATU file: resources/views/materi.blade.php (konfigurasi per
+         materi ada di array $materiConfig di file itu). --}}
+    @if ($activeMateri)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+            @include('student.ujian.materi')
         </div>
-    </div>
+    @endif
 
     {{-- ============ MODAL PILIHAN QUIZ (HANYA UNTUK BAHASA) ============ --}}
     <div x-show="quizChoiceModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
@@ -205,43 +190,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('explorePage', (initialBidang) => ({
         currentBidang: (initialBidang || 'bahasa').toLowerCase(),
-        modalOpen: false,
         quizChoiceModalOpen: false,
-        selectedKey: '',
-        selectedData: { headline: '', description: '', benefits: '', apps: [] },
-        
-        materi: {
-            arab: {
-                headline: 'Selamat datang di dunia, di mana <span class="bg-[#FDCB6E] text-slate-900 px-1">bahasa Arab</span> menghubungkan makna mendalam.',
-                description: 'Bahasa Arab adalah bahasa wahyu dan peradaban yang kaya akan tata bahasa (Nahwu &amp; Sharaf), balaghah, dan mufradat yang indah untuk memahami literatur Islam dan diplomasi global.',
-                benefits: 'Meningkatkan ketajaman logika gramatikal, pemahaman tekstual sumber kitab klasik, serta kemampuan komunikasi aktif di kancah timur tengah.',
-                apps: ['Al-Maany', 'Duolingo', 'Google Translate', 'Tashreef App']
-            },
-            inggris: {
-                headline: 'Selamat datang di dunia, di mana <span class="bg-[#FDCB6E] text-slate-900 px-1">bahasa Inggris</span> membuka jendela dunia.',
-                description: 'Bahasa Inggris adalah kunci utama akses informasi global, sains, dan teknologi masa kini. Kuasai grammar, vocabulary, dan speaking untuk bersaing di era digital.',
-                benefits: 'Membuka wawasan internasional, mempermudah adaptasi dengan software dan dokumentasi teknologi, serta meningkatkan daya saing karir masa depan.',
-                apps: ['Grammarly', 'Duolingo', 'Cambridge Dictionary', 'ELSA Speak']
-            },
-            programming: {
-                headline: 'Bangun masa depan digital dengan <span class="bg-[#74b9ff] text-slate-900 px-1">logika pemrograman</span>.',
-                description: 'Kembangkan software, web aplikasi, dan algoritma cerdas untuk menyelesaikan masalah nyata menggunakan baris kode terstruktur.',
-                benefits: 'Melatih kemampuan computational thinking, pemecahan masalah sistematis, dan membuka peluang karir global di bidang rekayasa teknologi.',
-                apps: ['VS Code', 'Git / GitHub', 'Python', 'Node.js']
-            },
-            dkv: {
-                headline: 'Ekspresikan ide dan identitas visual melalui <span class="bg-[#55efc4] text-slate-900 px-1">Desain Grafis (DKV)</span>.',
-                description: 'Pelajari harmoni tata letak (layout), psikologi warna, tipografi, dan komposisi grafis untuk mengomunikasikan pesan yang berdampak luas.',
-                benefits: 'Mengasah kreativitas estetis, penguasaan branding visual, serta kemampuan komunikasi visual digital.',
-                apps: ['Adobe Photoshop', 'Figma', 'Adobe Illustrator', 'Canva']
-            },
-            videografi: {
-                headline: 'Ceritakan kisah visual memukau lewat <span class="bg-[#a29bfe] text-slate-900 px-1">Videografi</span>.',
-                description: 'Rancang alur storyboard, sinematografi, rekaman gambar dinamis, serta editing audio-visual untuk menghasilkan karya konten yang berkesan.',
-                benefits: 'Mengembangkan insting storytelling, pemahaman produksi sinema, dan keahlian di industri media kreatif.',
-                apps: ['Premiere Pro', 'DaVinci Resolve', 'CapCut', 'After Effects']
-            }
-        },
 
         handleMainQuizBtn() {
             if (this.currentBidang === 'it') {
@@ -249,12 +198,6 @@ document.addEventListener('alpine:init', () => {
             } else {
                 this.quizChoiceModalOpen = true;
             }
-        },
-
-        openModal(type) {
-            this.selectedKey = type;
-            this.selectedData = this.materi[type] || { headline: '', description: '', benefits: '', apps: [] };
-            this.modalOpen = true;
         },
 
         async mulaiQuiz(targetKey = null) {
