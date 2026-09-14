@@ -152,7 +152,7 @@
             </p>
         </div>
         <div class="md:w-1/2 flex justify-center z-10">
-            <div class="w-64 h-64 bg-[length:8px_8px] bg-[image:repeating-conic-gradient(#e5e5e5_0_25%,white_0_50%)] rounded-lg"></div>
+            <img src="{{ asset('images/landing/star-mascot.svg') }}" alt="Star Mascot" class="w-72 h-auto">
         </div>
     </div>
 </section>

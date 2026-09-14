@@ -33,7 +33,7 @@
         
         <h1 class="font-display font-extrabold text-4xl sm:text-5xl tracking-tight mt-2 transition-colors duration-300"
             :class="currentBidang === 'it' ? 'text-[#2d3436]' : 'text-[#E17055]'"
-            x-text="currentBidang === 'it' ? 'Eksplorasi Dunia IT & Desain' : '2 Bahasa Utama'">
+            x-text="currentBidang === 'it' ? '4 Bidang Utama' : '2 Bidang Bahasa'">
         </h1>
         
         <p class="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed pt-3">
@@ -41,7 +41,7 @@
         </p>
 
         <div class="pt-5">
-            {{-- Tombol Utama: Jika IT langsung mulai quiz, jika Bahasa buka modal pilihan Arab/Inggris --}}
+            {{-- Tombol Utama --}}
             <button type="button" @click="handleMainQuizBtn()"
                     class="inline-block text-white font-extrabold text-sm sm:text-base px-8 py-3 rounded-full transition shadow-sm active:scale-95"
                     :class="currentBidang === 'it' ? 'bg-[#0984e3] hover:bg-[#0773c5]' : 'bg-[#38ada9] hover:bg-[#2e8c89]'">
@@ -55,104 +55,152 @@
         <img src="{{ asset('images/landing/Vector 10.svg') }}" 
              class="absolute top-0 left-0 w-full h-auto pointer-events-none z-0" alt="">
 
-        <div class="max-w-3xl mx-auto space-y-5 relative z-10 pt-48"> 
-            
-            {{-- ====== KARTU-KARTU BAHASA ====== --}}
-            <template x-if="currentBidang === 'bahasa'">
-                <div class="space-y-5">
-                    {{-- Bahasa Arab --}}
-                    <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-100 shadow-sm">
-                        <div class="space-y-2 max-w-md">
-                            <h2 class="font-display font-extrabold text-2xl text-slate-900">Bahasa Arab</h2>
-                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                                Pelajari bahasa Al-Qur'an, tata bahasa qawaid, dan percakapan untuk memperdalam literatur klasik &amp; modern.
-                            </p>
-                        </div>
-                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'arab']) }}"
-                           class="bg-[#8C8C8C] hover:bg-[#737373] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
-                            Pelajari sekarang
-                        </a>
-                    </div>
-
-                    {{-- Bahasa Inggris --}}
-                    <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-100 shadow-sm">
-                        <div class="space-y-2 max-w-md">
-                            <h2 class="font-display font-extrabold text-2xl text-slate-900">Bahasa Inggris</h2>
-                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                                Kuasai bahasa internasional untuk komunikasi global, pemahaman teknologi, dan literatur sains dunia.
-                            </p>
-                        </div>
-                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'inggris']) }}"
-                           class="bg-[#8C8C8C] hover:bg-[#737373] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
-                            Pelajari sekarang
-                        </a>
-                    </div>
+             <div class="max-w-2xl mx-auto space-y-4 relative z-10 pt-48"> 
+    
+    {{-- ====== KARTU-KARTU BAHASA ====== --}}
+    <template x-if="currentBidang === 'bahasa'">
+        <div class="space-y-4">
+            {{-- Bahasa Arab --}}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
+                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/BahasaArab.jpg') }}" 
+                         alt="Bahasa Arab Banner" 
+                         class="w-full h-full object-cover">
                 </div>
-            </template>
-
-            {{-- ====== KARTU-KARTU IT ====== --}}
-            <template x-if="currentBidang === 'it'">
-                <div class="space-y-5">
-                    {{-- Programming --}}
-                    <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-100 shadow-sm">
-                        <div class="space-y-2 max-w-md">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded">M - Algoritma</span>
-                                <h2 class="font-display font-extrabold text-2xl text-slate-900">Programming &amp; Web</h2>
-                            </div>
-                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                                Bangun logika pemecahan masalah, buat sistem perangkat lunak, dan kembangkan aplikasi web modern.
-                            </p>
-                        </div>
-                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'programming']) }}"
-                           class="bg-[#0984e3] hover:bg-[#0773c5] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
-                            Pelajari sekarang
-                        </a>
+                
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1 max-w-md">
+                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Bahasa Arab</h2>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Pelajari bahasa Al-Qur'an, tata bahasa qawaid, dan percakapan untuk memperdalam literatur klasik &amp; modern.
+                        </p>
                     </div>
-
-                    {{-- DKV / Desain Grafis --}}
-                    <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-100 shadow-sm">
-                        <div class="space-y-2 max-w-md">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded">G - Visual &amp; Layout</span>
-                                <h2 class="font-display font-extrabold text-2xl text-slate-900">DKV &amp; Desain Grafis</h2>
-                            </div>
-                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                                Kuasai komposisi warna, tata letak visual, ilustrasi digital, dan komunikasi brand secara estetis.
-                            </p>
-                        </div>
-                        <a href="{{ request()->fullUrlWithQuery (['materi' => 'dkv']) }}"
-                           class="bg-[#00b894] hover:bg-[#00a383] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
-                            Pelajari sekarang
-                        </a>
-                    </div>
-
-                    {{-- Videografi & Editing --}}
-                    <div class="bg-[#F8F9FA] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-100 shadow-sm">
-                        <div class="space-y-2 max-w-md">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded">A - Motion &amp; Story</span>
-                                <h2 class="font-display font-extrabold text-2xl text-slate-900">Videografi &amp; Multimedia</h2>
-                            </div>
-                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                                Produksi konten video sinematik, teknik pengambilan gambar visual, storytelling, serta audio-visual editing.
-                            </p>
-                        </div>
-                        <a href="{{ request()->fullUrlWithQuery(['materi' => 'videografi']) }}"
-                           class="bg-[#6c5ce7] hover:bg-[#5a4cdb] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition shrink-0 text-center">
-                            Pelajari sekarang
-                        </a>
-                    </div>
+                    <a href="{{ request()->fullUrlWithQuery(['materi' => 'arab']) }}"
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                        Pelajari sekarang
+                    </a>
                 </div>
-            </template>
+            </div>
 
+            {{-- Bahasa Inggris --}}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
+                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/BahasaInggris.jpg') }}" 
+                         alt="Bahasa Inggris Banner" 
+                         class="w-full h-full object-cover">
+                </div>
+                
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1 max-w-md">
+                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Bahasa Inggris</h2>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Kuasai bahasa internasional untuk komunikasi global, pemahaman teknologi, dan literatur sains dunia.
+                        </p>
+                    </div>
+                    <a href="{{ request()->fullUrlWithQuery(['materi' => 'inggris']) }}"
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                        Pelajari sekarang
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
+    </template>
 
+    {{-- ====== KARTU-KARTU IT ====== --}}
+    <template x-if="currentBidang === 'it'">
+        <div class="space-y-4">
+            {{-- Programming --}}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
+                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/programming.jpg') }}" 
+                         alt="Programming Banner" 
+                         class="w-full h-full object-cover">
+                </div>
+
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1 max-w-md">
+                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Programming</h2>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Bangun produk nyata dari logika dan baris kode yang kamu ciptakan.
+                        </p>
+                    </div>
+                    <a href="{{ request()->fullUrlWithQuery(['materi' => 'programming']) }}"
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                        Pelajari sekarang
+                    </a>
+                </div>
+            </div>
+
+            {{-- DKV / Desain Grafis --}}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
+                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/DKV.jpg') }}" 
+                         alt="DKV Banner" 
+                         class="w-full h-full object-cover">
+                </div>
+
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1 max-w-md">
+                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Desain Komunikasi Visual (DKV)</h2>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Tangkap momen, rangkai cerita, dan ciptakan karya visual bergerak.
+                        </p>
+                    </div>
+                    <a href="{{ request()->fullUrlWithQuery(['materi' => 'dkv']) }}"
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                        Pelajari sekarang
+                    </a>
+                </div>
+            </div>
+
+            {{-- Komik --}}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
+                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/Komik.jpg') }}" 
+                         alt="Komik Banner" 
+                         class="w-full h-full object-cover">
+                </div>
+
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1 max-w-md">
+                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Komik</h2>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Ceritakan duniamu lewat panel visual, dan karakter yang penuh jiwa.
+                        </p>
+                    </div>
+                    <a href="{{ request()->fullUrlWithQuery(['materi' => 'komik']) }}"
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                        Pelajari sekarang
+                    </a>
+                </div>
+            </div>
+
+            {{-- Videografi & Editing --}}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
+                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/videography.jpg') }}" 
+                         alt="Videografi Banner" 
+                         class="w-full h-full object-cover">
+                </div>
+
+                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1 max-w-md">
+                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Videografi</h2>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Tangkap momen, rangkai cerita, dan ciptakan karya visual bergerak.
+                        </p>
+                    </div>
+                    <a href="{{ request()->fullUrlWithQuery(['materi' => 'videografi']) }}"
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                        Pelajari sekarang
+                    </a>
+                </div>
+            </div>
+        </div>
+    </template>
+
+</div>
     {{-- ============ MODAL PREVIEW MATERI ============ --}}
-    {{-- Dikontrol lewat query string ?materi=... (GET). Semua 5 materi ada
-         di SATU file: resources/views/materi.blade.php (konfigurasi per
-         materi ada di array $materiConfig di file itu). --}}
     @if ($activeMateri)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
             @include('student.ujian.materi')
@@ -236,13 +284,11 @@ document.addEventListener('alpine:init', () => {
                 let selectedExam = null;
 
                 if (this.currentBidang === 'it') {
-                    // Prioritas: Home Slot -> Kategori IT -> Subkategori GCLWAMA
                     selectedExam = examPool.find(e => e.home_slot === 'it_gclwama' && isExamActive(e))
                                 || examPool.find(e => (e.category || '').toLowerCase() === 'it' && isExamActive(e))
                                 || examPool.find(e => (e.subcategory || '').toLowerCase().includes('gclwama') && isExamActive(e))
                                 || examPool.find(e => (e.category || '').toLowerCase() === 'it');
                 } else {
-                    // Bidang Bahasa
                     const subLower = (targetKey || '').toLowerCase();
                     const targetSlot = subLower.includes('arab') ? 'bahasa_arab' : 'bahasa_inggris';
                     
