@@ -61,22 +61,27 @@
     <template x-if="currentBidang === 'bahasa'">
         <div class="space-y-4">
             {{-- Bahasa Arab --}}
+                        {{-- Bahasa Arab --}}
             <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
-                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                <!-- Image height reduced to h-20 sm:h-24 -->
+                <div class="w-full h-20 sm:h-24 bg-slate-200 relative overflow-hidden">
                     <img src="{{ asset('images/landing/BahasaArab.jpg') }}" 
                          alt="Bahasa Arab Banner" 
                          class="w-full h-full object-cover">
                 </div>
                 
-                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <!-- Padding reduced to p-3 sm:p-4, gap reduced to gap-2 -->
+                <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="space-y-1 max-w-md">
-                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Bahasa Arab</h2>
+                        <!-- Font size slightly reduced to text-base sm:text-lg -->
+                        <h2 class="font-display font-extrabold text-base sm:text-lg text-slate-900">Bahasa Arab</h2>
                         <p class="text-xs text-slate-500 leading-relaxed">
                             Pelajari bahasa Al-Qur'an, tata bahasa qawaid, dan percakapan untuk memperdalam literatur klasik &amp; modern.
                         </p>
                     </div>
+                    <!-- Button padding reduced to px-4 py-1.5 -->
                     <a href="{{ request()->fullUrlWithQuery(['materi' => 'arab']) }}"
-                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-4 py-1.5 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
                         Pelajari sekarang
                     </a>
                 </div>
@@ -84,21 +89,25 @@
 
             {{-- Bahasa Inggris --}}
             <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
-                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                <!-- Image height reduced to h-20 sm:h-24 -->
+                <div class="w-full h-20 sm:h-24 bg-slate-200 relative overflow-hidden">
                     <img src="{{ asset('images/landing/BahasaInggris.jpg') }}" 
                          alt="Bahasa Inggris Banner" 
                          class="w-full h-full object-cover">
                 </div>
                 
-                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <!-- Padding reduced to p-3 sm:p-4, gap reduced to gap-2 -->
+                <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="space-y-1 max-w-md">
-                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Bahasa Inggris</h2>
+                        <!-- Font size slightly reduced to text-base sm:text-lg -->
+                        <h2 class="font-display font-extrabold text-base sm:text-lg text-slate-900">Bahasa Inggris</h2>
                         <p class="text-xs text-slate-500 leading-relaxed">
-                            Kuasai bahasa internasional untuk komunikasi global, pemahaman teknologi, dan literatur sains dunia.
+                             Kuasai bahasa internasional untuk komunikasi global, pemahaman teknologi, dan literatur sains dunia.
                         </p>
                     </div>
+                    <!-- Button padding reduced to px-4 py-1.5 -->
                     <a href="{{ request()->fullUrlWithQuery(['materi' => 'inggris']) }}"
-                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-4 py-1.5 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
                         Pelajari sekarang
                     </a>
                 </div>
@@ -111,43 +120,51 @@
         <div class="space-y-4">
             {{-- Programming --}}
             <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
-                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
-                    <img src="{{ asset('images/landing/programming.jpg') }}" 
+                <!-- Image height reduced to h-20 sm:h-24 -->
+                <div class="w-full h-20 sm:h-24 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/Programming.jpg') }}" 
                          alt="Programming Banner" 
                          class="w-full h-full object-cover">
                 </div>
-
-                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                
+                <!-- Padding reduced to p-3 sm:p-4, gap reduced to gap-2 -->
+                <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="space-y-1 max-w-md">
-                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Programming</h2>
+                        <!-- Font size slightly reduced to text-base sm:text-lg -->
+                        <h2 class="font-display font-extrabold text-base sm:text-lg text-slate-900">programming</h2>
                         <p class="text-xs text-slate-500 leading-relaxed">
-                            Bangun produk nyata dari logika dan baris kode yang kamu ciptakan.
+                           Bangun produk nyata dari logika dan baris kode yang kamu ciptakan.
                         </p>
                     </div>
+                    <!-- Button padding reduced to px-4 py-1.5 -->
                     <a href="{{ request()->fullUrlWithQuery(['materi' => 'programming']) }}"
-                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-4 py-1.5 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
                         Pelajari sekarang
                     </a>
                 </div>
-            </div>
+            </div>  
 
             {{-- DKV / Desain Grafis --}}
             <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
-                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
-                    <img src="{{ asset('images/landing/DKV.jpg') }}" 
+                <!-- Image height reduced to h-20 sm:h-24 -->
+                <div class="w-full h-20 sm:h-24 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/dkv.jpg') }}" 
                          alt="DKV Banner" 
                          class="w-full h-full object-cover">
                 </div>
-
-                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                
+                <!-- Padding reduced to p-3 sm:p-4, gap reduced to gap-2 -->
+                <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="space-y-1 max-w-md">
-                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Desain Komunikasi Visual (DKV)</h2>
+                        <!-- Font size slightly reduced to text-base sm:text-lg -->
+                        <h2 class="font-display font-extrabold text-base sm:text-lg text-slate-900">Desain komunikasi visual (DKV)</h2>
                         <p class="text-xs text-slate-500 leading-relaxed">
-                            Tangkap momen, rangkai cerita, dan ciptakan karya visual bergerak.
+                           Tangkap momen, rangkai cerita, dan ciptakan karya visual bergerak.
                         </p>
                     </div>
+                    <!-- Button padding reduced to px-4 py-1.5 -->
                     <a href="{{ request()->fullUrlWithQuery(['materi' => 'dkv']) }}"
-                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-4 py-1.5 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
                         Pelajari sekarang
                     </a>
                 </div>
@@ -155,21 +172,25 @@
 
             {{-- Komik --}}
             <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
-                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
-                    <img src="{{ asset('images/landing/Komik.jpg') }}" 
+                <!-- Image height reduced to h-20 sm:h-24 -->
+                <div class="w-full h-20 sm:h-24 bg-slate-200 relative overflow-hidden">
+                    <img src="{{ asset('images/landing/komik.jpg') }}" 
                          alt="Komik Banner" 
                          class="w-full h-full object-cover">
                 </div>
-
-                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                
+                <!-- Padding reduced to p-3 sm:p-4, gap reduced to gap-2 -->
+                <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="space-y-1 max-w-md">
-                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Komik</h2>
+                        <!-- Font size slightly reduced to text-base sm:text-lg -->
+                        <h2 class="font-display font-extrabold text-base sm:text-lg text-slate-900">komik</h2>
                         <p class="text-xs text-slate-500 leading-relaxed">
-                            Ceritakan duniamu lewat panel visual, dan karakter yang penuh jiwa.
+                           Ceritakan duniamu lewat panel visual, dan karakter yang penuh jiwa.
                         </p>
                     </div>
+                    <!-- Button padding reduced to px-4 py-1.5 -->
                     <a href="{{ request()->fullUrlWithQuery(['materi' => 'komik']) }}"
-                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-4 py-1.5 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
                         Pelajari sekarang
                     </a>
                 </div>
@@ -177,21 +198,25 @@
 
             {{-- Videografi & Editing --}}
             <div class="bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col transition hover:shadow-md">
-                <div class="w-full h-28 sm:h-36 bg-slate-200 relative overflow-hidden">
+                <!-- Image height reduced to h-20 sm:h-24 -->
+                <div class="w-full h-20 sm:h-24 bg-slate-200 relative overflow-hidden">
                     <img src="{{ asset('images/landing/videography.jpg') }}" 
                          alt="Videografi Banner" 
                          class="w-full h-full object-cover">
                 </div>
-
-                <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                
+                <!-- Padding reduced to p-3 sm:p-4, gap reduced to gap-2 -->
+                <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="space-y-1 max-w-md">
-                        <h2 class="font-display font-extrabold text-lg sm:text-xl text-slate-900">Videografi</h2>
+                        <!-- Font size slightly reduced to text-base sm:text-lg -->
+                        <h2 class="font-display font-extrabold text-base sm:text-lg text-slate-900">Videografi</h2>
                         <p class="text-xs text-slate-500 leading-relaxed">
                             Tangkap momen, rangkai cerita, dan ciptakan karya visual bergerak.
                         </p>
                     </div>
+                    <!-- Button padding reduced to px-4 py-1.5 -->
                     <a href="{{ request()->fullUrlWithQuery(['materi' => 'videografi']) }}"
-                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-5 py-2 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
+                       class="bg-[#E85D4E] hover:bg-[#d44c3d] text-white text-xs font-extrabold px-4 py-1.5 rounded-full transition shrink-0 text-center shadow-xs active:scale-95">
                         Pelajari sekarang
                     </a>
                 </div>
