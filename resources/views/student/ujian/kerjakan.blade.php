@@ -38,6 +38,42 @@
         </div>
     </div>
 
+    {{-- ==================== MODAL: SELESAIKAN QUIZ ==================== --}}
+<div x-show="showFinishModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+    <div @click.outside="showFinishModal = false" class="bg-white rounded-3xl max-w-sm w-full p-8 text-center space-y-5 shadow-2xl border border-slate-100 relative">
+        
+        {{-- Custom Icon --}}
+        <div class="w-16 h-16 bg-[#FBBF24] rounded-full flex items-center justify-center mx-auto text-3xl shadow-sm">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+
+        <h3 class="font-display font-black text-2xl text-[#E85D4E]">Selesaikan Quiz?</h3>
+        
+        <p class="text-sm text-slate-500 leading-relaxed">
+            Pastikan kamu sudah memeriksa kembali seluruh jawaban sebelum menyelesaikan quiz.
+        </p>
+
+        {{-- Info Box --}}
+        <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 inline-block w-full">
+            <p class="text-sm font-bold text-slate-400">
+                <span x-text="answeredCount"></span>/<span x-text="questions.length"></span> quiz telah dijawab
+            </p>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 pt-2">
+            <button type="button" @click="showFinishModal = false" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-3 rounded-xl transition text-sm">
+                Kembali
+            </button>
+            <button type="button" @click="finishExam()" class="flex-1 bg-[#6C70EB] hover:bg-[#5B50E5] text-white font-bold py-3 rounded-xl transition text-sm shadow-md active:scale-95">
+                Selesai
+            </button>
+        </div>
+    </div>
+</div>
+
     {{-- ==================== SCREEN 0: KETIKA UJIAN DITUTUP / DILUAR JADWAL ==================== --}}
     <div x-show="step === 'closed'" x-cloak class="max-w-xl w-full mx-auto text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
         <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">⏱</div>
@@ -99,120 +135,185 @@
     </div>
 
     {{-- ==================== SCREEN 2: PENGERJAAN SOAL + TIMER ==================== --}}
-    <div x-show="step === 'exam'" x-cloak class="max-w-4xl w-full mx-auto space-y-6">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Waktu Soal:</span>
-                <span class="font-mono font-bold text-base sm:text-lg"
-                      :class="questionTimeRemaining <= 10 ? 'text-rose-600 animate-pulse' : 'text-slate-900'"
-                      x-text="questionTimeRemaining + 's'"></span>
-            </div>
-
-            <div class="flex-1 max-w-md space-y-1.5 text-center">
-                <p class="text-xs sm:text-sm font-semibold text-slate-700">
-                    Aku sudah mengerjakan <span class="font-bold text-slate-900" x-text="`${answeredCount}/${questions.length}`"></span>
-                </p>
-                <div class="flex items-center gap-3">
-                    <div class="flex-1 h-3 rounded-full bg-[#D9D9D9] overflow-hidden">
-                        <div class="h-full bg-[#8C8C8C] transition-all duration-300"
-                             :style="`width: ${progressPercentage}%`"></div>
+       {{-- ==================== SCREEN 2: PENGERJAAN SOAL (NEW UI) ==================== --}}
+    <div x-show="step === 'exam'" x-cloak class="flex flex-col h-full w-full">
+        
+        {{-- TOP HEADER --}}
+        <div class="bg-white px-6 py-4 flex items-center justify-between shadow-xs z-10">
+            <div class="flex-1 max-w-2xl mr-6">
+                <div class="text-xs font-bold text-slate-600 mb-1.5 flex justify-between">
+                    <span>Aku sudah mengerjakan <span class="text-blue-600" x-text="answeredCount"></span> / <span x-text="questions.length"></span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 h-3 rounded-full bg-slate-200 overflow-hidden">
+                        <div class="h-full bg-[#3B82F6] transition-all duration-300" :style="`width: ${progressPercentage}%`"></div>
                     </div>
-                    <span class="text-xs font-mono font-bold text-slate-700 shrink-0" x-text="`${progressPercentage}%`"></span>
+                    <span class="text-xs font-bold text-slate-700 w-8 text-right" x-text="`${progressPercentage}%`"></span>
                 </div>
             </div>
-
-            <a href="{{ route('beranda') }}" class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-800 text-xs sm:text-sm font-bold px-5 py-2 rounded-lg transition">
+            <a href="{{ route('beranda') }}" class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-800 text-xs sm:text-sm font-bold px-6 py-2 rounded-lg transition">
                 Keluar
             </a>
         </div>
 
-        <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-            <div class="h-full bg-indigo-600 transition-all duration-1000 ease-linear"
-                 :style="`width: ${(questionTimeRemaining / Math.max(1, currentQuestionTimeLimit)) * 100}%`"></div>
-        </div>
-
-        <div class="text-center">
-            <span class="inline-block bg-[#D9D9D9] text-slate-800 font-bold text-xs uppercase tracking-wider px-6 py-1.5 rounded-full"
-                  x-text="exam?.title ?? 'QUIZ PENGETAHUAN'"></span>
-        </div>
-
-        <template x-if="currentQuestion">
-            <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-12 shadow-sm space-y-6">
-                <div>
-                    <span class="inline-block bg-[#D9D9D9] text-slate-800 font-semibold text-xs px-4 py-1 rounded-full"
-                          x-text="`Pertanyaan ${currentIndex + 1} dari ${questions.length}`"></span>
+        {{-- MAIN CONTENT --}}
+        {{-- CHANGED: lg:grid-cols-5, question area col-span-3, sidebar col-span-2 --}}
+        <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
+            
+            {{-- LEFT: QUESTION AREA --}}
+            <div class="lg:col-span-3 space-y-4">
+                
+                {{-- Banner --}}
+                <div class="bg-[#FF7B42] text-white font-bold py-3 px-6 rounded-t-xl text-center text-sm shadow-sm"
+                     x-text="exam?.title ?? 'QUIZ PENGETAHUAN'">
                 </div>
 
-                <h2 class="font-display font-bold text-lg sm:text-2xl text-slate-900 leading-relaxed"
-                    x-text="currentQuestion?.question_text"></h2>
-
-                {{-- 1. Pilihan Ganda Terenkripsi --}}
-                <div class="space-y-3 pt-2" x-show="currentQuestion?.type === 'multiple_choice'">
-                    <template x-for="(opsi, idx) in (currentQuestion?.options || [])" :key="idx">
-                        <label class="flex items-center gap-4 p-4 rounded-xl border border-slate-900/80 cursor-pointer transition-colors"
-                               :class="jawaban[currentQuestion.id] === opsi.token ? 'bg-slate-100 border-slate-950 font-bold' : 'hover:bg-slate-50'">
-                            <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi.token" x-model="jawaban[currentQuestion.id]" class="hidden">
-                            <span class="font-bold text-slate-900 text-sm sm:text-base" x-text="String.fromCharCode(65 + idx) + '.'"></span>
-                            <span class="text-sm sm:text-base text-slate-800" x-text="opsi.text"></span>
-                        </label>
-                    </template>
-                </div>
-
-                {{-- 2. Input Esai --}}
-                <div x-show="currentQuestion?.type === 'essay'" class="pt-2">
-                    <textarea rows="5" placeholder="Tuliskan jawaban atau narasi ceritamu di sini..." x-model="jawaban[currentQuestion.id]"
-                              class="w-full rounded-xl border border-slate-900/80 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"></textarea>
-                </div>
-
-                {{-- 3. Input Upload Gambar --}}
-                <div x-show="currentQuestion?.type === 'image_upload'" class="pt-2 space-y-4">
-                    <label class="block w-full border-2 border-dashed border-slate-400 hover:border-slate-800 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition bg-slate-50/50 hover:bg-slate-50">
-                        <input type="file" accept="image/*" class="hidden" 
-                               @click="prepareFilePicker()"
-                               @cancel="resetFilePicker()"
-                               @change="handleImageUpload(currentQuestion.id, $event)">
-                        <div class="space-y-2">
-                            <svg class="w-10 h-10 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <p class="font-bold text-sm sm:text-base text-slate-800">Klik atau seret foto/gambar karya kamu ke sini</p>
-                            <p class="text-xs text-slate-500">Mendukung JPG, PNG, WEBP, PDF (Maks. 5MB)</p>
-                        </div>
-                    </label>
-
-                    <template x-if="imagePreviews[currentQuestion?.id]">
-                        <div class="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-                            <div class="flex items-center gap-4 min-w-0">
-                                <img :src="imagePreviews[currentQuestion.id]" class="w-16 h-16 object-cover rounded-xl border border-emerald-300">
-                                <div class="min-w-0">
-                                    <p class="text-xs font-bold text-emerald-900 truncate" x-text="imageFiles[currentQuestion.id]?.name"></p>
-                                    <p class="text-[11px] text-emerald-700">Gambar siap dikirim ✓</p>
+                {{-- Question Card --}}
+                <div class="bg-white p-5 sm:p-8 rounded-b-xl shadow-sm space-y-6 min-h-[400px] flex flex-col">
+                    
+                    <template x-if="currentQuestion">
+                        <div class="flex-1 flex flex-col">
+                            
+                            {{-- Header Row --}}
+                            <div class="flex items-center justify-between mb-5">
+                                <div class="inline-block bg-[#3B82F6] text-white text-[11px] font-bold px-4 py-1.5 rounded-full tracking-wider uppercase">
+                                    PERTANYAAN <span x-text="currentIndex + 1"></span> DARI <span x-text="questions.length"></span>
+                                </div>
+                                {{-- Timer (kept from original logic) --}}
+                                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Waktu:</span>
+                                    <span class="font-mono font-bold text-sm" 
+                                          :class="questionTimeRemaining <= 10 ? 'text-rose-600 animate-pulse' : 'text-slate-800'" 
+                                          x-text="questionTimeRemaining + 's'"></span>
                                 </div>
                             </div>
-                            <button type="button" @click="removeUploadedImage(currentQuestion.id)" class="text-rose-600 hover:text-rose-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-rose-200 bg-white">
-                                Ganti / Hapus
-                            </button>
+
+                            {{-- Question Text --}}
+                            <h2 class="font-bold text-lg sm:text-xl text-slate-800 leading-snug mb-6" x-text="currentQuestion?.question_text"></h2>
+
+                            {{-- 1. Multiple Choice --}}
+                            <div class="space-y-3" x-show="currentQuestion?.type === 'multiple_choice'">
+                                <template x-for="(opsi, idx) in (currentQuestion?.options || [])" :key="idx">
+                                    <label class="flex items-center gap-4 p-3.5 rounded-xl border-2 cursor-pointer transition-all duration-200"
+                                           :class="jawaban[currentQuestion.id] === opsi.token ? 'border-[#3B82F6] bg-[#EFF6FF] shadow-xs' : 'border-slate-200 hover:border-[#3B82F6] hover:bg-slate-50'">
+                                        <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi.token" x-model="jawaban[currentQuestion.id]" class="hidden">
+                                        
+                                        {{-- Custom Radio Circle --}}
+                                        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
+                                             :class="jawaban[currentQuestion.id] === opsi.token ? 'border-[#3B82F6]' : 'border-slate-300'">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" x-show="jawaban[currentQuestion.id] === opsi.token"></div>
+                                        </div>
+                                        
+                                        <span class="text-sm font-medium" 
+                                              :class="jawaban[currentQuestion.id] === opsi.token ? 'text-[#1E3A8A]' : 'text-slate-700'" 
+                                              x-text="opsi.text"></span>
+                                    </label>
+                                </template>
+                            </div>
+
+                            {{-- 2. Essay --}}
+                            <div x-show="currentQuestion?.type === 'essay'" class="pt-2">
+                                <textarea rows="4" placeholder="Tuliskan jawaban atau narasi ceritamu di sini..." x-model="jawaban[currentQuestion.id]"
+                                          class="w-full rounded-xl border border-slate-300 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+
+                            {{-- 3. Image Upload --}}
+                            <div x-show="currentQuestion?.type === 'image_upload'" class="pt-2 space-y-4">
+                                <label class="block w-full border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30">
+                                    <input type="file" accept="image/*" class="hidden" 
+                                           @click="prepareFilePicker()"
+                                           @cancel="resetFilePicker()"
+                                           @change="handleImageUpload(currentQuestion.id, $event)">
+                                    <div class="space-y-2">
+                                        <svg class="w-8 h-8 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        <p class="font-bold text-xs sm:text-sm text-slate-800">Klik atau seret foto/gambar karya kamu ke sini</p>
+                                        <p class="text-[11px] text-slate-500">Mendukung JPG, PNG, WEBP, PDF (Maks. 5MB)</p>
+                                    </div>
+                                </label>
+
+                                <template x-if="imagePreviews[currentQuestion?.id]">
+                                    <div class="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <img :src="imagePreviews[currentQuestion.id]" class="w-12 h-12 object-cover rounded-xl border border-emerald-300">
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-bold text-emerald-900 truncate" x-text="imageFiles[currentQuestion.id]?.name"></p>
+                                                <p class="text-[10px] text-emerald-700">Gambar siap dikirim ✓</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" @click="removeUploadedImage(currentQuestion.id)" class="text-rose-600 hover:text-rose-800 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-rose-200 bg-white">
+                                            Ganti / Hapus
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+
                         </div>
                     </template>
+
+                    {{-- Bottom Navigation (SMALLER BUTTONS) --}}
+                    <div class="flex items-center justify-between pt-5 border-t border-slate-100 mt-auto">
+                        <button type="button" @click="prevQuestion()" :disabled="currentIndex === 0"
+                                class="bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 font-bold text-xs px-4 py-2 rounded-lg transition">
+                            ← Sebelumnya
+                        </button>
+
+                        <button type="button" x-show="!isLast" @click="nextQuestion()"
+                                class="bg-[#3B82F6] hover:bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm">
+                            Selanjutnya →
+                        </button>
+
+                        <button type="button" x-show="isLast" @click="finishExam()"
+                                class="bg-[#10B981] hover:bg-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm">
+                            Selesai →
+                        </button>
+                    </div>
                 </div>
             </div>
-        </template>
 
-        <div class="flex items-center justify-between pt-2">
-            <button type="button" @click="prevQuestion()" :disabled="currentIndex === 0"
-                    class="bg-[#D9D9D9] hover:bg-[#C8C8C8] disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 rounded-2xl transition">
-                &lt; Sebelumnya
-            </button>
+            {{-- RIGHT: SIDEBAR (WIDER) --}}
+            <div class="lg:col-span-2">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 sticky top-6 space-y-5">
+                    
+                    <h3 class="font-bold text-center text-slate-700 text-sm">Navigasi Soal</h3>
+                    
+                    {{-- Number Grid (More columns now) --}}
+                    <div class="grid grid-cols-5 gap-2">
+                        <template x-for="(q, idx) in questions" :key="idx">
+                            <button @click="currentIndex = idx; resetQuestionTimer();"
+                                    class="h-9 w-full rounded-md font-bold text-xs flex items-center justify-center transition"
+                                    :class="{
+                                        'bg-[#10B981] text-white shadow-sm': jawaban[q.id] !== undefined && jawaban[q.id] !== '',
+                                        'bg-[#EF4444] text-white shadow-md ring-2 ring-rose-200': currentIndex === idx,
+                                        'bg-slate-200 text-slate-600 hover:bg-slate-300': (jawaban[q.id] === undefined || jawaban[q.id] === '') && currentIndex !== idx
+                                    }">
+                                <span x-text="idx + 1"></span>
+                            </button>
+                        </template>
+                    </div>
 
-            <button type="button" x-show="!isLast" @click="nextQuestion()"
-                    class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-900 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 rounded-2xl transition">
-                Selanjutnya &gt;
-            </button>
+                    {{-- Legend --}}
+                    <div class="text-[11px] space-y-2 pt-3 border-t border-slate-100 text-slate-600 font-medium">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-[#10B981] rounded-sm"></div> Sudah Dijawab
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-[#EF4444] rounded-sm"></div> Sedang Dikerjakan
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-slate-200 rounded-sm"></div> Belum Dikerjakan
+                        </div>
+                    </div>
 
-            <button type="button" x-show="isLast" @click="finishExam()"
-                    class="bg-[#8C8C8C] hover:bg-[#737373] text-white font-bold text-sm sm:text-base px-8 py-3 rounded-2xl transition shadow active:scale-95">
-                Selesai &gt;
-            </button>
+                    {{-- Finish Button --}}
+                    <button type="button" @click="if(answeredCount === questions.length) showFinishModal = true;" 
+                            class="w-full font-bold py-3.5 rounded-xl transition text-sm mt-4 shadow-sm active:scale-95"
+                            :class="answeredCount === questions.length && questions.length > 0 ? 'bg-[#FBBF24] hover:bg-[#F59E0B] text-white cursor-pointer' : 'bg-[#E5E7EB] text-slate-400 cursor-not-allowed'">
+                        SELESAI!
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -250,6 +351,7 @@ document.addEventListener('alpine:init', () => {
         violations: 0,
         maxViolations: 3,
         showWarningModal: false,
+        showFinishModal: false,
         isPickingFile: false,
 
         questionTimeRemaining: 60,
