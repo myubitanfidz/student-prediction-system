@@ -134,31 +134,11 @@
         </div>
     </div>
 
-    {{-- ==================== SCREEN 2: PENGERJAAN SOAL + TIMER ==================== --}}
-       {{-- ==================== SCREEN 2: PENGERJAAN SOAL (NEW UI) ==================== --}}
-    <div x-show="step === 'exam'" x-cloak class="flex flex-col h-full w-full">
+       {{-- ==================== SCREEN 2: PENGERJAAN SOAL ==================== --}}
+    <div x-show="step === 'exam'" x-cloak class="flex flex-col h-full w-full max-w-7xl mx-auto pt-6">
         
-        {{-- TOP HEADER --}}
-        <div class="bg-white px-6 py-4 flex items-center justify-between shadow-xs z-10">
-            <div class="flex-1 max-w-2xl mr-6">
-                <div class="text-xs font-bold text-slate-600 mb-1.5 flex justify-between">
-                    <span>Aku sudah mengerjakan <span class="text-blue-600" x-text="answeredCount"></span> / <span x-text="questions.length"></span></span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="flex-1 h-3 rounded-full bg-slate-200 overflow-hidden">
-                        <div class="h-full bg-[#3B82F6] transition-all duration-300" :style="`width: ${progressPercentage}%`"></div>
-                    </div>
-                    <span class="text-xs font-bold text-slate-700 w-8 text-right" x-text="`${progressPercentage}%`"></span>
-                </div>
-            </div>
-            <a href="{{ route('beranda') }}" class="bg-[#D9D9D9] hover:bg-[#C8C8C8] text-slate-800 text-xs sm:text-sm font-bold px-6 py-2 rounded-lg transition">
-                Keluar
-            </a>
-        </div>
-
-        {{-- MAIN CONTENT --}}
-        {{-- CHANGED: lg:grid-cols-5, question area col-span-3, sidebar col-span-2 --}}
-        <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
+        {{-- MAIN CONTENT (No more top white header! Progress bar is now in the layout topbar) --}}
+        <div class="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
             
             {{-- LEFT: QUESTION AREA --}}
             <div class="lg:col-span-3 space-y-4">
@@ -170,16 +150,14 @@
 
                 {{-- Question Card --}}
                 <div class="bg-white p-5 sm:p-8 rounded-b-xl shadow-sm space-y-6 min-h-[400px] flex flex-col">
-                    
                     <template x-if="currentQuestion">
                         <div class="flex-1 flex flex-col">
                             
-                            {{-- Header Row --}}
+                            {{-- Header Row (Now only shows the "PERTANYAAN X DARI Y" and Timer) --}}
                             <div class="flex items-center justify-between mb-5">
                                 <div class="inline-block bg-[#3B82F6] text-white text-[11px] font-bold px-4 py-1.5 rounded-full tracking-wider uppercase">
                                     PERTANYAAN <span x-text="currentIndex + 1"></span> DARI <span x-text="questions.length"></span>
                                 </div>
-                                {{-- Timer (kept from original logic) --}}
                                 <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
                                     <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Waktu:</span>
                                     <span class="font-mono font-bold text-sm" 
@@ -197,13 +175,10 @@
                                     <label class="flex items-center gap-4 p-3.5 rounded-xl border-2 cursor-pointer transition-all duration-200"
                                            :class="jawaban[currentQuestion.id] === opsi.token ? 'border-[#3B82F6] bg-[#EFF6FF] shadow-xs' : 'border-slate-200 hover:border-[#3B82F6] hover:bg-slate-50'">
                                         <input type="radio" :name="'q-' + currentQuestion.id" :value="opsi.token" x-model="jawaban[currentQuestion.id]" class="hidden">
-                                        
-                                        {{-- Custom Radio Circle --}}
                                         <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
                                              :class="jawaban[currentQuestion.id] === opsi.token ? 'border-[#3B82F6]' : 'border-slate-300'">
                                             <div class="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" x-show="jawaban[currentQuestion.id] === opsi.token"></div>
                                         </div>
-                                        
                                         <span class="text-sm font-medium" 
                                               :class="jawaban[currentQuestion.id] === opsi.token ? 'text-[#1E3A8A]' : 'text-slate-700'" 
                                               x-text="opsi.text"></span>
@@ -232,7 +207,6 @@
                                         <p class="text-[11px] text-slate-500">Mendukung JPG, PNG, WEBP, PDF (Maks. 5MB)</p>
                                     </div>
                                 </label>
-
                                 <template x-if="imagePreviews[currentQuestion?.id]">
                                     <div class="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
                                         <div class="flex items-center gap-3 min-w-0">
@@ -248,7 +222,6 @@
                                     </div>
                                 </template>
                             </div>
-
                         </div>
                     </template>
 
@@ -274,11 +247,11 @@
 
             {{-- RIGHT: SIDEBAR (WIDER) --}}
             <div class="lg:col-span-2">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 sticky top-6 space-y-5">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 sticky top-20 space-y-5">
                     
                     <h3 class="font-bold text-center text-slate-700 text-sm">Navigasi Soal</h3>
                     
-                    {{-- Number Grid (More columns now) --}}
+                    {{-- Number Grid --}}
                     <div class="grid grid-cols-5 gap-2">
                         <template x-for="(q, idx) in questions" :key="idx">
                             <button @click="currentIndex = idx; resetQuestionTimer();"
@@ -377,6 +350,18 @@ document.addEventListener('alpine:init', () => {
 
         async init() {
             this.setupKeyGuards();
+
+             // 🌟 THIS IS THE MISSING PIECE — Syncs exam state to topbar
+    Alpine.effect(() => {
+        const store = Alpine.store('examHeader');
+        if (store) {
+            store.active  = this.step === 'exam';
+            store.answered = this.answeredCount;
+            store.total    = this.questions.length;
+            store.percent  = this.progressPercentage;
+        }
+    });
+
 
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
             try {

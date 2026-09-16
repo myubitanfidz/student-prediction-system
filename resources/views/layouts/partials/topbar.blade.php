@@ -15,9 +15,29 @@
 
     {{-- Sisi Kanan: Menu Navigasi & Profil --}}
     <div class="flex items-center gap-6">
+        
+        {{-- ==================== EXAM MODE HEADER ==================== --}}
+        {{-- Progress Bar (Only shows during exam) --}}
+        <div x-show="$store.examHeader.active" x-cloak class="hidden md:flex items-center gap-3 w-48 lg:w-64">
+            <div class="flex-1 h-3 rounded-full bg-white/20 overflow-hidden">
+                <div class="h-full bg-[#3B82F6] transition-all duration-300"
+                     :style="`width: ${$store.examHeader.percent}%`"></div>
+            </div>
+            <span class="text-xs font-bold text-white/90"
+                  x-text="`${$store.examHeader.answered}/${$store.examHeader.total}`"></span>
+        </div>
+
+        {{-- Kembali Button (Only shows during exam) --}}
+        <a href="{{ route('beranda') }}" x-show="$store.examHeader.active" x-cloak
+           class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
+            Kembali
+        </a>
+        {{-- ==================== END EXAM MODE HEADER ==================== --}}
+
         {{-- Navigasi Khusus Admin & Guru (Disebelah Kanan) --}}
+        {{-- ADDED x-show="!$store.examHeader.active" --}}
         <template x-if="['admin', 'teacher'].includes($store.auth.user?.role)">
-            <nav class="hidden md:flex items-center gap-3 text-sm font-semibold">
+            <nav x-show="!$store.examHeader.active" x-cloak class="hidden md:flex items-center gap-3 text-sm font-semibold">
                 <a href="{{ route('admin.dashboard') }}" 
                    class="px-3.5 py-1.5 rounded-xl transition-all {{ request()->routeIs('admin.dashboard') || request()->routeIs('admin.koreksi') ? 'bg-white/20 text-amber-300 shadow-xs' : 'text-white/80 hover:text-white hover:bg-white/10' }}">
                     Daftar Santri &amp; Koreksi
@@ -32,8 +52,9 @@
         </template>
 
         {{-- Navigasi Desktop Santri (Disebelah Kanan) --}}
+        {{-- ADDED x-show="!$store.examHeader.active" --}}
         <template x-if="!['admin', 'teacher'].includes($store.auth.user?.role)">
-            <nav class="hidden md:flex items-center gap-6 text-sm font-semibold">
+            <nav x-show="!$store.examHeader.active" x-cloak class="hidden md:flex items-center gap-6 text-sm font-semibold">
                 <a href="{{ route('beranda') }}" class="text-white hover:text-amber-300 transition-colors {{ request()->routeIs('beranda') ? 'text-amber-300' : '' }}">Home</a>
                 <a href="{{ route('beranda') }}#bidang" class="text-white/80 hover:text-white transition-colors">Bidang</a>
                 <a href="{{ route('beranda') }}#about" class="text-white/80 hover:text-white transition-colors">About Us</a>
@@ -41,10 +62,12 @@
         </template>
 
         {{-- Separator Garis Tipis (Opsional) --}}
-        <div class="hidden md:block w-px h-6 bg-white/20"></div>
+        {{-- ADDED x-show="!$store.examHeader.active" --}}
+        <div x-show="!$store.examHeader.active" x-cloak class="hidden md:block w-px h-6 bg-white/20"></div>
 
         {{-- Menu Profile / Dropdown --}}
-        <div class="relative">
+        {{-- ADDED x-show="!$store.examHeader.active" --}}
+        <div x-show="!$store.examHeader.active" x-cloak class="relative">
             <button type="button" @click="profileOpen = !profileOpen" class="w-9 h-9 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center font-bold text-sm text-white hover:bg-white/30 transition shadow-xs" aria-label="Buka menu profil">
                 <span x-text="($store.auth.user?.name ?? 'S').charAt(0).toUpperCase()"></span>
             </button>
