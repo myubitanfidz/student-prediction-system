@@ -71,7 +71,7 @@
 {{-- ============ MARQUEE ============ --}}
 <div class="bg-[#f26d3d] py-4 overflow-hidden">
     <div class="marquee-track">
-        <img src="{{ asset('images/landing/marquee-tile.svg') }}" alt="" aria-hidden="true" class="h-auto w-[1440px] shrink-0">
+        <img src="{{ asset('images/landing/marquee-tile.svg') }}" alt="" aria-hidden="true" class="h-full w-[1440px] shrink-0">
     </div>
 </div>
 

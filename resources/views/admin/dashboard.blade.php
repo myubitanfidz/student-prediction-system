@@ -80,45 +80,49 @@
 
                 <div class="overflow-x-auto min-h-[400px]">
                     <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead class="bg-white border-b border-line text-xs uppercase tracking-wide text-ink/50">
-                            <tr>
-                                <th class="px-5 py-4 font-semibold text-center w-16">No</th>
-                                <th class="px-5 py-4 font-semibold">Nama Santri</th>
-                                <th class="px-5 py-4 font-semibold">Periode Ujian Diikuti</th>
-                                <th class="px-5 py-4 font-semibold text-center w-32">Test Kelar</th>
-                                <th class="px-5 py-4 font-semibold text-center w-32">Porto</th>
-                                <th class="px-5 py-4 font-semibold text-center w-32">Aksi</th>
-                            </tr>
-                        </thead>
+               <thead class="bg-white border-b border-line text-xs uppercase tracking-wide text-ink/50">
+    <tr>
+        <th class="px-5 py-4 font-semibold text-center w-16">No</th>
+        <th class="px-5 py-4 font-semibold">Nama Santri</th>
+        <th class="px-5 py-4 font-semibold">Periode Ujian Diikuti</th>
+        <th class="px-5 py-4 font-semibold text-center w-24">Benar</th>   {{-- 🌟 NEW --}}
+        <th class="px-5 py-4 font-semibold text-center w-24">Salah</th>   {{-- 🌟 NEW --}}
+        <th class="px-5 py-4 font-semibold text-center w-32">Test Kelar</th>
+        <th class="px-5 py-4 font-semibold text-center w-32">Porto</th>
+        <th class="px-5 py-4 font-semibold text-center w-32">Aksi</th>
+    </tr>
+</thead>
                         <tbody class="divide-y divide-line bg-white">
                             <template x-for="(student, index) in paginatedStudents" :key="student.id">
-                                <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-5 py-4 text-center font-mono text-ink/50" x-text="(currentPage - 1) * itemsPerPage + index + 1"></td>
-                                    <td class="px-5 py-4">
-                                        <p class="font-bold text-slate-900 text-base" x-text="studentName(student)"></p>
-                                        <p class="text-xs text-ink/50" x-text="studentEmail(student)"></p>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <div class="flex flex-wrap gap-1 max-w-xs">
-                                            <template x-for="p in studentPeriods(student)" :key="p">
-                                                <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="p"></span>
-                                            </template>
-                                            <span x-show="studentPeriods(student).length === 0" class="text-xs text-slate-400 italic">Belum Mengikuti Ujian</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4 text-center font-mono font-bold text-brand-blue text-base" x-text="testsDone(student)"></td>
-                                    <td class="px-5 py-4 text-center font-mono font-bold text-brand-orange text-base" x-text="portfolioFiles(student).length"></td>
-                                    <td class="px-5 py-4 text-center">
-                                        <button type="button" @click="activeStudent = student; setTimeout(() => modalAnim = true, 150)" 
-                                                class="bg-slate-800 text-white text-xs font-semibold px-5 py-2 rounded-lg hover:bg-slate-700 transition-colors">
-                                            Expand
-                                        </button>
-                                    </td>
-                                </tr>
+                              <tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-5 py-4 text-center font-mono text-ink/50" x-text="(currentPage - 1) * itemsPerPage + index + 1"></td>
+    <td class="px-5 py-4">
+        <p class="font-bold text-slate-900 text-base" x-text="studentName(student)"></p>
+        <p class="text-xs text-ink/50" x-text="studentEmail(student)"></p>
+    </td>
+    <td class="px-5 py-4">
+        <div class="flex flex-wrap gap-1 max-w-xs">
+            <template x-for="p in studentPeriods(student)" :key="p">
+                <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="p"></span>
+            </template>
+            <span x-show="studentPeriods(student).length === 0" class="text-xs text-slate-400 italic">Belum Mengikuti Ujian</span>
+        </div>
+    </td>
+    <td class="px-5 py-4 text-center font-mono font-bold text-emerald-600 text-base" x-text="correctCount(student)"></td>
+    <td class="px-5 py-4 text-center font-mono font-bold text-rose-600 text-base" x-text="wrongCount(student)"></td>
+    <td class="px-5 py-4 text-center font-mono font-bold text-brand-blue text-base" x-text="testsDone(student)"></td>
+    <td class="px-5 py-4 text-center font-mono font-bold text-brand-orange text-base" x-text="portfolioFiles(student).length"></td>
+    <td class="px-5 py-4 text-center">
+        <button type="button" @click="activeStudent = student; setTimeout(() => modalAnim = true, 150)" 
+                class="bg-slate-800 text-white text-xs font-semibold px-5 py-2 rounded-lg hover:bg-slate-700 transition-colors">
+            Expand
+        </button>
+    </td>
+</tr>
                             </template>
                             
                             <tr x-show="paginatedStudents.length === 0">
-                                <td colspan="6" class="px-5 py-12 text-center text-ink/40">
+                                <td colspan="8" class="px-5 py-12 text-center text-ink/40">
                                     Tidak ada santri yang cocok dengan filter gelombang / pencarian ini.
                                 </td>
                             </tr>

@@ -14,25 +14,31 @@ class DashboardController extends Controller
         $user = $request->user()->load(['portfolio', 'answers.question.exam']);
 
         // 1. Rekap Per Paket Ujian Standar
-        $examResults = Exam::all()->map(function ($exam) use ($user) {
-            $answers = $user->answers->filter(fn ($ans) => $ans->question && $ans->question->exam_id === $exam->id);
-            $mcAnswers = $answers->filter(fn ($ans) => $ans->question->type === 'multiple_choice');
+       $examResults = Exam::all()->map(function ($exam) use ($user) {
+    $answers = $user->answers->filter(fn ($ans) => $ans->question && $ans->question->exam_id === $exam->id);
+    $mcAnswers = $answers->filter(fn ($ans) => $ans->question->type === 'multiple_choice');
 
-            $mcTotal = $mcAnswers->count();
-            $mcCorrect = $mcAnswers->where('score', '>=', 100)->count();
-            $percentage = $mcTotal > 0 ? round(($mcCorrect / $mcTotal) * 100, 2) : 0;
+    $mcTotal   = $mcAnswers->count();
+    $mcCorrect = $mcAnswers->where('score', '>=', 100)->count();
+    $mcWrong   = $mcAnswers->where('score', '=', 0)->count();
+    $ungraded  = $answers->whereNull('score')->count();
+    $percentage = $mcTotal > 0 ? round(($mcCorrect / $mcTotal) * 100, 2) : 0;
 
-            return [
-                'exam_id'         => $exam->id,
-                'category'        => $exam->category,
-                'subcategory'     => $exam->subcategory,
-                'exam_title'      => $exam->title,
-                'answered_count'  => $answers->count(),
-                'mc_accuracy_pct' => $percentage,
-                'total_score'     => $answers->sum('score'),
-            ];
-        });
-
+    return [
+        'exam_id'          => $exam->id,
+        'hash_id'          => $exam->hash_id,   // 🌟 untuk matching di frontend
+        'category'         => $exam->category,
+        'subcategory'      => $exam->subcategory,
+        'exam_title'       => $exam->title,
+        'answered_count'   => $answers->count(),
+        'mc_total_count'   => $mcTotal,
+        'mc_correct_count' => $mcCorrect,
+        'mc_wrong_count'   => $mcWrong,
+        'ungraded_count'   => $ungraded,
+        'mc_accuracy_pct'  => $percentage,
+        'total_score'      => $answers->sum('score'),
+    ];
+});
         // 2. Mesin Agregasi GCLWAMA
         $tagScores = [
             'G'           => [],
