@@ -48,14 +48,17 @@
                     <img src="{{ asset('images/landing/star.svg') }}" alt="" aria-hidden="true" class="h-full w-auto max-w-full object-contain">
                 </div>
 
-                {{-- Rincian Skor (GCLWAMA) --}}
+                {{-- Rincian Skor --}}
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-2.5">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-display font-bold text-xs text-slate-900">Rincian Skor (GCLWAMA)</h3>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Global</span>
+                        <h3 class="font-display font-bold text-xs text-slate-900"
+                            x-text="isItExam ? 'Rincian Skor (GCLWAMA)' : 'Rincian Skor Ujian'"></h3>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider"
+                              x-text="isItExam ? 'Global' : 'Per Ujian'"></span>
                     </div>
 
-                    <template x-if="hasBreakdown">
+                    {{-- MODE IT: 7 GCLWAMA bars --}}
+                    <template x-if="isItExam && hasBreakdown">
                         <div class="space-y-2.5">
                             <template x-for="detail in breakdown" :key="detail.label">
                                 <div class="space-y-1">
@@ -73,8 +76,26 @@
                         </div>
                     </template>
 
-                    {{-- Bahasa exams have no GCLWAMA tags --}}
-                    <template x-if="!hasBreakdown">
+                    {{-- MODE BAHASA: single exam score bar --}}
+                    <template x-if="!isItExam">
+                        <div class="space-y-1 pt-1">
+                            <div class="flex justify-between items-center text-[10px] font-bold">
+                                <span class="text-slate-700" x-text="examTitle"></span>
+                                <span class="text-slate-900 font-mono" x-text="`${totalScore}%`"></span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-700"
+                                     :style="`width: ${totalScore}%; background-color: #5B50E5`">
+                                </div>
+                            </div>
+                            <p class="text-[9px] text-slate-400 italic pt-1 text-center">
+                                Hasil dari jawaban pilihan ganda kamu
+                            </p>
+                        </div>
+                    </template>
+
+                    {{-- IT exam but no tagged questions --}}
+                    <template x-if="isItExam && !hasBreakdown">
                         <p class="text-[11px] text-slate-400 italic text-center py-4">
                             Belum ada data GCLWAMA untuk ujian ini.
                         </p>
@@ -83,8 +104,8 @@
             </div>
         </div>
 
-        {{-- ==================== PREDIKSI BAKAT (CAREER) ==================== --}}
-        <div x-show="topInclination" x-cloak
+        {{-- ==================== PREDIKSI BAKAT (only for IT exam) ==================== --}}
+        <div x-show="isItExam && topInclination && topScore > 0" x-cloak
              class="bg-gradient-to-br from-[#5B50E5] to-[#7C70F0] rounded-3xl p-5 text-white shadow-md space-y-3">
             <div class="flex items-center justify-between">
                 <div>
@@ -121,7 +142,6 @@
 
         {{-- ==================== STAT BOXES ==================== --}}
         <div class="grid grid-cols-3 gap-2">
-            {{-- Skor Benar --}}
             <div class="rounded-2xl p-3 text-center" style="background-color: #E9E5FF;">
                 <p class="font-display font-black text-xl text-[#5B50E5] font-mono"
                    x-text="`${totalScore}%`">
@@ -129,7 +149,6 @@
                 <p class="text-[9px] font-bold text-slate-600 mt-1">Skor benar</p>
             </div>
 
-            {{-- Jumlah Benar --}}
             <div class="rounded-2xl p-3 text-center" style="background-color: #D1FAE5;">
                 <p class="font-display font-black text-xl text-[#10B981] font-mono"
                    x-text="correctCount">
@@ -137,7 +156,6 @@
                 <p class="text-[9px] font-bold text-slate-600 mt-1">Benar</p>
             </div>
 
-            {{-- Jumlah Salah --}}
             <div class="rounded-2xl p-3 text-center" style="background-color: #FEE2E2;">
                 <p class="font-display font-black text-xl text-[#EF4444] font-mono"
                    x-text="wrongCount">
@@ -182,6 +200,7 @@ document.addEventListener('alpine:init', () => {
         topScore: 0,
         careerPredictions: {},
         hasBreakdown: false,
+        isItExam: false,   // 🌟 NEW: flag to distinguish IT vs Bahasa
 
         breakdown: [
             { label: 'Gambar (G)',     value: 0, color: '#E85D4E' },
@@ -206,7 +225,7 @@ document.addEventListener('alpine:init', () => {
                 const allStats = json?.data?.exam_stats || [];
                 const student  = json?.data?.student || {};
 
-                // 🎯 Cocokkan exam pakai hash_id (bukan raw exam_id)
+                // 🎯 Match the current exam by hash_id (URL param), then raw exam_id, then fall back
                 const current = allStats.find(s => String(s.hash_id) === String(this.examId))
                              || allStats.find(s => String(s.exam_id) === String(this.examId))
                              || allStats[0];
@@ -217,9 +236,24 @@ document.addEventListener('alpine:init', () => {
                     this.totalScore   = Math.round(current.mc_accuracy_pct || 0);
                     this.correctCount = current.mc_correct_count ?? 0;
                     this.wrongCount   = current.mc_wrong_count   ?? 0;
+
+                    // 🌟 DETECT: Is this the IT/GCLWAMA exam or a Bahasa exam?
+                    // Based on category, subcategory, AND title — whichever gives us the answer.
+                    const catText = [
+                        current.category || '',
+                        current.subcategory || '',
+                        this.examTitle || ''
+                    ].join(' ').toLowerCase();
+
+                    const isBahasa = catText.includes('bahasa')
+                                  || catText.includes('arab')
+                                  || catText.includes('inggris')
+                                  || catText.includes('english');
+
+                    this.isItExam = !isBahasa;
                 }
 
-                // 📊 GCLWAMA (dari data.student, global)
+                // 📊 GCLWAMA (only rendered when isItExam === true)
                 const gcl = student.gclwama_breakdown || {};
                 this.breakdown = [
                     { label: 'Gambar (G)',     value: Math.round(gcl['Gambar (G)']     ?? 0), color: '#E85D4E' },
@@ -232,18 +266,28 @@ document.addEventListener('alpine:init', () => {
                 ];
                 this.hasBreakdown = this.breakdown.some(b => b.value > 0);
 
-                // 🎯 Career Predictions
+                // 🎯 Career Predictions (rendered only for IT exam)
                 this.topInclination    = student.top_inclination || null;
                 this.topScore          = Math.round(student.top_score || 0);
                 this.careerPredictions = student.career_predictions || {};
 
-                // ✍️ Feedback text dinamis
-                if (this.totalScore >= 70) {
-                    this.feedbackText = `Kamu memiliki jiwa visual dan estetika yang baik untuk dipadukan dengan teknis. Kamu juga mampu memahami dan menghasilkan sebuah karya visual, sehingga kamu berbakat! Bidang ${this.examTitle} adalah tempat terbentuk kamu untuk menyalurkan bakat yang kamu miliki.`;
-                } else if (this.totalScore >= 40) {
-                    this.feedbackText = `Kamu sudah memiliki dasar yang cukup baik di bidang ${this.examTitle}. Teruslah berlatih untuk mengasah kemampuan visual dan teknis kamu, sehingga bakat tersebut dapat berkembang maksimal.`;
+                // ✍️ Feedback text (adapted per exam type)
+                if (this.isItExam) {
+                    if (this.totalScore >= 70) {
+                        this.feedbackText = `Kamu memiliki jiwa visual dan estetika yang baik untuk dipadukan dengan teknis. Kamu juga mampu memahami dan menghasilkan sebuah karya visual, sehingga kamu berbakat! Bidang ${this.examTitle} adalah tempat terbentuk kamu untuk menyalurkan bakat yang kamu miliki.`;
+                    } else if (this.totalScore >= 40) {
+                        this.feedbackText = `Kamu sudah memiliki dasar yang cukup baik di bidang ${this.examTitle}. Teruslah berlatih untuk mengasah kemampuan visual dan teknis kamu, sehingga bakat tersebut dapat berkembang maksimal.`;
+                    } else {
+                        this.feedbackText = `Bakat kamu di bidang ${this.examTitle} masih bisa terus dikembangkan. Jangan berkecil hati, teruslah belajar dan berlatih untuk menemukan gaya unik kamu sendiri!`;
+                    }
                 } else {
-                    this.feedbackText = `Bakat kamu di bidang ${this.examTitle} masih bisa terus dikembangkan. Jangan berkecil hati, teruslah belajar dan berlatih untuk menemukan gaya unik kamu sendiri!`;
+                    if (this.totalScore >= 70) {
+                        this.feedbackText = `Kemampuan ${this.examTitle} kamu sangat baik! Terus asah kemampuan berbahasa kamu dengan membaca dan berlatih secara rutin, agar bisa bersaing di kancah global.`;
+                    } else if (this.totalScore >= 40) {
+                        this.feedbackText = `Kamu sudah punya dasar ${this.examTitle} yang cukup baik. Perbanyak latihan kosakata dan percakapan supaya kemampuan kamu terus meningkat!`;
+                    } else {
+                        this.feedbackText = `Kemampuan ${this.examTitle} kamu masih bisa terus ditingkatkan. Jangan menyerah, teruslah berlatih setiap hari dan kamu akan melihat kemajuan besar!`;
+                    }
                 }
             } catch (err) {
                 console.error(err);

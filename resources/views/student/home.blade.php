@@ -95,6 +95,8 @@
                 <img src="{{ asset('images/landing/card-bahasa.svg') }}" alt="Bahasa — Arabic, English" class="w-full h-auto">
             </a>
 
+            
+
             {{-- KARTU IT --}}
             <a href="{{ route('explore', ['bidang' => 'it']) }}" class="relative w-full max-w-xs shrink-0 card-hover block transition-transform">
                 <img src="{{ asset('images/landing/card-it-back.svg') }}" alt="" class="absolute -right-6 top-4 w-full h-auto -z-10 opacity-95">
