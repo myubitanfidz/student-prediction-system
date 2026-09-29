@@ -48,92 +48,67 @@
                     <img src="{{ asset('images/landing/star.svg') }}" alt="" aria-hidden="true" class="h-full w-auto max-w-full object-contain">
                 </div>
 
-                {{-- Rincian Skor --}}
-                <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-2.5">
-                    <div class="flex items-center justify-between mb-2">
+                {{-- Rincian Skor (1 bar only) --}}
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between">
                         <h3 class="font-display font-bold text-xs text-slate-900"
                             x-text="isItExam ? 'Rincian Skor (GCLWAMA)' : 'Rincian Skor Ujian'"></h3>
                         <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider"
                               x-text="isItExam ? 'Global' : 'Per Ujian'"></span>
                     </div>
 
-                    {{-- MODE IT: 7 GCLWAMA bars --}}
-                    <template x-if="isItExam && hasBreakdown">
-                        <div class="space-y-2.5">
-                            <template x-for="detail in breakdown" :key="detail.label">
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center text-[10px] font-bold">
-                                        <span class="text-slate-700" x-text="detail.label"></span>
-                                        <span class="text-slate-900 font-mono" x-text="`${detail.value}%`"></span>
-                                    </div>
-                                    <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                        <div class="h-full rounded-full transition-all duration-700"
-                                             :style="`width: ${detail.value}%; background-color: ${detail.color}`">
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
+                    {{-- ONE single bar: overall score --}}
+                    <div class="space-y-1.5 pt-1">
+                        <div class="flex justify-between items-center text-[11px] font-bold">
+                            <span class="text-slate-700"
+                                  x-text="isItExam ? 'Skor GCLWAMA' : examTitle"></span>
+                            <span class="text-slate-900 font-mono text-sm"
+                                  x-text="`${displayScore}%`"></span>
                         </div>
-                    </template>
-
-                    {{-- MODE BAHASA: single exam score bar --}}
-                    <template x-if="!isItExam">
-                        <div class="space-y-1 pt-1">
-                            <div class="flex justify-between items-center text-[10px] font-bold">
-                                <span class="text-slate-700" x-text="examTitle"></span>
-                                <span class="text-slate-900 font-mono" x-text="`${totalScore}%`"></span>
+                        <div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-700"
+                                 :style="`width: ${displayScore}%; background-color: #5B50E5`">
                             </div>
-                            <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full rounded-full transition-all duration-700"
-                                     :style="`width: ${totalScore}%; background-color: #5B50E5`">
-                                </div>
-                            </div>
-                            <p class="text-[9px] text-slate-400 italic pt-1 text-center">
-                                Hasil dari jawaban pilihan ganda kamu
-                            </p>
                         </div>
-                    </template>
-
-                    {{-- IT exam but no tagged questions --}}
-                    <template x-if="isItExam && !hasBreakdown">
-                        <p class="text-[11px] text-slate-400 italic text-center py-4">
-                            Belum ada data GCLWAMA untuk ujian ini.
+                        <p class="text-[9px] text-slate-400 italic pt-0.5"
+                           x-text="isItExam ? 'Rata-rata dari 7 dimensi GCLWAMA' : 'Hasil dari jawaban pilihan ganda kamu'">
                         </p>
-                    </template>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- ==================== PREDIKSI BAKAT (only for IT exam) ==================== --}}
-        <div x-show="isItExam && topInclination && topScore > 0" x-cloak
-             class="bg-gradient-to-br from-[#5B50E5] to-[#7C70F0] rounded-3xl p-5 text-white shadow-md space-y-3">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-white/70">
-                        Prediksi Bakat Terbaik Kamu
-                    </p>
-                    <h3 class="font-display font-black text-2xl mt-1" x-text="topInclination"></h3>
-                </div>
-                <div class="text-right">
-                    <p class="font-display font-black text-3xl font-mono" x-text="`${topScore}%`"></p>
-                    <p class="text-[10px] font-bold text-white/70">Match Score</p>
-                </div>
-            </div>
-            <div class="space-y-2 pt-2 border-t border-white/20">
-                <template x-for="(score, role) in careerPredictions" :key="role">
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-center text-[10px] font-bold">
-                            <span x-text="role"></span>
-                            <span class="font-mono" x-text="`${score}%`"></span>
-                        </div>
-                        <div class="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
-                            <div class="h-full rounded-full bg-white transition-all duration-700"
-                                 :style="`width: ${score}%`"></div>
-                        </div>
-                    </div>
-                </template>
-            </div>
+        {{-- ==================== PREDIKSI BAKAT (simplified) ==================== --}}
+       {{-- ==================== PREDIKSI BAKAT (with 4 bars, title = GCLWAMA) ==================== --}}
+<div x-show="isItExam && gclwamaScore > 0" x-cloak
+     class="bg-gradient-to-br from-[#5B50E5] to-[#7C70F0] rounded-3xl p-5 text-white shadow-md space-y-3">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-white/70">
+                Prediksi Bakat Terbaik Kamu
+            </p>
+            <h3 class="font-display font-black text-2xl mt-1">GCLWAMA</h3>
         </div>
+        <div class="text-right">
+            <p class="font-display font-black text-3xl font-mono" x-text="`${gclwamaScore}%`"></p>
+            <p class="text-[10px] font-bold text-white/70">Match Score</p>
+        </div>
+    </div>
+    <div class="space-y-2 pt-2 border-t border-white/20">
+        <template x-for="(score, role) in careerPredictions" :key="role">
+            <div class="space-y-1">
+                <div class="flex justify-between items-center text-[10px] font-bold">
+                    <span x-text="role"></span>
+                    <span class="font-mono" x-text="`${score}%`"></span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
+                    <div class="h-full rounded-full bg-white transition-all duration-700"
+                         :style="`width: ${score}%`"></div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
 
         {{-- ==================== DESCRIPTION TEXT ==================== --}}
         <div class="text-center px-2">
@@ -188,6 +163,7 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('hasilDetailPage', (examId) => ({
+        // ============ Properties ============
         examId,
         loading: true,
         examTitle: 'Ujian Talent Mapping',
@@ -196,22 +172,12 @@ document.addEventListener('alpine:init', () => {
         correctCount: 0,
         wrongCount: 0,
         feedbackText: 'Memuat analisis...',
-        topInclination: null,
-        topScore: 0,
-        careerPredictions: {},
-        hasBreakdown: false,
-        isItExam: false,   // 🌟 NEW: flag to distinguish IT vs Bahasa
+        isItExam: false,
+        gclwamaScore: 0,
+        displayScore: 0,
+        careerPredictions: {},   // 🌟 added here, next to the other props
 
-        breakdown: [
-            { label: 'Gambar (G)',     value: 0, color: '#E85D4E' },
-            { label: 'Cerita (C)',     value: 0, color: '#5B50E5' },
-            { label: 'Layout (L)',     value: 0, color: '#10B981' },
-            { label: 'Warna (W)',      value: 0, color: '#FBBF24' },
-            { label: 'Animasi (A)',    value: 0, color: '#06B6D4' },
-            { label: 'Matematika (M)', value: 0, color: '#8B5CF6' },
-            { label: 'Algoritma (A)',  value: 0, color: '#EC4899' },
-        ],
-
+        // ============ Methods ============
         async init() {
             const token = localStorage.getItem('ts_token') || localStorage.getItem('token');
             try {
@@ -225,7 +191,10 @@ document.addEventListener('alpine:init', () => {
                 const allStats = json?.data?.exam_stats || [];
                 const student  = json?.data?.student || {};
 
-                // 🎯 Match the current exam by hash_id (URL param), then raw exam_id, then fall back
+                // 🎯 4 career predictions
+                this.careerPredictions = student.career_predictions || {};
+
+                // 🎯 Match the current exam
                 const current = allStats.find(s => String(s.hash_id) === String(this.examId))
                              || allStats.find(s => String(s.exam_id) === String(this.examId))
                              || allStats[0];
@@ -237,8 +206,6 @@ document.addEventListener('alpine:init', () => {
                     this.correctCount = current.mc_correct_count ?? 0;
                     this.wrongCount   = current.mc_wrong_count   ?? 0;
 
-                    // 🌟 DETECT: Is this the IT/GCLWAMA exam or a Bahasa exam?
-                    // Based on category, subcategory, AND title — whichever gives us the answer.
                     const catText = [
                         current.category || '',
                         current.subcategory || '',
@@ -253,29 +220,30 @@ document.addEventListener('alpine:init', () => {
                     this.isItExam = !isBahasa;
                 }
 
-                // 📊 GCLWAMA (only rendered when isItExam === true)
+                // 📊 GCLWAMA overall average
                 const gcl = student.gclwama_breakdown || {};
-                this.breakdown = [
-                    { label: 'Gambar (G)',     value: Math.round(gcl['Gambar (G)']     ?? 0), color: '#E85D4E' },
-                    { label: 'Cerita (C)',     value: Math.round(gcl['Cerita (C)']     ?? 0), color: '#5B50E5' },
-                    { label: 'Layout (L)',     value: Math.round(gcl['Layout (L)']     ?? 0), color: '#10B981' },
-                    { label: 'Warna (W)',      value: Math.round(gcl['Warna (W)']      ?? 0), color: '#FBBF24' },
-                    { label: 'Animasi (A)',    value: Math.round(gcl['Animasi (A)']    ?? 0), color: '#06B6D4' },
-                    { label: 'Matematika (M)', value: Math.round(gcl['Matematika (M)'] ?? 0), color: '#8B5CF6' },
-                    { label: 'Algoritma (A)',  value: Math.round(gcl['Algoritma (A)']  ?? 0), color: '#EC4899' },
-                ];
-                this.hasBreakdown = this.breakdown.some(b => b.value > 0);
+                const gclValues = [
+                    gcl['Gambar (G)']     ?? 0,
+                    gcl['Cerita (C)']     ?? 0,
+                    gcl['Layout (L)']     ?? 0,
+                    gcl['Warna (W)']      ?? 0,
+                    gcl['Animasi (A)']    ?? 0,
+                    gcl['Matematika (M)'] ?? 0,
+                    gcl['Algoritma (A)']  ?? 0,
+                ].map(v => Number(v) || 0);
 
-                // 🎯 Career Predictions (rendered only for IT exam)
-                this.topInclination    = student.top_inclination || null;
-                this.topScore          = Math.round(student.top_score || 0);
-                this.careerPredictions = student.career_predictions || {};
+                const nonZero = gclValues.filter(v => v > 0);
+                this.gclwamaScore = nonZero.length > 0
+                    ? Math.round(nonZero.reduce((a, b) => a + b, 0) / nonZero.length)
+                    : 0;
 
-                // ✍️ Feedback text (adapted per exam type)
+                this.displayScore = this.isItExam ? this.gclwamaScore : this.totalScore;
+
+                // ✍️ Feedback text
                 if (this.isItExam) {
-                    if (this.totalScore >= 70) {
+                    if (this.gclwamaScore >= 70) {
                         this.feedbackText = `Kamu memiliki jiwa visual dan estetika yang baik untuk dipadukan dengan teknis. Kamu juga mampu memahami dan menghasilkan sebuah karya visual, sehingga kamu berbakat! Bidang ${this.examTitle} adalah tempat terbentuk kamu untuk menyalurkan bakat yang kamu miliki.`;
-                    } else if (this.totalScore >= 40) {
+                    } else if (this.gclwamaScore >= 40) {
                         this.feedbackText = `Kamu sudah memiliki dasar yang cukup baik di bidang ${this.examTitle}. Teruslah berlatih untuk mengasah kemampuan visual dan teknis kamu, sehingga bakat tersebut dapat berkembang maksimal.`;
                     } else {
                         this.feedbackText = `Bakat kamu di bidang ${this.examTitle} masih bisa terus dikembangkan. Jangan berkecil hati, teruslah belajar dan berlatih untuk menemukan gaya unik kamu sendiri!`;
