@@ -181,29 +181,58 @@
             {{-- Popup Content Grid --}}
             <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                 
-                {{-- Left Column: Analitik Karir --}}
-                <div class="md:col-span-1 border border-line rounded-2xl p-5 bg-slate-50 flex flex-col items-center">
-                    <h3 class="font-display font-bold text-sm uppercase tracking-wide text-slate-800 w-full text-center mb-1">Analitik Karir</h3>
-                    <p class="text-[10px] text-ink/50 text-center mb-6">Prediksi bakat tertinggi</p>
-                    
-                    <div class="flex items-end justify-between w-full h-36 gap-2 px-1">
-                        <template x-if="activeStudent && activeStudent.career_predictions">
-                            <template x-for="(score, role) in activeStudent.career_predictions" :key="role">
-                                <div class="flex flex-col items-center gap-2 w-full group relative">
-                                    <div class="absolute -top-10 bg-slate-800 text-white text-[10px] px-2 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg" x-text="role + ': ' + score + '%'"></div>
-                                    <span class="font-mono text-[9px] font-bold text-brand-green" x-text="score + '%'"></span>
-                                    
-                                    <div class="w-6 h-28 rounded-full border border-slate-200 bg-white overflow-hidden shadow-inner flex flex-col justify-end">
-                                        <div class="w-full bg-gradient-to-t from-emerald-500 to-brand-green transition-all duration-1000 ease-out rounded-full"
-                                             :style="modalAnim ? `height: ${score}%` : 'height: 0%'"></div>
-                                    </div>
-                                    
-                                    <span class="text-[9px] font-semibold text-ink/60 text-center truncate w-full" x-text="role"></span>
-                                </div>
-                            </template>
-                        </template>
+              {{-- Left Column: Analitik Karir (Adaptive) --}}
+{{-- Left Column: Analitik Karir (Adaptive) --}}
+<div class="md:col-span-1 border border-line rounded-2xl p-5 bg-slate-50 flex flex-col items-center">
+    <h3 class="font-display font-bold text-sm uppercase tracking-wide text-slate-800 w-full text-center mb-1"
+        x-text="hasItData(activeStudent) ? 'Analitik Karir' : 'Hasil Bahasa Santri'"></h3>
+    <p class="text-[10px] text-ink/50 text-center mb-6"
+       x-text="hasItData(activeStudent) ? 'Prediksi bakat tertinggi (GCLWAMA)' : 'Skor Bahasa yang telah diikuti'"></p>
+
+    {{-- IT Mode: 4 career bars --}}
+    <template x-if="hasItData(activeStudent)">
+        <div class="flex items-end justify-between w-full h-36 gap-2 px-1">
+            <template x-for="(score, role) in activeStudent.career_predictions" :key="role">
+                <div class="flex flex-col items-center gap-2 w-full group relative">
+                    <div class="absolute -top-10 bg-slate-800 text-white text-[10px] px-2 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg"
+                         x-text="role + ': ' + score + '%'"></div>
+                    <span class="font-mono text-[9px] font-bold text-brand-green" x-text="score + '%'"></span>
+
+                    <div class="w-6 h-28 rounded-full border border-slate-200 bg-white overflow-hidden shadow-inner flex flex-col justify-end">
+                        <div class="w-full bg-gradient-to-t from-emerald-500 to-brand-green transition-all duration-1000 ease-out rounded-full"
+                             :style="modalAnim ? `height: ${score}%` : 'height: 0%'"></div>
                     </div>
+
+                    <span class="text-[9px] font-semibold text-ink/60 text-center truncate w-full" x-text="role"></span>
                 </div>
+            </template>
+        </div>
+    </template>
+
+    {{-- Bahasa Mode: horizontal bars --}}
+    <template x-if="!hasItData(activeStudent) && activeStudent?.bahasa_scores?.length">
+        <div class="w-full space-y-4 pt-2">
+            <template x-for="b in activeStudent.bahasa_scores" :key="b.label">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-700" x-text="b.label"></span>
+                        <span class="font-mono font-black text-lg text-brand-green" x-text="b.score + '%'"></span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-brand-green transition-all duration-1000 ease-out"
+                             :style="modalAnim ? `width: ${b.score}%` : 'width: 0%'"></div>
+                    </div>
+                    <p class="text-[9px] text-slate-400 italic" x-text="b.exam_title"></p>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    {{-- Empty state --}}
+    <template x-if="!hasItData(activeStudent) && !activeStudent?.bahasa_scores?.length">
+        <p class="text-[11px] text-slate-400 italic text-center py-8">Belum ada data ujian.</p>
+    </template>
+</div>
 
                 {{-- Right Column: Portofolio & Daftar Ujian yang Diikuti --}}
                 <div class="md:col-span-2 space-y-6">
