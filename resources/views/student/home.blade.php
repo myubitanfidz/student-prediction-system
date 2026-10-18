@@ -71,7 +71,7 @@
 {{-- ============ MARQUEE ============ --}}
 <div class="bg-[#f26d3d] py-4 overflow-hidden">
     <div class="marquee-track">
-        <img src="{{ asset('images/landing/marquee-tile.svg') }}" alt="" aria-hidden="true" class="h-auto w-[1440px] shrink-0">
+        <img src="{{ asset('images/landing/marquee-tile.svg') }}" alt="" aria-hidden="true" class="h-full w-[1440px] shrink-0">
     </div>
 </div>
 
@@ -94,6 +94,8 @@
             <a href="{{ route('explore', ['bidang' => 'bahasa']) }}" class="w-full max-w-xs shrink-0 card-hover block transition-transform">
                 <img src="{{ asset('images/landing/card-bahasa.svg') }}" alt="Bahasa — Arabic, English" class="w-full h-auto">
             </a>
+
+            
 
             {{-- KARTU IT --}}
             <a href="{{ route('explore', ['bidang' => 'it']) }}" class="relative w-full max-w-xs shrink-0 card-hover block transition-transform">
@@ -152,7 +154,7 @@
             </p>
         </div>
         <div class="md:w-1/2 flex justify-center z-10">
-            <div class="w-64 h-64 bg-[length:8px_8px] bg-[image:repeating-conic-gradient(#e5e5e5_0_25%,white_0_50%)] rounded-lg"></div>
+            <img src="{{ asset('images/landing/star-mascot.svg') }}" alt="Star Mascot" class="w-72 h-auto">
         </div>
     </div>
 </section>

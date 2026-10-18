@@ -39,8 +39,15 @@
     </style>
 </head>
 <body x-data="{ profileOpen: false, pageLoaded: false }"
-      x-init="if (!$store.auth.user) window.location.href = '/login'; $nextTick(() => pageLoaded = true)"
+      x-init="if ($store.auth && !$store.auth.user) window.location.href = '/login'; $nextTick(() => pageLoaded = true)"
       class="min-h-screen bg-[#FFFDF0] text-slate-800 flex flex-col relative">
+
+    <script>
+    // 🌟 Register the examHeader store BEFORE Alpine starts
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('examHeader', { active: false, answered: 0, total: 0, percent: 0 });
+    });
+    </script>
 
     @include('layouts.partials.topbar')
 

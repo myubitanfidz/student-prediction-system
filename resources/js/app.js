@@ -536,6 +536,26 @@ Alpine.data('adminDashboardPage', () => ({
         return (student?.exam_stats || []).filter(e => e.completed).length;
     },
 
+    correctCount(student) {
+    if (!student || !student.exam_stats) return 0;
+    return student.exam_stats.reduce((sum, e) => sum + (e.mc_correct_count || 0), 0);
+},
+
+wrongCount(student) {
+    if (!student || !student.exam_stats) return 0;
+    return student.exam_stats.reduce((sum, e) => sum + (e.mc_wrong_count || 0), 0);
+},
+
+hasItData(student) {
+    if (!student?.career_predictions) return false;
+    const vals = Object.values(student.career_predictions);
+    return vals.some(v => v > 0);   // true if any GCLWAMA-tagged score exists
+},
+
+hasBahasaData(student) {
+    return !!(student?.bahasa_scores && student.bahasa_scores.length > 0);
+},
+
     portfolioFiles(student) {
         if (Array.isArray(student?.portfolio?.files)) return student.portfolio.files;
         if (Array.isArray(student?.files)) return student.files;
